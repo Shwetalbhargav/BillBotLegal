@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import { Button, useToast } from "@/components/common";
-import { Input } from "@/components/forms";
+import { Input } from "@/components/form";
 import Form from "@/components/form/Form";
 import FormField from "@/components/form/FormField";
 import { useForm } from "react-hook-form";
