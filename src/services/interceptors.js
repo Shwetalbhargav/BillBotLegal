@@ -1,8 +1,6 @@
 // src/services/interceptors.js
 import axios from 'axios';
 
-// src/services/interceptors.js
-import axios from 'axios';
 
 // Create an axios instance
 
