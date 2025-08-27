@@ -1,23 +1,32 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Button, useToast } from "@/components/common";
+import { Button } from "@/components/common";
 import { Input, Select, Switch } from "@/components/form";
 import Form from "@/components/form/Form";
 import FormField from "@/components/form/FormField";
 import { useForm } from "react-hook-form";
 import { registerUser } from "@/services/api";
-import useAuth from "@/hooks/useAuth";
 
-const ROLES = ["Lawyer", "Paralegal", "Billing", "Admin"];
+const ROLES = [
+  { label: "Partner", value: "partner" },
+  { label: "Lawyer", value: "lawyer" },
+  { label: "Associate", value: "associate" },
+  { label: "Intern", value: "intern" },
+  { label: "Admin", value: "admin" },
+];
 
 export default function Register() {
   const navigate = useNavigate();
-  const { addToast } = useToast();
   const [submitting, setSubmitting] = useState(false);
-
   const form = useForm({
     mode: "onBlur",
-    defaultValues: { name: "", email: "", password: "", role: "Lawyer", terms: false },
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      role: "lawyer",
+      terms: false,
+    },
   });
 
   const onSubmit = async (values) => {
@@ -27,12 +36,16 @@ export default function Register() {
     }
     setSubmitting(true);
     try {
-      await registerUser(values);
-      addToast({ tone: "success", title: "Verification email sent" });
-      navigate(`/check-email?email=${encodeURIComponent(values.email)}`);
-      
-    } catch (e) {
-      addToast({ tone: "danger", title: "Registration failed", description: "Please try again." });
+      await registerUser({
+        name: values.name,
+        email: values.email,
+        password: values.password,
+        role: values.role, // already lowercased for backend enum
+      });
+      // success → go to sign-in
+      navigate("/login");
+    } catch {
+      form.setError("email", { message: "Registration failed. Try a different email." });
     } finally {
       setSubmitting(false);
     }
@@ -42,6 +55,7 @@ export default function Register() {
     <div className="min-h-screen flex items-center justify-center px-6">
       <div className="w-full max-w-md">
         <h2 className="text-xl font-semibold mb-6">Create your account</h2>
+
         <Form form={form} onSubmit={onSubmit} className="space-y-4">
           <FormField name="name" label="Full name" required>
             {({ id, describedBy, error }) => (
@@ -83,9 +97,15 @@ export default function Register() {
 
           <FormField name="role" label="Role">
             {({ id }) => (
-              <Select id={id} value={form.watch("role")} onChange={(e) => form.setValue("role", e.target.value)}>
+              <Select
+                id={id}
+                value={form.watch("role")}
+                onChange={(e) => form.setValue("role", e.target.value)}
+              >
                 {ROLES.map((r) => (
-                  <option key={r} value={r}>{r}</option>
+                  <option key={r.value} value={r.value}>
+                    {r.label}
+                  </option>
                 ))}
               </Select>
             )}
@@ -115,7 +135,10 @@ export default function Register() {
         </Form>
 
         <p className="mt-4 text-sm">
-          Already have an account? <Link to="/login" className="underline">Sign in</Link>
+          Already have an account?{" "}
+          <Link to="/login" className="underline">
+            Sign in
+          </Link>
         </p>
       </div>
     </div>

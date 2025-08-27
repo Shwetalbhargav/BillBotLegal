@@ -8,11 +8,6 @@ export const loginUser = (credentials) =>
 export const registerUser = (data) =>
   apiClient.post('/auth/register', data);
 
-export const resendVerification = (email) =>
-  apiClient.post('/auth/resend-verification', { email });
-
-export const requestMagicLink = (payload) => apiClient.post('/auth/magic/request', payload);
-
 // === CLIENT APIs ===
 export const getClients = () => apiClient.get('/clients');
 export const addClient = (client) => apiClient.post('/clients/create', client);
