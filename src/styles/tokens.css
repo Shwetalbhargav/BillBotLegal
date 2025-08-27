@@ -1,0 +1,100 @@
+/* Design tokens + light/dark theme for Legal Billables */
+:root {
+  --lb-font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+  --lb-radius-sm: 4px;
+  --lb-radius-md: 8px;
+  --lb-radius-lg: 12px;
+  --lb-radius-xl: 16px; /* requested */
+  --lb-shadow-sm: 0 1px 2px rgba(0,0,0,.06);
+  --lb-shadow-md: 0 8px 24px rgba(0,0,0,.12); /* requested */
+  --lb-shadow-lg: 0 16px 40px rgba(0,0,0,.18);
+
+  --lb-space-1: 4px;
+  --lb-space-2: 8px;
+  --lb-space-3: 12px;
+  --lb-space-4: 16px;
+  --lb-space-5: 20px;
+  --lb-space-6: 24px;
+  --lb-space-8: 32px;
+  --lb-space-10: 40px;
+
+  --lb-fs-xs: 12px;
+  --lb-fs-sm: 14px;
+  --lb-fs-md: 16px;
+  --lb-fs-lg: 18px;
+  --lb-fs-xl: 20px;
+
+  /* Light palette */
+  --lb-bg: #ffffff;
+  --lb-surface: #f7f7f8;
+  --lb-text: #111827;
+  --lb-muted: #6b7280;      /* requested muted */
+  --lb-border: #e5e7eb;
+
+  --lb-primary-600: #2563eb;
+  --lb-primary-700: #1d4ed8;
+  --lb-primary-100: #dbeafe;
+
+  --lb-success-600: #16a34a;
+  --lb-success-100: #dcfce7;
+
+  --lb-danger-600: #dc2626;
+  --lb-danger-700: #b91c1c;
+  --lb-danger-100: #fee2e2;
+
+  --lb-focus: 2px solid #93c5fd;
+}
+
+:root[data-theme="dark"] {
+  --lb-bg: #0b0c0f;
+  --lb-surface: #121318;
+  --lb-text: #e5e7eb;
+  --lb-muted: #9ca3af;
+  --lb-border: #1f2430;
+
+  --lb-primary-600: #60a5fa;
+  --lb-primary-700: #3b82f6;
+  --lb-primary-100: #1d2a3f;
+
+  --lb-success-600: #34d399;
+  --lb-success-100: #0d2a22;
+
+  --lb-danger-600: #f87171;
+  --lb-danger-700: #ef4444;
+  --lb-danger-100: #2b1515;
+}
+
+/* Base resets for components */
+.lb-reset {
+  font-family: var(--lb-font-sans);
+  color: var(--lb-text);
+}
+
+.lb-field {
+  display: flex; flex-direction: column; gap: 6px;
+}
+
+.lb-input {
+  width: 100%;
+  border: 1px solid var(--lb-border);
+  background: var(--lb-bg);
+  border-radius: var(--lb-radius-md);
+  padding: 10px 12px;
+  font-size: var(--lb-fs-md);
+  outline: none;
+}
+.lb-input:focus-visible {
+  box-shadow: 0 0 0 3px rgba(59,130,246,.35);
+  border-color: var(--lb-primary-600);
+}
+.lb-input[aria-invalid="true"] {
+  border-color: var(--lb-danger-600);
+}
+.lb-help {
+  color: var(--lb-muted);
+  font-size: var(--lb-fs-sm);
+}
+.lb-error {
+  color: var(--lb-danger-600);
+  font-size: var(--lb-fs-sm);
+}
