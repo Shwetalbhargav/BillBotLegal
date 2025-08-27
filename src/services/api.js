@@ -3,63 +3,63 @@ import apiClient from './interceptors';
 
 // === AUTH APIs ===
 export const loginUser = (credentials) =>
-  apiClient.post('/auth/login', credentials);
+  apiClient.post('/api/auth/login', credentials);
 
 export const registerUser = (data) =>
-  apiClient.post('/auth/register', data);
+  apiClient.post('/api/auth/register', data);
 
 // === CLIENT APIs ===
-export const getClients = () => apiClient.get('/clients');
-export const addClient = (client) => apiClient.post('/clients/create', client);
-export const updateClient = (id, client) => apiClient.put(`/clients/${id}/update`, client);
-export const deleteClient = (id) => apiClient.delete(`/clients/${id}/delete`);
-export const getClientDashboard = (id) => apiClient.get(`/clients/${id}/dashboard`);
+export const getClients = () => apiClient.get('/api/clients');
+export const addClient = (client) => apiClient.post('/api/clients/create', client);
+export const updateClient = (id, client) => apiClient.put(`/api/clients/${id}/update`, client);
+export const deleteClient = (id) => apiClient.delete(`/api/clients/${id}/delete`);
+export const getClientDashboard = (id) => apiClient.get(`/api/clients/${id}/dashboard`);
 
 // === CASE APIs ===
-export const getCases = () => apiClient.get('/cases');
-export const addCase = (caseData) => apiClient.post('/cases/create', caseData);
-export const updateCase = (id, caseData) => apiClient.put(`/cases/${id}/update`, caseData);
-export const deleteCase = (id) => apiClient.delete(`/cases/${id}/delete`);
-export const getCaseById = (id) => apiClient.get(`/cases/${id}`);
+export const getCases = () => apiClient.get('/api/cases');
+export const addCase = (caseData) => apiClient.post('/api/cases/create', caseData);
+export const updateCase = (id, caseData) => apiClient.put(`/api/cases/${id}/update`, caseData);
+export const deleteCase = (id) => apiClient.delete(`/api/cases/${id}/delete`);
+export const getCaseById = (id) => apiClient.get(`/api/cases/${id}`);
 
 // === BILLABLE APIs ===
-export const getBillables = () => apiClient.get('/billables');
-export const addBillable = (billable) => apiClient.post('/billables', billable);
-export const updateBillable = (id, billable) => apiClient.put(`/billables/${id}`, billable);
-export const deleteBillable = (id) => apiClient.delete(`/billables/${id}`);
-export const getBillableById = (id) => apiClient.get(`/billables/${id}`);
+export const getBillables = () => apiClient.get('/api/billables');
+export const addBillable = (billable) => apiClient.post('/api/billables', billable);
+export const updateBillable = (id, billable) => apiClient.put(`/api/billables/${id}`, billable);
+export const deleteBillable = (id) => apiClient.delete(`/api/billables/${id}`);
+export const getBillableById = (id) => apiClient.get(`/api/billables/${id}`);
 export const createBillableFromEmail = (emailEntryId) =>
-  apiClient.post(`/billables/from-email/${emailEntryId}`);
+  apiClient.post(`/api/billables/from-email/${emailEntryId}`);
 
 
 // === INVOICE APIs ===
-export const createInvoice = (invoice) => apiClient.post('/invoices', invoice);
-export const getInvoiceById = (id) => apiClient.get(`/invoices/${id}`);
-export const getAllInvoices = () => apiClient.get('/invoices');
-export const getInvoicesByUser = (userId) => apiClient.get(`/invoices/user/${userId}`);
+export const createInvoice = (invoice) => apiClient.post('/api/invoices', invoice);
+export const getInvoiceById = (id) => apiClient.get(`/api/invoices/${id}`);
+export const getAllInvoices = () => apiClient.get('/api/invoices');
+export const getInvoicesByUser = (userId) => apiClient.get(`/api/invoices/user/${userId}`);
 
 // === ANALYTICS APIs ===
-export const getBillableStats = () => apiClient.get('/analytics/billables');
-export const getInvoiceStats = () => apiClient.get('/analytics/invoices');
-export const getUnbilledBillables = () => apiClient.get('/analytics/unbilled');
+export const getBillableStats = () => apiClient.get('/api/analytics/billables');
+export const getInvoiceStats = () => apiClient.get('/api/analytics/invoices');
+export const getUnbilledBillables = () => apiClient.get('/api/analytics/unbilled');
 
 // === EMAIL ENTRY APIs ===
-export const createEmailEntry = (entry) => apiClient.post('/email-entry', entry);
-export const getEmailEntries = () => apiClient.get('/email-entry');
+export const createEmailEntry = (entry) => apiClient.post('/api/email-entry', entry);
+export const getEmailEntries = () => apiClient.get('/api/email-entry');
 
 // === CLIO AUTH (OAuth Redirect Only) ===
 export const clioAuthCallback = (code) =>
-  apiClient.get(`/callback?code=${code}`);
+  apiClient.get(`/api/callback?code=${code}`);
 
 // === TEAM ASSIGNMENT APIs ===
 export const assignUserToCase = (assignment) =>
-  apiClient.post('/team-assignments/assign', assignment);
+  apiClient.post('/api/team-assignments/assign', assignment);
 
 export const getCaseTeam = (caseId) =>
-  apiClient.get(`/team-assignments/${caseId}`);
+  apiClient.get(`/api/team-assignments/${caseId}`);
 
 export const removeUserFromCase = (caseId, userId) =>
-  apiClient.delete('/team-assignments/remove', {
+  apiClient.delete('/api/team-assignments/remove', {
     data: { caseId, userId },
   });
 

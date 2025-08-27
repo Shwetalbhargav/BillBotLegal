@@ -2,12 +2,10 @@
 import axios from 'axios';
 
 // Create an axios instance
-const apiClient = axios.create({
+export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL, 
   withCredentials: true,
-  headers: {
-    'Content-Type': 'application/json'  
-  },
+  headers: { 'Content-Type': 'application/json' },
 });
 
 // Request interceptor for adding auth token
