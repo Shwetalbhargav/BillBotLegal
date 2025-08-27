@@ -31,7 +31,6 @@ export const getBillableById = (id) => apiClient.get(`/api/billables/${id}`);
 export const createBillableFromEmail = (emailEntryId) =>
   apiClient.post(`/api/billables/from-email/${emailEntryId}`);
 
-
 // === INVOICE APIs ===
 export const createInvoice = (invoice) => apiClient.post('/api/invoices', invoice);
 export const getInvoiceById = (id) => apiClient.get(`/api/invoices/${id}`);
@@ -49,7 +48,7 @@ export const getEmailEntries = () => apiClient.get('/api/email-entry');
 
 // === CLIO AUTH (OAuth Redirect Only) ===
 export const clioAuthCallback = (code) =>
-  apiClient.get(`/api/callback?code=${code}`);
+  apiClient.get(`/api/callback?code=${encodeURIComponent(code)}`);
 
 // === TEAM ASSIGNMENT APIs ===
 export const assignUserToCase = (assignment) =>
@@ -59,17 +58,14 @@ export const getCaseTeam = (caseId) =>
   apiClient.get(`/api/team-assignments/${caseId}`);
 
 export const removeUserFromCase = (caseId, userId) =>
-  apiClient.delete('/api/team-assignments/remove', {
-    data: { caseId, userId },
-  });
+  apiClient.delete('/api/team-assignments/remove', { data: { caseId, userId } });
 
-  // services/api.js
+// === EMAIL → CLIO PUSH ===
 export async function pushEmailToClio(id) {
-  const { data } = await axios.post(`/api/email-entry/${id}/push-clio`);
+  const { data } = await apiClient.post(`/api/email-entry/${id}/push-clio`);
   return data; // { success, entry }
 }
 
-// add at the bottom
+// === AI Email Generation ===
 export const generateEmail = (prompt) =>
   apiClient.post('/generate-email', { prompt });
-
