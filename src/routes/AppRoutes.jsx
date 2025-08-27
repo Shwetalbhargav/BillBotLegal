@@ -25,7 +25,7 @@ const RoleRoute = ({ children, allow = [] }) => {
 const LandingPage     = lazy(() => import('@/features/landing/LandingPage'));
 const Login           = lazy(() => import('@/features/auth/Login'));
 const Register        = lazy(() => import('@/features/auth/Register'));
-const ForgotPassword  = lazy(() => import('@/features/auth/Forgot'));       
+  
 const ResetPassword   = lazy(() => import('@/features/auth/Reset'));       
 
 // -------- Protected (pages/*) --------
@@ -52,7 +52,6 @@ export default function AppRoutes() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
           <Route path="/register" element={<PublicOnlyRoute><Register /></PublicOnlyRoute>} />
-          <Route path="/forgot-password" element={<PublicOnlyRoute><ForgotPassword /></PublicOnlyRoute>} />
           <Route path="/reset-password" element={<PublicOnlyRoute><ResetPassword /></PublicOnlyRoute>} />
           <Route path="/magic-ok" element={<MagicOk />} />
           <Route path="/check-email" element={<CheckEmail />} />
