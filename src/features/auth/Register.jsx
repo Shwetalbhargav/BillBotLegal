@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import { Button } from "@/components/common";
 import { Input, Select, Switch } from "@/components/form";
 import Form from "@/components/form/Form";
 import FormField from "@/components/form/FormField";
 import { useForm } from "react-hook-form";
-import { registerUser } from "@/services/api";
+import { registerThunk, resetRegisterState } from "@/store/registerSlice";
 
 const ROLES = [
   { label: "Partner", value: "partner" },
@@ -17,7 +18,11 @@ const ROLES = [
 
 export default function Register() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { status, error } = useSelector((s) => s.register);
+
   const [submitting, setSubmitting] = useState(false);
+
   const form = useForm({
     mode: "onBlur",
     defaultValues: {
@@ -29,6 +34,22 @@ export default function Register() {
     },
   });
 
+  // If the slice reports success, welcome + redirect
+  useEffect(() => {
+    if (status === "succeeded") {
+      alert("Welcome, new lawyer! 🎉 Your account was created successfully.");
+      navigate("/login", { replace: true });
+      dispatch(resetRegisterState());
+    }
+  }, [status, navigate, dispatch]);
+
+  // If the slice reports an error, surface it on the email field
+  useEffect(() => {
+    if (status === "failed" && error) {
+      form.setError("email", { message: error });
+    }
+  }, [status, error, form]);
+
   const onSubmit = async (values) => {
     if (!values.terms) {
       form.setError("terms", { message: "You must accept the terms." });
@@ -36,16 +57,15 @@ export default function Register() {
     }
     setSubmitting(true);
     try {
-      await registerUser({
-        name: values.name,
-        email: values.email,
-        password: values.password,
-        role: values.role, // already lowercased for backend enum
-      });
-      // success → go to sign-in
-      navigate("/login");
-    } catch {
-      form.setError("email", { message: "Registration failed. Try a different email." });
+      // dispatch thunk
+      await dispatch(
+        registerThunk({
+          name: values.name,
+          email: values.email,
+          password: values.password,
+          role: values.role, // already lowercase enum expected by backend
+        })
+      );
     } finally {
       setSubmitting(false);
     }
@@ -82,7 +102,12 @@ export default function Register() {
             )}
           </FormField>
 
-          <FormField name="password" label="Password" required help="At least 8 characters.">
+          <FormField
+            name="password"
+            label="Password"
+            required
+            help="At least 8 characters."
+          >
             {({ id, describedBy, error }) => (
               <Input
                 id={id}
@@ -90,7 +115,11 @@ export default function Register() {
                 aria-describedby={describedBy}
                 aria-invalid={!!error}
                 placeholder="••••••••"
-                {...form.register("password", { required: "Password is required", minLength: 8 })}
+                // ensure proper minLength object so the rule fires with a message
+                {...form.register("password", {
+                  required: "Password is required",
+                  minLength: { value: 8, message: "At least 8 characters" },
+                })}
               />
             )}
           </FormField>
@@ -123,14 +152,14 @@ export default function Register() {
             {() => (
               <Switch
                 checked={!!form.watch("terms")}
-                onChange={(v) => form.setValue("terms", v, { shouldValidate: true })}
+                onChange={(v) => form.setValue("terms", !!v, { shouldValidate: true })}
                 aria-invalid={!!form.formState.errors?.terms}
               />
             )}
           </FormField>
 
-          <Button type="submit" loading={submitting} fullWidth>
-            Create account
+          <Button type="submit" loading={submitting || status === "loading"} fullWidth>
+            {status === "loading" ? "Creating…" : "Create account"}
           </Button>
         </Form>
 

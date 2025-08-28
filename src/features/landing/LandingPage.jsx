@@ -3,8 +3,11 @@ import NavBar from "@/components/layout/NavBar";
 import Footer from "@/components/layout/Footer";
 import { Button, Badge } from "@/components/common";
 import Loginpage from "@/assets/Loginpage.png";
+import { useNavigate } from "react-router-dom";
+
 
 export default function LandingPage() {
+  const navigate = useNavigate();
   return (
     <>
       <NavBar />
@@ -21,10 +24,10 @@ export default function LandingPage() {
               and push entries to Clio in one click.
             </p>
             <div className="mt-6 flex gap-3">
-              <Button variant="primary" size="lg" onClick={() => (window.location.href = "/register")}>
+              <Button variant="primary" size="lg" onClick={() =>  navigate("/register")}>
                 Get Started
               </Button>
-              <Button variant="secondary" size="lg" onClick={() => (window.location.href = "/login")}>
+              <Button variant="secondary" size="lg" onClick={() => navigate("/login")}>
                 Sign in
               </Button>
             </div>
