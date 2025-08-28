@@ -36,7 +36,7 @@ const BillablesPage       = lazy(() => import('@/pages/BillablesPage'));
 const InvoicesPage        = lazy(() => import('@/pages/InvoicesPage'));
 const AnalyticsPage       = lazy(() => import('@/pages/AnalyticsPage'));
 const EmailEntriesPage    = lazy(() => import('@/pages/EmailEntriesPage'));
-const TeamAssignmentsPage = lazy(() => import('@/pages/TeamAssignmentsPage'));
+
 const AdminDashboard      = lazy(() => import('@/features/admin/AdminDashboard')); 
 const MainDashboard = lazy(() => import('@/pages/MainDashboard'));   
 const MagicOk = lazy(() => import('@/pages/MagicOk'));
@@ -63,7 +63,7 @@ export default function AppRoutes() {
           <Route path="/invoices" element={<PrivateRoute><InvoicesPage /></PrivateRoute>} />
           <Route path="/analytics" element={<PrivateRoute><AnalyticsPage /></PrivateRoute>} />
           <Route path="/email-entries" element={<PrivateRoute><EmailEntriesPage /></PrivateRoute>} />
-          <Route path="/team-assignments" element={<PrivateRoute><TeamAssignmentsPage /></PrivateRoute>} />
+          
           <Route path="/admin" element={<RoleRoute allow={['Admin']}><AdminDashboard /></RoleRoute>} />
           <Route path="/dashboard" element={<PrivateRoute><MainDashboard /></PrivateRoute>} />
 

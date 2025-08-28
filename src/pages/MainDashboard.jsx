@@ -183,7 +183,6 @@ const openCases = useMemo(() => cases.filter(c => normCaseStatus(c.status) === "
           <QuickLink to="/clients" label="Clients" />
           <QuickLink to="/invoices" label="Invoices" />
           <QuickLink to="/billables" label="Billables" />
-          <QuickLink to="/team-assignments" label="Team" />
           <QuickLink to="/analytics" label="Analytics" />
           <QuickLink to="/admin" label="Admin" />
         </div>
