@@ -6,7 +6,7 @@ import billableReducer from './billableSlice';
 import invoiceReducer from './invoiceSlice';
 import analyticsReducer from './analyticsSlice';
 import emailReducer from './emailSlice';
-import teamReducer from './teamSlice';
+
 
 const store = configureStore({
   reducer: {
@@ -17,7 +17,7 @@ const store = configureStore({
     invoices: invoiceReducer,
     analytics: analyticsReducer,
     emails: emailReducer,
-    team: teamReducer,
+    
   },
 });
 
