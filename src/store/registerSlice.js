@@ -1,15 +1,15 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { registerUser } from "@/services/api"; // uses /api/auth/register
+import { registerUser } from "@/services/api";
 
-// Async thunk
+// Async thunk to call /api/auth/register
 export const registerThunk = createAsyncThunk(
   "auth/register",
   async (payload, { rejectWithValue }) => {
     try {
       const { data } = await registerUser(payload);
-      return data; // whatever your API returns on success
+      return data;
     } catch (err) {
-      let message =
+      const message =
         err?.response?.data?.message ||
         err?.message ||
         "Registration failed";
@@ -19,7 +19,7 @@ export const registerThunk = createAsyncThunk(
 );
 
 const initialState = {
-  status: "idle",      // idle | loading | succeeded | failed
+  status: "idle", // idle | loading | succeeded | failed
   error: null,
 };
 

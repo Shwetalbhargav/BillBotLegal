@@ -19,7 +19,9 @@ const ROLES = [
 export default function Register() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { status, error } = useSelector((s) => s.register);
+  // guard to avoid crashes if reducer not mounted yet
+  const slice = useSelector((s) => s.register) ?? { status: "idle", error: null };
+  const { status, error } = slice;
 
   const [submitting, setSubmitting] = useState(false);
 
@@ -34,7 +36,6 @@ export default function Register() {
     },
   });
 
-  // If the slice reports success, welcome + redirect
   useEffect(() => {
     if (status === "succeeded") {
       alert("Welcome, new lawyer! 🎉 Your account was created successfully.");
@@ -43,7 +44,6 @@ export default function Register() {
     }
   }, [status, navigate, dispatch]);
 
-  // If the slice reports an error, surface it on the email field
   useEffect(() => {
     if (status === "failed" && error) {
       form.setError("email", { message: error });
@@ -57,13 +57,12 @@ export default function Register() {
     }
     setSubmitting(true);
     try {
-      // dispatch thunk
       await dispatch(
         registerThunk({
           name: values.name,
           email: values.email,
           password: values.password,
-          role: values.role, // already lowercase enum expected by backend
+          role: values.role, // backend expects lowercase
         })
       );
     } finally {
@@ -115,7 +114,6 @@ export default function Register() {
                 aria-describedby={describedBy}
                 aria-invalid={!!error}
                 placeholder="••••••••"
-                // ensure proper minLength object so the rule fires with a message
                 {...form.register("password", {
                   required: "Password is required",
                   minLength: { value: 8, message: "At least 8 characters" },
