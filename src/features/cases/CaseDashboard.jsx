@@ -1,9 +1,9 @@
-// src/pages/CaseDashboard.jsx
+// src/pages/CaseDashboard.jsx — API‑integrated
 import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchCases, createCase, editCase, removeCase } from "@/store/caseSlice";
+import { getUnbilledBillables } from "@/services/api";
 
-// Project skeleton barrels
 import { Button, Drawer, ConfirmDialog, useToast } from "@/components/common";
 import { FormField, Input, TextArea, Select } from "@/components/form";
 import { DataTable, TableToolbar, SkeletonRows } from "@/components/table";
@@ -33,24 +33,60 @@ export default function CaseDashboard() {
     status: "open",
     assignedUsers: [],
     primaryLawyerId: "",
+    caseType: "",
   };
   const [form, setForm] = useState(emptyCase);
+
+  // unbilled summary per case (amount & hours)
+  const [unbilledByCase, setUnbilledByCase] = useState({}); // { caseKey: { amount, hours } }
+  useEffect(() => {
+    async function loadUnbilled() {
+      try {
+        const res = await getUnbilledBillables();
+        const arr = Array.isArray(res?.data?.items) ? res.data.items : Array.isArray(res?.data) ? res.data : [];
+        const map = {};
+        for (const it of arr) {
+          const key = it?.caseId?._id || it?.caseId || it?.case || it?.caseTitle;
+          if (!key) continue;
+          const hrs = typeof it?.durationHours === "number" ? it.durationHours : (Number(it?.durationMinutes || 0) / 60);
+          const amt = Number(it?.amount || (hrs * Number(it?.rate || 0)) || 0);
+          map[key] = map[key] || { hours: 0, amount: 0 };
+          map[key].hours += isFinite(hrs) ? hrs : 0;
+          map[key].amount += isFinite(amt) ? amt : 0;
+        }
+        setUnbilledByCase(map);
+      } catch (e) {
+        // non-fatal; just don't show the column
+        console.error("unbilled load failed", e);
+      }
+    }
+    loadUnbilled();
+  }, []);
 
   useEffect(() => { dispatch(fetchCases()); }, [dispatch]);
 
   // normalize rows for table
-  const rows = useMemo(() => (Array.isArray(list) ? list : []).map((c) => ({
-    id: c._id || c.id,
-    name: c.name || c.title || "—",
-    description: c.description || "",
-    clientId: typeof c.clientId === "object" ? (c.clientId?.name || c.clientId?._id) : (c.clientId || "—"),
-    status: (c.status || "open").toLowerCase(),
-    assignedUsers: Array.isArray(c.assignedUsers)
-      ? c.assignedUsers.map(u => typeof u === "object" ? (u.name || u._id) : u)
-      : [],
-    primaryLawyerId: typeof c.primaryLawyerId === "object" ? (c.primaryLawyerId?.name || c.primaryLawyerId?._id) : (c.primaryLawyerId || ""),
-    _raw: c,
-  })), [list]);
+  const rows = useMemo(() => (Array.isArray(list) ? list : []).map((c) => {
+    const id = c._id || c.id;
+    const clientStr = typeof c.clientId === "object" ? (c.clientId?.name || c.clientId?._id) : (c.clientId || "—");
+    const caseKey = c?._id || c?.title || c?.name;
+    const unb = unbilledByCase[caseKey] || unbilledByCase[c?.title] || unbilledByCase[c?._id] || { amount: 0, hours: 0 };
+    return {
+      id,
+      name: c.name || c.title || "—",
+      description: c.description || "",
+      clientId: clientStr,
+      status: (c.status || "open").toLowerCase(),
+      assignedUsers: Array.isArray(c.assignedUsers)
+        ? c.assignedUsers.map(u => typeof u === "object" ? (u.name || u._id) : u)
+        : [],
+      primaryLawyer: typeof c.primaryLawyerId === "object" ? (c.primaryLawyerId?.name || c.primaryLawyerId?._id) : (c.primaryLawyerId || "—"),
+      caseType: c.caseType || c.type || "—",
+      unbilledAmount: unb.amount,
+      unbilledHours: unb.hours,
+      _raw: c,
+    };
+  }), [list, unbilledByCase]);
 
   const filtered = useMemo(() => {
     let r = [...rows];
@@ -87,11 +123,14 @@ export default function CaseDashboard() {
         </button>
       ),
       sortable: true,
-      width: 260,
+      width: 240,
     },
-    { id: "clientId", header: "Client", accessor: (r) => r.clientId, sortable: true, width: 220 },
+    { id: "clientId", header: "Client", accessor: (r) => r.clientId, sortable: true, width: 200 },
+    { id: "caseType", header: "Type", accessor: (r) => r.caseType, sortable: true, width: 140 },
+    { id: "primaryLawyer", header: "Primary Lawyer", accessor: (r) => r.primaryLawyer, width: 200 },
     { id: "status", header: "Status", accessor: (r) => cap(r.status), sortable: true, width: 120 },
-    { id: "assignedUsers", header: "Assigned", accessor: (r) => r.assignedUsers?.join(", ") || "—", width: 280 },
+    { id: "unbilledHours", header: "Unbilled Hrs", accessor: (r) => fmtNumber(r.unbilledHours), align: "right", width: 120, sortable: true },
+    { id: "unbilledAmount", header: "Unbilled Amount", accessor: (r) => money(r.unbilledAmount), align: "right", width: 160, sortable: true },
   ];
 
   function getCell(row, id) {
@@ -99,21 +138,16 @@ export default function CaseDashboard() {
       case "name": return row.name;
       case "clientId": return row.clientId;
       case "status": return row.status;
+      case "unbilledAmount": return Number(row.unbilledAmount || 0);
+      case "unbilledHours": return Number(row.unbilledHours || 0);
       default: return row[id];
     }
   }
 
-  function onToggleRow(id, checked) {
-    setSelectedIds((prev) => (checked ? [...prev, id] : prev.filter((x) => x !== id)));
-  }
+  function onToggleRow(id, checked) { setSelectedIds((prev) => (checked ? [...prev, id] : prev.filter((x) => x !== id))); }
   function onToggleAll(checked, ids) { setSelectedIds(checked ? ids : []); }
 
-  function openCreate() {
-    setMode("create");
-    setEditing(null);
-    setForm(emptyCase);
-    setOpen(true);
-  }
+  function openCreate() { setMode("create"); setEditing(null); setForm(emptyCase); setOpen(true); }
   function openEdit(row) {
     setMode("edit");
     setEditing(row);
@@ -128,6 +162,7 @@ export default function CaseDashboard() {
       primaryLawyerId: typeof row._raw?.primaryLawyerId === "object"
         ? (row._raw.primaryLawyerId?._id || "")
         : (row._raw?.primaryLawyerId || ""),
+      caseType: row._raw?.caseType || row._raw?.type || "",
     });
     setOpen(true);
   }
@@ -197,7 +232,7 @@ export default function CaseDashboard() {
         rowKey={(r) => r.id}
         loading={!!loading}
         stickyHeader
-        skeleton={<SkeletonRows columns={columns} />}   // ← shows skeleton while loading
+        skeleton={<SkeletonRows columns={columns} />}
         rowActions={(r) => (
           <div className="flex justify-end gap-2">
             <Button variant="ghost" size="sm" onClick={() => openEdit(r)}>Edit</Button>
@@ -245,14 +280,16 @@ export default function CaseDashboard() {
             </FormField>
             <FormField label="Assigned User IDs (comma‑separated)">
               {({ inputId }) => (
-                <Input
-                  id={inputId}
-                  value={form.assignedUsers.join(",")}
-                  onChange={(e) => setForm({ ...form, assignedUsers: toCsvArray(e.target.value) })}
-                />
+                <Input id={inputId} value={(form.assignedUsers||[]).join(",")} onChange={(e) => setForm({ ...form, assignedUsers: toCsvArray(e.target.value) })} />
               )}
             </FormField>
           </div>
+
+          <FormField label="Case Type">
+            {({ inputId }) => (
+              <Input id={inputId} value={form.caseType} onChange={(e) => setForm({ ...form, caseType: e.target.value })} />
+            )}
+          </FormField>
 
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="secondary" type="button" onClick={() => setOpen(false)}>Cancel</Button>
@@ -289,5 +326,9 @@ function compare(a,b,desc){
   if(a==null) return desc?1:-1;
   if(b==null) return desc?-1:1;
   if(typeof a==="number" && typeof b==="number") return desc? b-a : a-b;
-  return desc ? String(b).localeCompare(String(a)) : String(a).localeCompare(String(b));
+  const an = Number(a), bn = Number(b);
+  if (!Number.isNaN(an) && !Number.isNaN(bn)) return desc ? bn - an : an - bn;
+  return desc ? String(b).localeCompare(String(a), undefined, { numeric: true, sensitivity: "base" }) : String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: "base" });
 }
+function fmtNumber(v){ return new Intl.NumberFormat().format(Number(v||0)); }
+function money(v, c="INR"){ const n = Number(v||0); return new Intl.NumberFormat("en-IN", { style: "currency", currency: c }).format(n); }

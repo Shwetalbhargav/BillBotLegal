@@ -21,6 +21,8 @@ export const addCase = (caseData) => apiClient.post('/api/cases/create', caseDat
 export const updateCase = (id, caseData) => apiClient.put(`/api/cases/${id}/update`, caseData);
 export const deleteCase = (id) => apiClient.delete(`/api/cases/${id}/delete`);
 export const getCaseById = (id) => apiClient.get(`/api/cases/${id}`);
+export const getCasesByClient = (clientId) => apiClient.get(`/api/cases/client/${clientId}`);
+export const listCaseTypes = () => apiClient.get('/api/cases/__meta/case-types');
 
 // === BILLABLE APIs ===
 export const getBillables = () => apiClient.get('/api/billables');
@@ -36,11 +38,14 @@ export const createInvoice = (invoice) => apiClient.post('/api/invoices', invoic
 export const getInvoiceById = (id) => apiClient.get(`/api/invoices/${id}`);
 export const getAllInvoices = () => apiClient.get('/api/invoices');
 export const getInvoicesByUser = (userId) => apiClient.get(`/api/invoices/user/${userId}`);
+export const addInvoicePayment = (id, payload) => apiClient.post(`/api/invoices/${id}/payments`, payload);
+export const getPendingSummaryByClient = () => apiClient.get('/api/invoices/__analytics/pending-by-client');
 
 // === ANALYTICS APIs ===
 export const getBillableStats = () => apiClient.get('/api/analytics/billables');
 export const getInvoiceStats = () => apiClient.get('/api/analytics/invoices');
 export const getUnbilledBillables = () => apiClient.get('/api/analytics/unbilled');
+export const getBillableStatsByCaseType = () => apiClient.get('/api/analytics/billables-by-case-type');
 
 // === EMAIL ENTRY APIs ===
 export const createEmailEntry = (entry) => apiClient.post('/api/email-entry', entry);
