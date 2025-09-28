@@ -4,8 +4,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchBillables } from "@/store/billableSlice";
 import { getUnbilledBillables } from "@/services/api";
 
-import { Input, Select } from "@/components/form";
-import { Button, Badge, Modal } from "@/components/common"; // removed Switch import
+import { Input, Select, Switch } from "@/components/form";
+import { Button, Badge, Modal } from "@/components/common";
 import { DataTable, TableToolbar, SkeletonRows } from "@/components/table";
 
 const money = (n, c = "INR") =>
