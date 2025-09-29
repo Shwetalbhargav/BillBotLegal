@@ -64,6 +64,7 @@ export const getPendingSummaryByClient = () => apiClient.get('/api/invoices/__an
 export const getBillableStats = () => apiClient.get('/api/analytics/billables');
 export const getInvoiceStats = () => apiClient.get('/api/analytics/invoices');
 export const getBilledBillables = () => apiClient.get('/api/analytics/unbilled');
+export const getUnbilledBillables = getBilledBillables; // alias to satisfy existing imports
 export const getBillableStatsByCaseType = () => apiClient.get('/api/analytics/billables-by-case-type');
 
 // === EMAIL ENTRY APIs ===
