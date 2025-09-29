@@ -1,4 +1,4 @@
-// src/features/users/usersSlice.js
+// src/store/usersSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { fetchUsers, getMe } from '@/services/api';
 
