@@ -63,7 +63,7 @@ export const getPendingSummaryByClient = () => apiClient.get('/api/invoices/__an
 // === ANALYTICS APIs ===
 export const getBillableStats = () => apiClient.get('/api/analytics/billables');
 export const getInvoiceStats = () => apiClient.get('/api/analytics/invoices');
-export const getUnbilledBillables = () => apiClient.get('/api/analytics/unbilled');
+export const getBilledBillables = () => apiClient.get('/api/analytics/unbilled');
 export const getBillableStatsByCaseType = () => apiClient.get('/api/analytics/billables-by-case-type');
 
 // === EMAIL ENTRY APIs ===
@@ -74,15 +74,6 @@ export const getEmailEntries = () => apiClient.get('/api/email-entry');
 export const clioAuthCallback = (code) =>
   apiClient.get(`/api/callback?code=${encodeURIComponent(code)}`);
 
-// === TEAM ASSIGNMENT APIs ===
-export const assignUserToCase = (assignment) =>
-  apiClient.post('/api/team-assignments/assign', assignment);
-
-export const getCaseTeam = (caseId) =>
-  apiClient.get(`/api/team-assignments/${caseId}`);
-
-export const removeUserFromCase = (caseId, userId) =>
-  apiClient.delete('/api/team-assignments/remove', { data: { caseId, userId } });
 
 // === EMAIL → CLIO PUSH ===
 export async function pushEmailToClio(id) {
@@ -93,3 +84,7 @@ export async function pushEmailToClio(id) {
 // === AI Email Generation ===
 export const generateEmail = (prompt) =>
   apiClient.post('/generate-email', { prompt });
+
+
+export const emailToBillable = (payload) =>
+  apiClient.post('/api/ai/email-to-billable', payload);

@@ -1,21 +1,9 @@
 // src/pages/CaseDashboard.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Plus,
-  RefreshCcw,
-  Pencil,
-  Trash2,
-  Briefcase,
-  User,
-  Users,
-  Tag,
-  Gavel,
-  CircleDot,
-  Clock,
-  CircleDollarSign,
-  Search,
-  Save,
-  X,
+  Plus, RefreshCcw, Pencil, Trash2, Briefcase, User, Users, Tag,
+  Gavel, CircleDot, Clock, CircleDollarSign, Search, Save, X,
+  AlignLeft,                      
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchCases, createCase, editCase, removeCase } from "@/store/caseSlice";
