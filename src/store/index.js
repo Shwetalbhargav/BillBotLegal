@@ -6,7 +6,7 @@ import billableReducer from './billableSlice';
 import invoiceReducer from './invoiceSlice';
 import analyticsReducer from './analyticsSlice';
 import emailReducer from './emailSlice';
-import usersReducer from '@/features/users/usersSlice';
+import usersReducer from './usersSlice';
 
 const store = configureStore({
   reducer: {
