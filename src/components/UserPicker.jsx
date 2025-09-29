@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   fetchUsersThunk, selectUsers, selectUsersLoading, selectUsersError
-} from '@/features/users/usersSlice';
-import { selectRole } from '@/features/auth/authSlice';
+} from '@/store/usersSlice';
+import { selectRole } from '@/store/authSlice';
 
 export default function UserPicker() {
   const dispatch = useDispatch();
