@@ -6,10 +6,11 @@ import billableReducer from './billableSlice';
 import invoiceReducer from './invoiceSlice';
 import analyticsReducer from './analyticsSlice';
 import emailReducer from './emailSlice';
-
+import usersReducer from '@/features/users/usersSlice';
 
 const store = configureStore({
   reducer: {
+    users: usersReducer,
     auth: authReducer,
     clients: clientReducer,
     cases: caseReducer,

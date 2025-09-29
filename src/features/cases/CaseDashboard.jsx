@@ -1,107 +1,453 @@
-// src/pages/CaseDashboard.jsx — API‑integrated
-import React, { useEffect, useMemo, useState } from "react";
+// src/pages/CaseDashboard.jsx
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Plus,
+  RefreshCcw,
+  Pencil,
+  Trash2,
+  Briefcase,
+  User,
+  Users,
+  Tag,
+  Gavel,
+  CircleDot,
+  Clock,
+  CircleDollarSign,
+  Search,
+  Save,
+  X,
+} from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchCases, createCase, editCase, removeCase } from "@/store/caseSlice";
-import { getUnbilledBillables } from "@/services/api";
-
-import { Button, Drawer, ConfirmDialog, useToast } from "@/components/common";
-import { FormField, Input, TextArea, Select } from "@/components/form";
+import { getBilledBillables, getClients, listCaseTypes } from "@/services/api";
+import {
+  fetchUsersThunk,
+  selectUsers,
+  selectUsersLoading,
+} from "@/features/users/usersSlice";
+import { Button, ConfirmDialog, useToast } from "@/components/common";
+import { Input, Select } from "@/components/form";
 import { DataTable, TableToolbar, SkeletonRows } from "@/components/table";
 
+/* ----------------------------- Draggable Modal ---------------------------- */
+function DraggableShell({ children, onClose, title }) {
+  const shellRef = useRef(null);
+  const [pos, setPos] = useState({ x: 0, y: 0 });
+  const [drag, setDrag] = useState(null);
+
+  function onMouseDown(e) {
+    if (!(e.target.closest && e.target.closest("[data-drag-handle]"))) return;
+    const rect = shellRef.current.getBoundingClientRect();
+    setDrag({ dx: e.clientX - rect.left, dy: e.clientY - rect.top });
+  }
+  function onMouseMove(e) {
+    if (!drag) return;
+    setPos({ x: e.clientX - drag.dx, y: e.clientY - drag.dy });
+  }
+  function onMouseUp() {
+    setDrag(null);
+  }
+
+  useEffect(() => {
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+  }, [drag]);
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div
+        ref={shellRef}
+        onMouseDown={onMouseDown}
+        style={{ transform: `translate(${pos.x}px, ${pos.y}px)` }}
+        className="relative w-[720px] max-w-[95vw] rounded-2xl bg-white shadow-2xl"
+      >
+        <div
+          data-drag-handle
+          className="cursor-move select-none rounded-t-2xl bg-gray-100 px-4 py-3 flex items-center justify-between"
+        >
+          <div className="font-semibold">{title}</div>
+          <button onClick={onClose} className="p-2 rounded hover:bg-gray-200">
+            <X size={18} />
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------ Case Form Modal ------------------------------ */
+function CaseFormModal({ open, onClose, onSave, initial , users = [], usersLoading}) {
+  const [form, setForm] = useState(() => ({
+    name: "",
+    description: "",
+    client_id: "",
+    status: "open",
+    primary_lawyer_user_id: "",
+    assigned_user_ids: "", 
+    case_type: "",
+    case_type_id: "",
+    ...initial,
+  }));
+  const [clients, setClients] = useState([]);
+  const [caseTypes, setCaseTypes] = useState([]);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    (async () => {
+      try {
+        const [{ data: clientsData }, { data: typesData }] = await Promise.all([
+          getClients(),
+          listCaseTypes(),
+        ]);
+        setClients(Array.isArray(clientsData) ? clientsData : clientsData?.items || []);
+        setCaseTypes(Array.isArray(typesData) ? typesData : typesData?.items || []);
+      } catch (e) {
+        console.error("Failed to load dropdown data", e);
+      }
+    })();
+  }, [open]);
+
+  useEffect(() => {
+    if (initial && open) setForm((s) => ({ ...s, ...initial }));
+  }, [initial, open]);
+
+  if (!open) return null;
+
+  function update(k, v) {
+    setForm((s) => ({ ...s, [k]: v }));
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      const payload = {
+        ...form,
+        assigned_user_ids:
+          Array.isArray(form.assigned_user_ids)
+            ? form.assigned_user_ids
+            : String(form.assigned_user_ids || "")
+                .split(",")
+                .map((s) => s.trim())
+                .filter(Boolean)
+            
+      };
+      await onSave(payload);
+      onClose();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <DraggableShell
+      title={initial?._id ? "Edit Case" : "New Case"}
+      onClose={onClose}
+    >
+      <div className="max-h-[75vh] overflow-auto px-4 pb-4 pt-4">
+        <div className="grid grid-cols-1 gap-4">
+          {/* Case Name */}
+          <div>
+            <label className="mb-1 flex items-center gap-2 text-sm font-medium">
+              <Briefcase size={16} /> Case Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              className="w-full rounded-lg border px-3 py-2"
+              value={form.name || ""}
+              onChange={(e) => update("name", e.target.value)}
+              placeholder="e.g., Tax Audit — WCJ"
+              required
+            />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="mb-1 flex items-center gap-2 text-sm font-medium">
+              <AlignLeft size={16} /> Description
+            </label>
+            <textarea
+              className="min-h-[100px] w-full rounded-lg border px-3 py-2"
+              value={form.description || ""}
+              onChange={(e) => update("description", e.target.value)}
+              placeholder="Short description"
+            />
+          </div>
+
+          {/* Client + Status */}
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <label className="mb-1 flex items-center gap-2 text-sm font-medium">
+                <User size={16} /> Client <span className="text-red-500">*</span>
+              </label>
+              <select
+                className="w-full rounded-lg border px-3 py-2"
+                value={form.client_id || ""}
+                onChange={(e) => update("client_id", e.target.value)}
+                required
+              >
+                <option value="">Select client</option>
+                {clients.map((c) => (
+                  <option key={c._id} value={c._id}>
+                    {c.name || c.clientName || c.company || c.email}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-1 flex items-center gap-2 text-sm font-medium">
+                <CircleDot size={16} /> Status
+              </label>
+              <select
+                className="w-full rounded-lg border px-3 py-2 capitalize"
+                value={form.status || "open"}
+                onChange={(e) => update("status", e.target.value)}
+              >
+                <option value="open">Open</option>
+                <option value="on_hold">On hold</option>
+                <option value="closed">Closed</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Primary Lawyer + Assigned Users (to be replaced with users dropdowns later) */}
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <label className="mb-1 flex items-center gap-2 text-sm font-medium">
+                <Gavel size={16} /> Primary Lawyer User ID
+              </label>
+              <select className="w-full rounded-lg border px-3 py-2"
+                value={form.primary_lawyer_user_id || ""}
+                onChange={(e) => update("primary_lawyer_user_id", e.target.value)}
+                disabled={usersLoading}
+              >
+                    <option value="">
+                    {usersLoading ? "Loading users…" : "Select primary lawyer"}
+                  </option>
+                  {users
+                    .filter(u => ["lawyer", "partner"].includes(String(u.role)))
+                    .map(u => (
+                      <option key={u._id} value={u._id}>
+                        {u.name} — {u.email}
+                      </option>
+                    ))}
+              </select>  
+              
+            </div>
+
+            <div>
+            <label className="mb-1 flex items-center gap-2 text-sm font-medium">
+              <Users size={16} /> Assigned Users
+            </label>
+            <select
+              multiple
+              className="w-full rounded-lg border px-3 py-2 min-h-[120px]"
+              value={
+                Array.isArray(form.assigned_user_ids)
+                  ? form.assigned_user_ids
+                  : String(form.assigned_user_ids || "")
+                      .split(",")
+                      .map(s => s.trim())
+                      .filter(Boolean)
+                   }
+                   onChange={(e) => {
+                   const selected = Array.from(e.target.selectedOptions).map(o => o.value);
+                  update("assigned_user_ids", selected);
+                 }}
+                  disabled={usersLoading}
+                >
+                {usersLoading && <option>Loading users…</option>}
+                {!usersLoading && users.map(u => (
+                  <option key={u._id} value={u._id}>
+                    {u.name} — {u.email} ({u.role})
+                  </option>
+                ))}
+               </select>
+               <p className="mt-1 text-xs text-gray-500">
+                Hold Ctrl/Cmd to select multiple.
+              </p>
+            </div>
+          </div>
+
+          {/* Case Type */}
+          <div>
+            <label className="mb-1 flex items-center gap-2 text-sm font-medium">
+              <Tag size={16} /> Case Type
+            </label>
+            <select
+              className="w-full rounded-lg border px-3 py-2"
+              value={form.case_type_id || form.case_type || ""}
+              onChange={(e) => {
+                const val = e.target.value;
+                const isId = caseTypes.some((t) => String(t._id) === String(val));
+                update(isId ? "case_type_id" : "case_type", val);
+                if (isId) update("case_type", ""); // prefer id if we have it
+              }}
+            >
+              <option value="">Select type</option>
+              {caseTypes.map((t) => (
+                <option key={t._id || t.value} value={t._id || t.value}>
+                  {t.name || t.label || t.value}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="mt-6 flex items-center justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="rounded-lg border px-4 py-2 hover:bg-gray-50"
+            type="button"
+          >
+            Cancel
+          </button>
+          <button
+            disabled={saving}
+            onClick={handleSave}
+            className="inline-flex items-center gap-2 rounded-lg bg-[color:var(--lb-primary-600)] px-4 py-2 font-medium text-white hover:bg-[color:var(--lb-primary-700)] disabled:opacity-60"
+            type="button"
+          >
+            <Save size={16} /> {saving ? "Saving…" : "Save"}
+          </button>
+        </div>
+      </div>
+    </DraggableShell>
+  );
+}
+
+/* --------------------------------- Page --------------------------------- */
 export default function CaseDashboard() {
   const dispatch = useDispatch();
   const toast = useToast?.();
   const { list = [], loading, error } = useSelector((s) => s.cases || {});
+  const users = useSelector(selectUsers);
+  const usersLoading = useSelector(selectUsersLoading);
+  // filters/search
+  const [filters, setFilters] = useState({ q: "", status: "" });
+  const [debouncedQ, setDebouncedQ] = useState("");
 
-  // table state
+  // selection/pagination/sort
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [sort, setSort] = useState(null); // { id, desc }
   const [selectedIds, setSelectedIds] = useState([]);
-  const [filters, setFilters] = useState({ q: "", status: "" });
 
-  // drawer state
-  const [open, setOpen] = useState(false);
-  const [mode, setMode] = useState("create"); // create | edit
+  // form modal
+  const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
 
-  // form model
-  const emptyCase = {
-    name: "",
-    description: "",
-    clientId: "",
-    status: "open",
-    assignedUsers: [],
-    primaryLawyerId: "",
-    caseType: "",
-  };
-  const [form, setForm] = useState(emptyCase);
-
-  // unbilled summary per case (amount & hours)
-  const [unbilledByCase, setUnbilledByCase] = useState({}); // { caseKey: { amount, hours } }
+  // initial fetch
   useEffect(() => {
-    async function loadUnbilled() {
+    dispatch(fetchCases());
+  }, [dispatch]);
+  
+  useEffect(() => {
+    if (!formOpen) return;
+    dispatch(fetchUsersThunk({ limit: 200, sort: "name" }));
+    }, [formOpen, dispatch]);
+  // debounce search -> refetch with q (keep server simple; still do local filter too)
+  useEffect(() => {
+    const h = setTimeout(() => setDebouncedQ((filters.q || "").trim()), 350);
+    return () => clearTimeout(h);
+  }, [filters.q]);
+
+  useEffect(() => {
+    dispatch(fetchCases({ q: debouncedQ }));
+  }, [debouncedQ, dispatch]);
+
+  // billed totals per case
+  const [billedByCase, setBilledByCase] = useState({});
+  useEffect(() => {
+    (async () => {
       try {
-        const res = await getUnbilledBillables();
-        const arr = Array.isArray(res?.data?.items) ? res.data.items : Array.isArray(res?.data) ? res.data : [];
+        const res = await getBilledBillables();
+        const arr = Array.isArray(res?.data?.items)
+          ? res.data.items
+          : Array.isArray(res?.data)
+          ? res.data
+          : [];
         const map = {};
         for (const it of arr) {
           const key = it?.caseId?._id || it?.caseId || it?.case || it?.caseTitle;
           if (!key) continue;
-          const hrs = typeof it?.durationHours === "number" ? it.durationHours : (Number(it?.durationMinutes || 0) / 60);
-          const amt = Number(it?.amount || (hrs * Number(it?.rate || 0)) || 0);
+          const hrs =
+            typeof it?.durationHours === "number"
+              ? it.durationHours
+              : Number(it?.durationMinutes || 0) / 60;
+          const amt = Number(it?.amount || hrs * Number(it?.rate || 0) || 0);
           map[key] = map[key] || { hours: 0, amount: 0 };
           map[key].hours += isFinite(hrs) ? hrs : 0;
           map[key].amount += isFinite(amt) ? amt : 0;
         }
-        setUnbilledByCase(map);
+        setBilledByCase(map);
       } catch (e) {
-        // non-fatal; just don't show the column
-        console.error("unbilled load failed", e);
+        console.error("billed load failed", e);
       }
-    }
-    loadUnbilled();
+    })();
   }, []);
 
-  useEffect(() => { dispatch(fetchCases()); }, [dispatch]);
+  // row shaping
+  const rows = useMemo(() => {
+    const src = Array.isArray(list) ? list : [];
+    return src.map((c) => {
+      const id = c._id || c.id;
+      const clientStr =
+        typeof c.clientId === "object"
+          ? c.clientId?.name || c.clientId?._id
+          : c.clientId || "—";
+      const caseKey = c?._id || c?.title || c?.name;
+      const billed =
+        billedByCase[caseKey] ||
+        billedByCase[c?.title] ||
+        billedByCase[c?._id] ||
+        { amount: 0, hours: 0 };
+      return {
+        id,
+        name: c.name || c.title || "—",
+        description: c.description || "",
+        clientId: clientStr,
+        status: String(c.status || "open").toLowerCase(),
+        assignedUsers: Array.isArray(c.assignedUsers)
+          ? c.assignedUsers.map((u) =>
+              typeof u === "object" ? u.name || u._id : u
+            )
+          : [],
+        primaryLawyer:
+          typeof c.primaryLawyerId === "object"
+            ? c.primaryLawyerId?.name || c.primaryLawyerId?._id
+            : c.primaryLawyerId || "—",
+        caseType: c.case_type || c.caseType || c.type || "—",
+        billedAmount: billed.amount,
+        billedHours: billed.hours,
+        _raw: c,
+      };
+    });
+  }, [list, billedByCase]);
 
-  // normalize rows for table
-  const rows = useMemo(() => (Array.isArray(list) ? list : []).map((c) => {
-    const id = c._id || c.id;
-    const clientStr = typeof c.clientId === "object" ? (c.clientId?.name || c.clientId?._id) : (c.clientId || "—");
-    const caseKey = c?._id || c?.title || c?.name;
-    const unb = unbilledByCase[caseKey] || unbilledByCase[c?.title] || unbilledByCase[c?._id] || { amount: 0, hours: 0 };
-    return {
-      id,
-      name: c.name || c.title || "—",
-      description: c.description || "",
-      clientId: clientStr,
-      status: (c.status || "open").toLowerCase(),
-      assignedUsers: Array.isArray(c.assignedUsers)
-        ? c.assignedUsers.map(u => typeof u === "object" ? (u.name || u._id) : u)
-        : [],
-      primaryLawyer: typeof c.primaryLawyerId === "object" ? (c.primaryLawyerId?.name || c.primaryLawyerId?._id) : (c.primaryLawyerId || "—"),
-      caseType: c.caseType || c.type || "—",
-      unbilledAmount: unb.amount,
-      unbilledHours: unb.hours,
-      _raw: c,
-    };
-  }), [list, unbilledByCase]);
-
+  // local filter/sort/paginate
   const filtered = useMemo(() => {
     let r = [...rows];
     const t = (filters.q || "").toLowerCase();
     if (t) {
-      r = r.filter(x =>
-        String(x.name).toLowerCase().includes(t) ||
-        String(x.description).toLowerCase().includes(t) ||
-        String(x.clientId).toLowerCase().includes(t)
+      r = r.filter(
+        (x) =>
+          String(x.name).toLowerCase().includes(t) ||
+          String(x.description).toLowerCase().includes(t) ||
+          String(x.clientId).toLowerCase().includes(t)
       );
     }
-    if (filters.status) r = r.filter(x => x.status === filters.status);
+    if (filters.status) r = r.filter((x) => x.status === filters.status);
     if (sort) {
       const { id, desc } = sort;
-      r.sort((a,b) => compare(getCell(a,id), getCell(b,id), desc));
+      r.sort((a, b) => compare(getCell(a, id), getCell(b, id), desc));
     }
     return r;
   }, [rows, filters, sort]);
@@ -112,110 +458,229 @@ export default function CaseDashboard() {
     [filtered, page, pageSize]
   );
 
+  // table columns
   const columns = [
     { id: "_sel", header: "", selection: true, width: 44 },
     {
       id: "name",
-      header: "Case",
+      header: (
+        <div className="inline-flex items-center gap-2">
+          <Briefcase size={16} /> <span>Case</span>
+        </div>
+      ),
       accessor: (r) => (
-        <button className="text-[color:var(--lb-primary-700)] hover:underline" onClick={() => openEdit(r)}>
+        <button
+          className="text-[color:var(--lb-primary-700)] hover:underline"
+          onClick={() => handleOpenEdit(r)}
+        >
           {r.name}
         </button>
       ),
       sortable: true,
       width: 240,
     },
-    { id: "clientId", header: "Client", accessor: (r) => r.clientId, sortable: true, width: 200 },
-    { id: "caseType", header: "Type", accessor: (r) => r.caseType, sortable: true, width: 140 },
-    { id: "primaryLawyer", header: "Primary Lawyer", accessor: (r) => r.primaryLawyer, width: 200 },
-    { id: "status", header: "Status", accessor: (r) => cap(r.status), sortable: true, width: 120 },
-    { id: "unbilledHours", header: "Unbilled Hrs", accessor: (r) => fmtNumber(r.unbilledHours), align: "right", width: 120, sortable: true },
-    { id: "unbilledAmount", header: "Unbilled Amount", accessor: (r) => money(r.unbilledAmount), align: "right", width: 160, sortable: true },
+    {
+      id: "clientId",
+      header: (
+        <div className="inline-flex items-center gap-2">
+          <User size={16} /> <span>Client</span>
+        </div>
+      ),
+      accessor: (r) => r.clientId,
+      sortable: true,
+      width: 200,
+    },
+    {
+      id: "caseType",
+      header: (
+        <div className="inline-flex items-center gap-2">
+          <Tag size={16} /> <span>Type</span>
+        </div>
+      ),
+      accessor: (r) => r.caseType,
+      sortable: true,
+      width: 140,
+    },
+    {
+      id: "primaryLawyer",
+      header: (
+        <div className="inline-flex items-center gap-2">
+          <Gavel size={16} /> <span>Primary Lawyer</span>
+        </div>
+      ),
+      accessor: (r) => r.primaryLawyer,
+      width: 200,
+    },
+    {
+      id: "status",
+      header: (
+        <div className="inline-flex items-center gap-2">
+          <CircleDot size={16} /> <span>Status</span>
+        </div>
+      ),
+      accessor: (r) => cap(r.status),
+      sortable: true,
+      width: 120,
+    },
+    {
+      id: "billedHours",
+      header: (
+        <div className="inline-flex items-center gap-2">
+          <Clock size={16} /> <span>Billed Hrs</span>
+        </div>
+      ),
+      accessor: (r) => fmtNumber(r.billedHours),
+      align: "right",
+      width: 120,
+      sortable: true,
+    },
+    {
+      id: "billedAmount",
+      header: (
+        <div className="inline-flex items-center gap-2">
+          <CircleDollarSign size={16} /> <span>Billed Amount</span>
+        </div>
+      ),
+      accessor: (r) => money(r.billedAmount),
+      align: "right",
+      width: 160,
+      sortable: true,
+    },
   ];
 
   function getCell(row, id) {
     switch (id) {
-      case "name": return row.name;
-      case "clientId": return row.clientId;
-      case "status": return row.status;
-      case "unbilledAmount": return Number(row.unbilledAmount || 0);
-      case "unbilledHours": return Number(row.unbilledHours || 0);
-      default: return row[id];
+      case "name":
+        return row.name;
+      case "clientId":
+        return row.clientId;
+      case "status":
+        return row.status;
+      case "billedAmount":
+        return Number(row.billedAmount || 0);
+      case "billedHours":
+        return Number(row.billedHours || 0); // fixed typo from earlier
+      default:
+        return row[id];
     }
   }
 
-  function onToggleRow(id, checked) { setSelectedIds((prev) => (checked ? [...prev, id] : prev.filter((x) => x !== id))); }
-  function onToggleAll(checked, ids) { setSelectedIds(checked ? ids : []); }
+  function onToggleRow(id, checked) {
+    setSelectedIds((prev) => (checked ? [...prev, id] : prev.filter((x) => x !== id)));
+  }
+  function onToggleAll(checked, ids) {
+    setSelectedIds(checked ? ids : []);
+  }
 
-  function openCreate() { setMode("create"); setEditing(null); setForm(emptyCase); setOpen(true); }
-  function openEdit(row) {
-    setMode("edit");
-    setEditing(row);
-    setForm({
-      name: row.name || "",
+  function handleOpenCreate() {
+    setEditing(null);
+    setFormOpen(true);
+  }
+  function handleOpenEdit(row) {
+    setEditing({
+      _id: row._raw?._id,
+      name: row.name,
       description: row.description || "",
-      clientId: row._raw?.clientId?._id || row._raw?.clientId || "",
-      status: row.status || "open",
-      assignedUsers: Array.isArray(row._raw?.assignedUsers)
-        ? row._raw.assignedUsers.map(u => (typeof u === "object" ? (u._id || "") : u)).filter(Boolean)
-        : [],
-      primaryLawyerId: typeof row._raw?.primaryLawyerId === "object"
-        ? (row._raw.primaryLawyerId?._id || "")
-        : (row._raw?.primaryLawyerId || ""),
-      caseType: row._raw?.caseType || row._raw?.type || "",
+      client_id: row._raw?.clientId?._id || row._raw?.clientId || "",
+      status: (row.status || "open").toLowerCase(),
+      primary_lawyer_user_id: row._raw?.primary_lawyer_user_id || "",
+      assigned_user_ids: (row._raw?.assigned_user_ids || [])
+        .map((u) => (typeof u === "object" ? u._id : u))
+        .filter(Boolean)
+        .join(", "),
+      case_type: row._raw?.case_type || "",
+      case_type_id: row._raw?.case_type_id || "",
     });
-    setOpen(true);
+    setFormOpen(true);
   }
 
-  async function onSubmit(e) {
-    e.preventDefault();
-    const payload = { ...form, status: form.status || "open" };
-    if (mode === "create") {
+  async function handleSaveCase(payload) {
+    if (editing?._id) {
+      await dispatch(editCase({ id: editing._id, caseData: payload }));
+      toast?.addToast?.({
+        tone: "success",
+        title: "Updated",
+        description: "Case updated.",
+      });
+    } else {
       await dispatch(createCase(payload));
-      toast?.addToast?.({ tone: "success", title: "Created", description: "Case added." });
-    } else if (mode === "edit" && editing?.id) {
-      await dispatch(editCase({ id: editing.id, caseData: payload }));
-      toast?.addToast?.({ tone: "success", title: "Updated", description: "Case updated." });
+      toast?.addToast?.({
+        tone: "success",
+        title: "Created",
+        description: "Case added.",
+      });
     }
-    setOpen(false);
-    dispatch(fetchCases());
+    dispatch(fetchCases({ q: debouncedQ }));
   }
 
   const [confirmDelete, setConfirmDelete] = useState(null);
   async function onDelete(id) {
     await dispatch(removeCase(id));
-    toast?.addToast?.({ tone: "success", title: "Deleted", description: "Case removed." });
+    toast?.addToast?.({
+      tone: "success",
+      title: "Deleted",
+      description: "Case removed.",
+    });
     setConfirmDelete(null);
-    dispatch(fetchCases());
+    dispatch(fetchCases({ q: debouncedQ }));
   }
 
   return (
     <div className="lb-reset p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-semibold">Cases</h1>
+      {/* Header */}
+      <div className="mb-4 flex items-center justify-between">
+        <h1 className="inline-flex items-center gap-2 text-2xl font-semibold">
+          <Briefcase size={20} /> Cases
+        </h1>
         <div className="flex items-center gap-2">
-          <Button variant="secondary" onClick={() => dispatch(fetchCases())}>Refresh</Button>
-          <Button onClick={openCreate}>New Case</Button>
+          <div className="text-sm text-gray-600">
+            {usersLoading ? "Loading users…" : `Users: ${users.length}`}
+          </div>
+          <Button
+            variant="secondary"
+            onClick={() => dispatch(fetchCases({ q: debouncedQ }))}
+            className="inline-flex items-center gap-2"
+          >
+            <RefreshCcw size={16} /> Refresh
+          </Button>
+          <Button onClick={handleOpenCreate} className="inline-flex items-center gap-2">
+            <Plus size={16} /> New Case
+          </Button>
         </div>
       </div>
 
+      {/* Toolbar */}
       <TableToolbar>
-        <Input
-          placeholder="Search case/client/desc…"
-          value={filters.q}
-          onChange={(e) => { setPage(1); setFilters({ ...filters, q: e.target.value }); }}
-        />
+        <div className="relative">
+          <Search
+            size={16}
+            className="absolute left-3 top-1/2 -translate-y-1/2 opacity-60"
+          />
+          <Input
+            className="pl-9"
+            placeholder="Search case, client, description…"
+            value={filters.q}
+            onChange={(e) => {
+              setPage(1);
+              setFilters({ ...filters, q: e.target.value });
+            }}
+          />
+        </div>
         <Select
           value={filters.status}
-          onChange={(e) => { setPage(1); setFilters({ ...filters, status: e.target.value }); }}
+          onChange={(e) => {
+            setPage(1);
+            setFilters({ ...filters, status: e.target.value });
+          }}
         >
           <option value="">All statuses</option>
           <option value="open">Open</option>
-          <option value="pending">Pending</option>
+          <option value="on_hold">On hold</option>
           <option value="closed">Closed</option>
         </Select>
       </TableToolbar>
 
+      {/* Table */}
       <DataTable
         columns={columns}
         data={pageRows}
@@ -223,7 +688,10 @@ export default function CaseDashboard() {
         page={page}
         pageSize={pageSize}
         onPageChange={setPage}
-        onPageSizeChange={(s) => { setPageSize(s); setPage(1); }}
+        onPageSizeChange={(s) => {
+          setPageSize(s);
+          setPage(1);
+        }}
         sort={sort}
         onSortChange={setSort}
         selectedIds={selectedIds}
@@ -234,70 +702,38 @@ export default function CaseDashboard() {
         stickyHeader
         skeleton={<SkeletonRows columns={columns} />}
         rowActions={(r) => (
-          <div className="flex justify-end gap-2">
-            <Button variant="ghost" size="sm" onClick={() => openEdit(r)}>Edit</Button>
-            <Button variant="danger" size="sm" onClick={() => setConfirmDelete(r.id)}>Delete</Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleOpenEdit(r)}
+              className="inline-flex items-center gap-1"
+            >
+              <Pencil size={14} /> Edit
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => setConfirmDelete(r.id)}
+              className="inline-flex items-center gap-1"
+            >
+              <Trash2 size={14} /> Delete
+            </Button>
           </div>
         )}
       />
 
-      <Drawer open={open} onClose={() => setOpen(false)} title={mode === "create" ? "New Case" : "Edit Case"}>
-        <form onSubmit={onSubmit} className="space-y-4">
-          <FormField label="Case Name" required>
-            {({ inputId }) => (
-              <Input id={inputId} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-            )}
-          </FormField>
+      {/* Modal Form (draggable) */}
+      <CaseFormModal
+        open={formOpen}
+        initial={editing}
+        onClose={() => setFormOpen(false)}
+        onSave={handleSaveCase}
+        users={users}
+        usersLoading={usersLoading}
+      />
 
-          <FormField label="Description">
-            {({ inputId }) => (
-              <TextArea id={inputId} rows={4} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-            )}
-          </FormField>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField label="Client ID" required>
-              {({ inputId }) => (
-                <Input id={inputId} value={form.clientId} onChange={(e) => setForm({ ...form, clientId: e.target.value })} required />
-              )}
-            </FormField>
-            <FormField label="Status">
-              {({ inputId }) => (
-                <Select id={inputId} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
-                  <option value="open">Open</option>
-                  <option value="pending">Pending</option>
-                  <option value="closed">Closed</option>
-                </Select>
-              )}
-            </FormField>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField label="Primary Lawyer User ID">
-              {({ inputId }) => (
-                <Input id={inputId} value={form.primaryLawyerId} onChange={(e) => setForm({ ...form, primaryLawyerId: e.target.value })} />
-              )}
-            </FormField>
-            <FormField label="Assigned User IDs (comma‑separated)">
-              {({ inputId }) => (
-                <Input id={inputId} value={(form.assignedUsers||[]).join(",")} onChange={(e) => setForm({ ...form, assignedUsers: toCsvArray(e.target.value) })} />
-              )}
-            </FormField>
-          </div>
-
-          <FormField label="Case Type">
-            {({ inputId }) => (
-              <Input id={inputId} value={form.caseType} onChange={(e) => setForm({ ...form, caseType: e.target.value })} />
-            )}
-          </FormField>
-
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="secondary" type="button" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button type="submit">Save</Button>
-          </div>
-        </form>
-      </Drawer>
-
+      {/* Confirm Delete */}
       <ConfirmDialog
         open={!!confirmDelete}
         onCancel={() => setConfirmDelete(null)}
@@ -313,22 +749,32 @@ export default function CaseDashboard() {
   );
 }
 
-// utils
-function toCsvArray(s){
-  return String(s || "")
-    .split(",")
-    .map((x) => x.trim())
-    .filter(Boolean);
+/* --------------------------------- utils --------------------------------- */
+function cap(s) {
+  return String(s || "").replace(/^./, (c) => c.toUpperCase());
 }
-function cap(s){ return String(s||"").replace(/^./, (c)=>c.toUpperCase()); }
-function compare(a,b,desc){
-  if(a==null && b==null) return 0;
-  if(a==null) return desc?1:-1;
-  if(b==null) return desc?-1:1;
-  if(typeof a==="number" && typeof b==="number") return desc? b-a : a-b;
-  const an = Number(a), bn = Number(b);
+function compare(a, b, desc) {
+  if (a == null && b == null) return 0;
+  if (a == null) return desc ? 1 : -1;
+  if (b == null) return desc ? -1 : 1;
+  if (typeof a === "number" && typeof b === "number") return desc ? b - a : a - b;
+  const an = Number(a),
+    bn = Number(b);
   if (!Number.isNaN(an) && !Number.isNaN(bn)) return desc ? bn - an : an - bn;
-  return desc ? String(b).localeCompare(String(a), undefined, { numeric: true, sensitivity: "base" }) : String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: "base" });
+  return desc
+    ? String(b).localeCompare(String(a), undefined, {
+        numeric: true,
+        sensitivity: "base",
+      })
+    : String(a).localeCompare(String(b), undefined, {
+        numeric: true,
+        sensitivity: "base",
+      });
 }
-function fmtNumber(v){ return new Intl.NumberFormat().format(Number(v||0)); }
-function money(v, c="INR"){ const n = Number(v||0); return new Intl.NumberFormat("en-IN", { style: "currency", currency: c }).format(n); }
+function fmtNumber(v) {
+  return new Intl.NumberFormat().format(Number(v || 0));
+}
+function money(v, c = "INR") {
+  const n = Number(v || 0);
+  return new Intl.NumberFormat("en-IN", { style: "currency", currency: c }).format(n);
+}

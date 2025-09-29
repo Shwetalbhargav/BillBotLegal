@@ -8,6 +8,25 @@ export const loginUser = (credentials) =>
 export const registerUser = (data) =>
   apiClient.post('/api/auth/register', data);
 
+// === USER APIs ===
+export const getMe = () => apiClient.get('/api/users/me');
+
+/**
+ * fetchUsers({ role, q, firmId, page=1, limit=20, sort='name' })
+ * All params optional; only sent if defined.
+ */
+export const fetchUsers = (params = {}) => {
+  const qp = new URLSearchParams();
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== undefined && v !== null && v !== '') qp.append(k, v);
+  });
+  return apiClient.get(`/api/users?${qp.toString()}`);
+};
+
+// (optional) roles list for a dropdown if you expose one later
+export const listRoles = async () =>
+  ({ data: { roles: ['admin','partner','lawyer','associate','intern'] } }); 
+
 // === CLIENT APIs ===
 export const getClients = () => apiClient.get('/api/clients');
 export const addClient = (client) => apiClient.post('/api/clients/create', client);
