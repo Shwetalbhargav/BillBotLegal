@@ -24,7 +24,7 @@ import {
   fetchUsersThunk,
   selectUsers,
   selectUsersLoading,
-} from "@/features/users/usersSlice";
+} from "@/store/usersSlice.js";
 import { Button, ConfirmDialog, useToast } from "@/components/common";
 import { Input, Select } from "@/components/form";
 import { DataTable, TableToolbar, SkeletonRows } from "@/components/table";
