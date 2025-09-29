@@ -12,7 +12,7 @@ export default function UserPicker() {
   const items = useSelector(selectUsers);
   const loading = useSelector(selectUsersLoading);
   const error = useSelector(selectUsersError);
-  const myRole = useSelector(selectRole); // use to conditionally render
+  const myRole = useSelector(selectRole); 
 
   useEffect(() => {
     dispatch(fetchUsersThunk({ role, limit: 50, sort: 'name' }));
