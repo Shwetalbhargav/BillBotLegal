@@ -1,61 +1,95 @@
+// src/store/authSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { loginUser } from '@/services/api';
+import { loginUser, getMe, refreshSession } from '@/services/api';
 
-// ✅ Proper createAsyncThunk
+
 export const loginUserThunk = createAsyncThunk(
-  'auth/loginUser',
-  async (credentials, { rejectWithValue }) => {
-    try {
-      const { data } = await loginUser(credentials);
-      return { token: data.token, role: data.user?.role || 'User' };
-    } catch (err) {
-      return rejectWithValue(err.response?.data?.message || 'Login failed');
-    }
-  }
+'auth/loginUser',
+async (credentials, { rejectWithValue }) => {
+try {
+const { data } = await loginUser(credentials);
+// Expecting { token, user }
+return { token: data.token, user: data.user };
+} catch (err) {
+return rejectWithValue(err.response?.data?.message || 'Login failed');
+}
+}
 );
 
+export const bootstrapSessionThunk = createAsyncThunk(
+'auth/bootstrap',
+async (_, { rejectWithValue }) => {
+try {
+const { data } = await getMe();
+return { user: data.user };
+} catch (e) {
+// attempt refresh if available
+try {
+const { data } = await refreshSession();
+return { token: data.token, user: data.user };
+} catch (err) {
+return rejectWithValue('Session expired');
+}
+}
+}
+);
+
+const initialToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+const initialRole = typeof window !== 'undefined' ? localStorage.getItem('userRole') : null;
+
 const authSlice = createSlice({
-  name: 'auth',
-  initialState: {
-    token: localStorage.getItem('token') || null,
-    role: localStorage.getItem('userRole') || null,
-    loading: false,
-    error: null,
-  },
-  reducers: {
-    logout: (state) => {
-      state.token = null;
-      state.role = null;
-      localStorage.removeItem('token');
-      localStorage.removeItem('userRole');
-    },
-  },
-  setAuth: (state, action) => {
-    const { token, role } = action.payload;
-    state.token = token;
-    state.role = role || 'User';
-    localStorage.setItem('token', token);
-    localStorage.setItem('userRole', role || 'User');
-  },
-  extraReducers: (builder) => {
-    builder
-      .addCase(loginUserThunk.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(loginUserThunk.fulfilled, (state, action) => {
-        state.loading = false;
-        state.token = action.payload.token;
-        state.role = action.payload.role;
-        localStorage.setItem('token', action.payload.token);
-        localStorage.setItem('userRole', action.payload.role);
-      })
-      .addCase(loginUserThunk.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      });
-  },
+name: 'auth',
+initialState: {
+token: initialToken,
+user: null, // full user doc
+role: initialRole, // convenience
+loading: false,
+error: null,
+},
+reducers: {
+setAuth: (state, action) => {
+const { token, user } = action.payload || {};
+state.token = token || null;
+state.user = user || null;
+state.role = user?.role || null;
+if (token) localStorage.setItem('token', token);
+if (user?.role) localStorage.setItem('userRole', user.role);
+},
+logout: (state) => {
+state.token = null;
+state.user = null;
+state.role = null;
+localStorage.removeItem('token');
+localStorage.removeItem('userRole');
+},
+},
+extraReducers: (builder) => {
+builder
+.addCase(loginUserThunk.pending, (s) => { s.loading = true; s.error = null; })
+.addCase(loginUserThunk.fulfilled, (s, a) => {
+s.loading = false;
+s.token = a.payload.token;
+s.user = a.payload.user;
+s.role = a.payload.user?.role || null;
+localStorage.setItem('token', a.payload.token);
+if (s.role) localStorage.setItem('userRole', s.role);
+})
+.addCase(loginUserThunk.rejected, (s, a) => { s.loading = false; s.error = a.payload; })
+.addCase(bootstrapSessionThunk.pending, (s) => { s.loading = true; s.error = null; })
+.addCase(bootstrapSessionThunk.fulfilled, (s, a) => {
+s.loading = false;
+if (a.payload.token) {
+s.token = a.payload.token;
+localStorage.setItem('token', a.payload.token);
+}
+s.user = a.payload.user;
+s.role = a.payload.user?.role || null;
+if (s.role) localStorage.setItem('userRole', s.role);
+})
+.addCase(bootstrapSessionThunk.rejected, (s, a) => { s.loading = false; s.error = a.payload; });
+},
 });
 
-export const { logout , setAuth} = authSlice.actions;
+
+export const { logout, setAuth } = authSlice.actions;
 export default authSlice.reducer;

@@ -5,6 +5,7 @@ import store from "@/store";
 import App from "./App.jsx";
 import { ThemeProvider } from "./components/common";
 import { ToastProvider } from "./components/common";
+import { BrowserRouter } from "react-router-dom";
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
@@ -12,7 +13,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <Provider store={store}>
       <ThemeProvider>
         <ToastProvider>
-          <App />
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>          
         </ToastProvider>
       </ThemeProvider>
     </Provider>

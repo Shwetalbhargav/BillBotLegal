@@ -1,3 +1,4 @@
+// src/pages/auth/Login.jsx
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
@@ -23,8 +24,14 @@ export default function Login() {
     setSubmitting(true);
     setError(null);
     try {
-      await dispatch(loginUserThunk(values)).unwrap(); // stores token/role in slice/localStorage
-      navigate("/dashboard");
+      const { user } = await dispatch(loginUserThunk(values)).unwrap();
+      // Role-aware redirect
+      const role = user?.role;
+      if (role === "partner") navigate("/partner/dashboard");
+      else if (role === "lawyer") navigate("/lawyer/dashboard");
+      else if (role === "associate") navigate("/associate/dashboard");
+      else if (role === "intern") navigate("/intern/dashboard");
+      else navigate("/dashboard");
     } catch (e) {
       setError(e?.message || "Invalid email or password");
     } finally {
@@ -50,9 +57,7 @@ export default function Login() {
           </div>
 
           <div className="w-full max-w-md bg-white/15 backdrop-blur-md border border-white/30 shadow-2xl rounded-2xl p-8">
-            <h2 className="text-xl font-semibold mb-6 text-gray-900/90">
-              Sign in
-            </h2>
+            <h2 className="text-xl font-semibold mb-6 text-gray-900/90">Sign in</h2>
 
             <Form form={form} onSubmit={onSubmit} className="space-y-4">
               <FormField name="email" label="Email" required>
@@ -89,10 +94,7 @@ export default function Login() {
             </Form>
 
             <p className="mt-4 text-sm text-white/90">
-              No account?{" "}
-              <Link to="/register" className="underline">
-                Create one
-              </Link>
+              No account? <Link to="/register" className="underline">Create one</Link>
             </p>
           </div>
         </div>
@@ -100,3 +102,4 @@ export default function Login() {
     </div>
   );
 }
+
