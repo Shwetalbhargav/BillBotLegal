@@ -1,4 +1,4 @@
-/ src/store/profiles/profileSliceFactory.js
+// src/store/profiles/profileSliceFactory.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
 
