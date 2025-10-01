@@ -1,12 +1,15 @@
-// src/pages/auth/Login.jsx
+// ===== src/pages/auth/Login.jsx (updated) =====
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { Button } from "@/components/common";
+import { useForm } from "react-hook-form";
+import { motion } from "framer-motion";
+import { FiUser, FiPhone, FiLock, FiLogIn } from "react-icons/fi";
+
+// Local UI components
 import { Input } from "@/components/form";
 import Form from "@/components/form/Form";
 import FormField from "@/components/form/FormField";
-import { useForm } from "react-hook-form";
 import lawyer from "@/assets/lawyer.jpg";
 import { loginUserThunk } from "@/store/authSlice";
 
@@ -15,7 +18,7 @@ export default function Login() {
   const dispatch = useDispatch();
   const form = useForm({
     mode: "onBlur",
-    defaultValues: { email: "", password: "" },
+    defaultValues: { name: "", mobile: "", password: "" },
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -24,8 +27,8 @@ export default function Login() {
     setSubmitting(true);
     setError(null);
     try {
+      // Backend now accepts { name, mobile, password }
       const { user } = await dispatch(loginUserThunk(values)).unwrap();
-      // Role-aware redirect
       const role = user?.role;
       if (role === "partner") navigate("/partner/dashboard");
       else if (role === "lawyer") navigate("/lawyer/dashboard");
@@ -33,7 +36,7 @@ export default function Login() {
       else if (role === "intern") navigate("/intern/dashboard");
       else navigate("/dashboard");
     } catch (e) {
-      setError(e?.message || "Invalid email or password");
+      setError(e?.message || "Invalid credentials");
     } finally {
       setSubmitting(false);
     }
@@ -44,7 +47,9 @@ export default function Login() {
       className="relative min-h-screen bg-cover bg-center"
       style={{ backgroundImage: `url(${lawyer})` }}
     >
+      {/* Keep the same background; add soft overlay for legibility */}
       <div className="absolute inset-0 bg-black/40" />
+
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-10">
         <div className="flex items-center justify-between gap-10">
           <div className="max-w-xl text-white text-center md:text-left">
@@ -57,40 +62,78 @@ export default function Login() {
           </div>
 
           <div className="w-full max-w-md bg-white/15 backdrop-blur-md border border-white/30 shadow-2xl rounded-2xl p-8">
-            <h2 className="text-xl font-semibold mb-6 text-gray-900/90">Sign in</h2>
+            <div className="flex items-center gap-2 text-gray-900/90 mb-6">
+              <FiLogIn className="text-xl" />
+              <h2 className="text-xl font-semibold">Sign in</h2>
+            </div>
 
             <Form form={form} onSubmit={onSubmit} className="space-y-4">
-              <FormField name="email" label="Email" required>
+              {/* Name */}
+              <FormField name="name" label="Full name" required>
                 {({ id, describedBy, error }) => (
-                  <Input
-                    id={id}
-                    type="email"
-                    aria-describedby={describedBy}
-                    aria-invalid={!!error}
-                    placeholder="you@firm.com"
-                    {...form.register("email", { required: "Email is required" })}
-                  />
+                  <div className="relative">
+                    <FiUser className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                    <Input
+                      id={id}
+                      aria-describedby={describedBy}
+                      aria-invalid={!!error}
+                      placeholder="Jane Attorney"
+                      className="pl-10"
+                      {...form.register("name", { required: "Name is required" })}
+                    />
+                  </div>
                 )}
               </FormField>
 
+              {/* Mobile */}
+              <FormField name="mobile" label="Mobile number" required>
+                {({ id, describedBy, error }) => (
+                  <div className="relative">
+                    <FiPhone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                    <Input
+                      id={id}
+                      aria-describedby={describedBy}
+                      aria-invalid={!!error}
+                      placeholder="+1 555 0100"
+                      className="pl-10"
+                      {...form.register("mobile", {
+                        required: "Mobile is required",
+                        minLength: { value: 7, message: "Too short" },
+                      })}
+                    />
+                  </div>
+                )}
+              </FormField>
+
+              {/* Password */}
               <FormField name="password" label="Password" required>
                 {({ id, describedBy, error }) => (
-                  <Input
-                    id={id}
-                    type="password"
-                    aria-describedby={describedBy}
-                    aria-invalid={!!error}
-                    placeholder="••••••••"
-                    {...form.register("password", { required: "Password is required" })}
-                  />
+                  <div className="relative">
+                    <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                    <Input
+                      id={id}
+                      type="password"
+                      aria-describedby={describedBy}
+                      aria-invalid={!!error}
+                      placeholder="••••••••"
+                      className="pl-10"
+                      {...form.register("password", { required: "Password is required" })}
+                    />
+                  </div>
                 )}
               </FormField>
 
               {error && <p className="text-red-600 text-sm">{error}</p>}
 
-              <Button type="submit" loading={submitting} fullWidth>
-                Sign in
-              </Button>
+              <motion.button
+                type="submit"
+                disabled={submitting}
+                whileHover={{ y: -2, scale: 1.01 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 text-white font-medium px-4 py-2 shadow-lg shadow-indigo-900/20 disabled:opacity-60 disabled:cursor-not-allowed transition"
+              >
+                <FiLogIn /> {submitting ? "Signing in…" : "Sign in"}
+              </motion.button>
             </Form>
 
             <p className="mt-4 text-sm text-white/90">
@@ -102,4 +145,5 @@ export default function Login() {
     </div>
   );
 }
+
 
