@@ -1,19 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import NavBar from "@/components/layout/NavBar";
-import Footer from "@/components/layout/Footer";
-import { Button, Badge } from "@/components/common";
-import Loginpage from "@/assets/Loginpage.png";
-
-// Redux slices
-import { fetchBillableStats, selectBillableStats } from "@/store/analyticsSlice";
-import { fetchInvoiceStats, selectInvoiceStats } from "@/store/invoiceSlice";
-import { fetchEmailEntries, selectEmailEntries } from "@/store/billableSlice";
-import { fetchClients, selectClients } from "@/store/clientSlice";
-import { fetchUsers, selectUsers } from "@/store/usersSlice";
-
-// Charts
+import { useNavigate, Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import {
   ResponsiveContainer,
   LineChart,
@@ -30,43 +18,83 @@ import {
   CartesianGrid,
 } from "recharts";
 
-// Icons
-import { FiPieChart, FiBarChart2, FiTrendingUp, FiTable, FiMail, FiUsers, FiBriefcase } from "react-icons/fi";
+// ====== Local components (keep your existing ones) ======
+import NavBar from "@/components/layout/NavBar";
+import Footer from "@/components/layout/Footer";
+import { Button, Badge } from "@/components/common"; // uses your existing design system
 
-// --- Small helpers
+// ====== Redux thunks & selectors ======
+import { fetchAnalytics } from "@/store/analyticsSlice"; // billable+invoice+unbilled
+import { fetchClients } from "@/store/clientSlice";
+import { fetchCases } from "@/store/caseSlice";
+import { fetchInvoices } from "@/store/invoiceSlice";
+import { fetchUsersThunk, getMeThunk, selectMe, selectUsers } from "@/store/usersSlice";
+
+// ====== Icons (lucide-react) ======
+import {
+  Scale,
+  Users,
+  Briefcase,
+  Trophy,
+  LineChart as LineChartIcon,
+  BarChart2,
+  Mail,
+  Award,
+  Building2,
+  TrendingUp,
+  Sparkles,
+} from "lucide-react";
+
+// ====== Theme helpers ======
 const theme = {
-  primary: "#0b3b5a", // deep law‑firm navy
+  primary: "#0b3b5a", // deep navy
   accent: "#c5a156", // gold
-  surface: "#0b3b5a0d", // navy @ 5%
+  surface: "#0b3b5a0d", // 5% navy
   muted: "#6b7280",
   good: "#16a34a",
   bad: "#dc2626",
 };
+const COLORS = ["#2563eb", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6", "#14b8a6"]; // recharts category palette
 
-const COLORS = ["#2563eb", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6", "#14b8a6"];
-
-function toNameValueRows(raw, fallbackKey = "category", valueKey = "revenue") {
-  if (!raw) return [];
-  const items = Array.isArray(raw) ? raw : raw.items || raw.entries || [];
-  return items.map((r, i) => ({
-    id: r.id || r._id || i,
-    name: r.caseTitle || r.clientName || r[fallbackKey] || `Item ${i + 1}`,
-    value: Number(r[valueKey] ?? r.revenue ?? r.total ?? 0) || 0,
-  }));
-}
-
+// ====== Reusable UI ======
 function Card({ title, icon: Icon, rightSlot, children, className = "" }) {
   return (
-    <div className={`border rounded-[var(--lb-radius-lg)] bg-[color:var(--lb-bg)] shadow-[var(--lb-shadow-md)] ${className}`} style={{ borderColor: theme.surface }}>
-      <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: theme.surface }}>
+    <div
+      className={`relative border rounded-2xl bg-white/80 backdrop-blur shadow-lg ${className}`}
+      style={{ borderColor: theme.surface }}
+    >
+      <div className="flex items-center justify-between px-5 py-3 border-b" style={{ borderColor: theme.surface }}>
         <div className="flex items-center gap-2">
           {Icon && <Icon size={18} color={theme.primary} />}
-          <h3 className="font-semibold">{title}</h3>
+          <h3 className="font-semibold text-slate-800">{title}</h3>
         </div>
         <div>{rightSlot}</div>
       </div>
-      <div className="p-4">{children}</div>
+      <div className="p-5">{children}</div>
     </div>
+  );
+}
+
+function Metric({ label, value, icon: Icon, trend, trendColor }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="flex items-center gap-3 p-4 border rounded-2xl bg-white/70 backdrop-blur"
+      style={{ borderColor: theme.surface }}
+    >
+      <div className="p-3 rounded-xl" style={{ background: theme.surface }}>
+        <Icon size={18} color={theme.primary} />
+      </div>
+      <div className="flex-1">
+        <div className="text-xs text-slate-500">{label}</div>
+        <div className="text-lg font-semibold text-slate-800">{value}</div>
+      </div>
+      {trend != null && (
+        <div className={`text-xs font-medium ${trendColor || "text-slate-500"}`}>{trend}</div>
+      )}
+    </motion.div>
   );
 }
 
@@ -84,17 +112,25 @@ function ChartSwitcher({ data, view, setView, height = 260 }) {
   return (
     <div>
       <div className="flex gap-2 justify-end mb-3">
-        <Button size="sm" variant={view === "table" ? "primary" : "secondary"} onClick={() => setView("table")}> <FiTable className="mr-1"/> Table</Button>
-        <Button size="sm" variant={view === "bar" ? "primary" : "secondary"} onClick={() => setView("bar")}> <FiBarChart2 className="mr-1"/> Bar</Button>
-        <Button size="sm" variant={view === "pie" ? "primary" : "secondary"} onClick={() => setView("pie")}> <FiPieChart className="mr-1"/> Pie</Button>
-        <Button size="sm" variant={view === "line" ? "primary" : "secondary"} onClick={() => setView("line")}> <FiTrendingUp className="mr-1"/> Line</Button>
+        <Button size="sm" variant={view === "table" ? "primary" : "secondary"} onClick={() => setView("table")}>
+          <BarChart2 className="mr-1" size={14} /> Table
+        </Button>
+        <Button size="sm" variant={view === "bar" ? "primary" : "secondary"} onClick={() => setView("bar")}>
+          <BarChart2 className="mr-1" size={14} /> Bar
+        </Button>
+        <Button size="sm" variant={view === "pie" ? "primary" : "secondary"} onClick={() => setView("pie")}>
+          <Trophy className="mr-1" size={14} /> Pie
+        </Button>
+        <Button size="sm" variant={view === "line" ? "primary" : "secondary"} onClick={() => setView("line")}>
+          <LineChartIcon className="mr-1" size={14} /> Line
+        </Button>
       </div>
 
       {view === "table" && (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-[color:var(--lb-muted)]">
+              <tr className="text-left text-slate-500">
                 <th className="py-2 pr-4">Category</th>
                 <th className="py-2">Value</th>
               </tr>
@@ -156,154 +192,305 @@ function ChartSwitcher({ data, view, setView, height = 260 }) {
   );
 }
 
+// ====== Helpers ======
+function toNameValueRows(raw, nameKey = "name", valueKey = "value") {
+  if (!raw) return [];
+  const items = Array.isArray(raw) ? raw : raw.entries || raw.items || [];
+  return items.map((r, i) => ({
+    id: r.id || r._id || i,
+    name: r[nameKey] || r.client || r.clientName || r.case || r.caseTitle || `Item ${i + 1}`,
+    value: Number(r[valueKey] ?? r.revenue ?? r.total ?? r.hours ?? 0) || 0,
+  }));
+}
+
 export default function LandingPage() {
-  const navigate = useNavigate();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
-  const { data: billableRaw, loading: billableLoading, error: billableError } = useSelector(selectBillableStats);
-  const { data: invoiceRaw, loading: invoiceLoading } = useSelector(selectInvoiceStats);
-  const { data: emails } = useSelector(selectEmailEntries);
-  const { items: clients = [] } = useSelector(selectClients);
-  const { items: users = [] } = useSelector(selectUsers);
+  // Core data
+  const me = useSelector(selectMe);
+  const users = useSelector(selectUsers) || [];
+  const analytics = useSelector((s) => s.analytics) || {};
+  const clients = useSelector((s) => s.clients.list) || [];
+  const cases = useSelector((s) => s.cases.list) || [];
+  const invoices = useSelector((s) => s.invoices.list) || [];
 
-  const [billablesView, setBillablesView] = useState("bar");
-  const [invoicesView, setInvoicesView] = useState("table");
+  const [revenueView, setRevenueView] = useState("line");
+  const [casesView, setCasesView] = useState("bar");
 
+  // Bootload
   useEffect(() => {
-    dispatch(fetchBillableStats());
-    dispatch(fetchInvoiceStats());
-    dispatch(fetchEmailEntries());
+    dispatch(getMeThunk());
+    dispatch(fetchAnalytics());
+    dispatch(fetchUsersThunk({ limit: 100 }));
     dispatch(fetchClients());
-    dispatch(fetchUsers({ limit: 50 }));
+    dispatch(fetchCases());
+    dispatch(fetchInvoices());
   }, [dispatch]);
 
-  const billableData = useMemo(() => toNameValueRows(billableRaw, "client", "revenue"), [billableRaw]);
-  const invoiceData = useMemo(() => toNameValueRows(invoiceRaw, "client", "revenue"), [invoiceRaw]);
+  // ====== Derived metrics ======
+  const partners = useMemo(() => users.filter((u) => /partner/i.test(u.role || "")), [users]);
+  const lawyers = useMemo(() => users.filter((u) => /lawyer|associate/i.test(u.role || "")), [users]);
+  const interns = useMemo(() => users.filter((u) => /intern/i.test(u.role || "")), [users]);
 
+  const caseBuckets = useMemo(() => {
+    const counts = { Won: 0, Settled: 0, Lost: 0, Active: 0 };
+    (cases || []).forEach((c) => {
+      const s = (c.status || "").toLowerCase();
+      if (s.includes("won")) counts.Won++;
+      else if (s.includes("settled")) counts.Settled++;
+      else if (s.includes("lost")) counts.Lost++;
+      else counts.Active++;
+    });
+    return Object.entries(counts).map(([name, value]) => ({ id: name, name, value }));
+  }, [cases]);
+
+  const revenueSeries = useMemo(() => {
+    // Build monthly revenue from invoices or analytics.invoice.entries
+    const rows = (analytics.invoice?.entries?.length ? analytics.invoice.entries : invoices) || [];
+    const byMonth = new Map();
+    rows.forEach((r) => {
+      const d = r.date ? new Date(r.date) : null;
+      const key = d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}` : "Unknown";
+      const rev = Number(r.revenue ?? r.totalRevenue ?? 0) || 0;
+      byMonth.set(key, (byMonth.get(key) || 0) + rev);
+    });
+    const arr = Array.from(byMonth.entries())
+      .sort(([a], [b]) => (a > b ? 1 : -1))
+      .map(([k, v], i) => ({ id: i, name: k, value: v }));
+    return arr;
+  }, [invoices, analytics]);
+
+  const totalRevenue = useMemo(() => revenueSeries.reduce((s, r) => s + r.value, 0), [revenueSeries]);
+  const winRate = useMemo(() => {
+    const w = caseBuckets.find((x) => x.name === "Won")?.value || 0;
+    const l = caseBuckets.find((x) => x.name === "Lost")?.value || 0;
+    const t = w + l;
+    return t ? Math.round((w / t) * 100) : 0;
+  }, [caseBuckets]);
+
+  // Leaderboards (by revenue/hours from analytics.billable)
+  const billable = analytics.billable?.entries || [];
+  const perfByUser = useMemo(() => {
+    const m = new Map();
+    billable.forEach((b) => {
+      const key = b.user || b.userName || "Unknown";
+      const rev = Number(b.revenue || 0);
+      const hrs = Number(b.hours || 0);
+      if (!m.has(key)) m.set(key, { user: key, revenue: 0, hours: 0 });
+      const obj = m.get(key);
+      obj.revenue += rev;
+      obj.hours += hrs;
+    });
+    return Array.from(m.values()).sort((a, b) => b.revenue - a.revenue);
+  }, [billable]);
+
+  const topLawyers = useMemo(() => perfByUser.filter((u) => lawyers.some((l) => (l.name || l.fullName) === u.user)).slice(0, 5), [perfByUser, lawyers]);
+  const topInterns = useMemo(() => perfByUser.filter((u) => interns.some((l) => (l.name || l.fullName) === u.user)).slice(0, 5), [perfByUser, interns]);
+
+  // Prestigious clients (simple heuristic: clients with revenue in top quartile)
+  const clientPerf = useMemo(() => {
+    const m = new Map();
+    billable.forEach((b) => {
+      const key = b.client || b.clientName || "Client";
+      const rev = Number(b.revenue || 0);
+      m.set(key, (m.get(key) || 0) + rev);
+    });
+    const arr = Array.from(m.entries()).map(([name, value]) => ({ id: name, name, value }));
+    const sorted = [...arr].sort((a, b) => b.value - a.value);
+    const q = Math.ceil(sorted.length / 4) || 1;
+    return sorted.slice(0, q);
+  }, [billable]);
+
+  // ====== UI ======
   return (
     <>
-      <NavBar />
+      <div className="relative overflow-hidden">
+        {/* Decorative backdrop */}
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full" style={{ background: "radial-gradient(600px at 100% 0%, #c5a15622, transparent 60%)" }} />
+          <div className="absolute -bottom-24 -left-24 h-[28rem] w-[28rem] rounded-full" style={{ background: "radial-gradient(600px at 0% 100%, #0b3b5a22, transparent 60%)" }} />
+        </div>
 
-      <section className="pt-28 md:pt-32 pb-6">
-        <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-10 items-center">
-          <div>
-            <Badge color="primary">MVP: Email → Billable</Badge>
-            <h1 className="text-3xl md:text-4xl font-semibold mt-3" style={{ color: theme.primary }}>
-              Capture every billable minute — automatically.
-            </h1>
-            <p className="mt-3 text-[color:var(--lb-muted)]">
-              We track time while you draft emails, generate clean summaries with AI,
-              and push entries to practice management in one click.
-            </p>
-            <div className="mt-6 flex gap-3">
-              <Button variant="primary" size="lg" onClick={() => navigate("/register")}>Get Started</Button>
-              <Button variant="secondary" size="lg" onClick={() => navigate("/login")}>Sign in</Button>
-            </div>
-            <p className="mt-3 text-sm" style={{ color: theme.muted }}>No new tabs to learn. Lives inside Gmail.</p>
+        <NavBar />
 
-            {/* Live firm stats */}
-            <div className="mt-6 grid grid-cols-2 gap-3 max-w-md">
-              <div className="p-3 border rounded-lg flex items-center gap-2" style={{ borderColor: theme.surface }}>
-                <FiUsers size={18} color={theme.primary} />
-                <div>
-                  <div className="text-xs" style={{ color: theme.muted }}>Lawyers</div>
-                  <div className="font-semibold">{users.length}</div>
-                </div>
+        {/* Hero */}
+        <section className="pt-28 md:pt-32 pb-10">
+          <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-10 items-center">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+              <Badge color="primary" className="inline-flex items-center gap-2">
+                <Sparkles size={14} /> New
+              </Badge>
+              <h1 className="text-3xl md:text-5xl font-semibold mt-3 leading-tight" style={{ color: theme.primary }}>
+                {me ? `Welcome, ${me.name.split(" ")[0]} —` : "Modernize your firm —"}
+                <br />
+                <span className="text-slate-800">a glamorous, data‑driven legal hub.</span>
+              </h1>
+              <p className="mt-4 text-slate-600">
+                Fetches user details, showcases prestigious clients, partner memos, leaderboards and living revenue charts. Built for real firms — not a college project.
+              </p>
+              <div className="mt-6 flex gap-3">
+                <Button variant="primary" size="lg" onClick={() => navigate("/register")}>Get Started</Button>
+                <Button variant="secondary" size="lg" onClick={() => navigate("/login")}>Sign in</Button>
               </div>
-              <div className="p-3 border rounded-lg flex items-center gap-2" style={{ borderColor: theme.surface }}>
-                <FiBriefcase size={18} color={theme.primary} />
-                <div>
-                  <div className="text-xs" style={{ color: theme.muted }}>Active Clients</div>
-                  <div className="font-semibold">{clients.length}</div>
-                </div>
+              <p className="mt-3 text-sm text-slate-500">Runs inside your stack — Gmail, PracticePanther/Clio, and more.</p>
+
+              {/* Quick metrics */}
+              <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-3 max-w-3xl">
+                <Metric label="Partners" value={partners.length} icon={Award} />
+                <Metric label="Lawyers" value={lawyers.length} icon={Users} />
+                <Metric label="Active Clients" value={clients.length} icon={Building2} />
+                <Metric label="Win Rate" value={`${winRate}%`} icon={Trophy} trend={`${caseBuckets.find((x)=>x.name==='Won')?.value||0} won`} trendColor="text-emerald-600" />
               </div>
-            </div>
+            </motion.div>
+
+            {/* Hero visual */}
+            <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }} className="relative">
+              <div className="rounded-3xl border bg-white/70 backdrop-blur shadow-xl p-4" style={{ borderColor: theme.surface }}>
+                <div className="flex items-center gap-2 text-slate-600 text-sm mb-2"><Mail size={16} /> Email → Billable (auto)</div>
+                <div className="grid grid-cols-3 gap-2">
+                  {["Drafting", "Mapping", "Logged"].map((step, i) => (
+                    <div key={step} className="p-3 border rounded-xl text-center text-xs" style={{ borderColor: theme.surface }}>
+                      <div className="font-semibold text-slate-800">{step}</div>
+                      <div className="mt-1 text-slate-500">{i === 0 ? "Timer active" : i === 1 ? "Client matched" : "0.2h added"}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 text-[11px] text-slate-500 text-center">Animated demo clip/illustration can live here.</div>
+              </div>
+              <motion.div
+                className="absolute -bottom-6 -right-6 hidden md:block"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <div className="p-4 rounded-2xl border bg-white/70 backdrop-blur shadow" style={{ borderColor: theme.surface }}>
+                  <div className="text-xs text-slate-500">Compliance ready</div>
+                  <div className="text-sm font-semibold text-slate-800 flex items-center gap-2"><Scale size={14}/> Confidential by design</div>
+                </div>
+              </motion.div>
+            </motion.div>
           </div>
+        </section>
+      </div>
 
-          <div>
-            <Card
-              title="Billables by Category"
-              icon={FiBarChart2}
-              rightSlot={<span className="text-xs" style={{ color: theme.muted }}>demo data from your org</span>}
-            >
-              {billableLoading ? (
-                <div className="text-sm" style={{ color: theme.muted }}>Loading…</div>
-              ) : billableError ? (
-                <div className="text-sm" style={{ color: theme.bad }}>{billableError}</div>
-              ) : (
-                <ChartSwitcher data={billableData} view={billablesView} setView={setBillablesView} />
-              )}
+      {/* Cases performance */}
+      <section className="py-10 bg-slate-50/60">
+        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-3 gap-6 items-start">
+          <div className="lg:col-span-2">
+            <Card title="Cases — Won / Settled / Lost / Active" icon={Briefcase} rightSlot={<span className="text-xs text-slate-500">live from your org</span>}>
+              <ChartSwitcher data={caseBuckets} view={casesView} setView={setCasesView} />
+            </Card>
+          </div>
+          <div className="lg:col-span-1">
+            <Card title="Prestigious Clients" icon={Building2} rightSlot={<span className="text-xs text-slate-500">top quartile</span>}>
+              <div className="flex flex-col gap-3">
+                {clientPerf.slice(0, 8).map((c) => (
+                  <div key={c.id} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-full grid place-items-center text-xs font-semibold" style={{ background: theme.surface, color: theme.primary }}>
+                        {c.name?.slice(0, 2).toUpperCase()}
+                      </div>
+                      <div className="text-sm text-slate-800">{c.name}</div>
+                    </div>
+                    <div className="text-sm font-medium text-slate-700">${Intl.NumberFormat().format(Math.round(c.value))}</div>
+                  </div>
+                ))}
+                {clientPerf.length === 0 && <div className="text-sm text-slate-500">No client data yet.</div>}
+              </div>
             </Card>
           </div>
         </div>
       </section>
 
-      <section className="py-8 bg-[color:var(--lb-surface)]/50">
-        <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-3 gap-6">
-          {[
-            ["Real-time tracking", "Typing time is captured as you compose — pauses on inactivity."],
-            ["GPT billable summaries", "Crisp, client‑friendly descriptions you can edit before logging."],
-            ["One‑click push", "Send entries to PracticePanther or Clio with status feedback."],
-          ].map(([title, desc]) => (
-            <div key={title} className="p-5 border rounded-[var(--lb-radius-lg)] bg-[color:var(--lb-bg)]" style={{ borderColor: theme.surface }}>
-              <div className="font-semibold" style={{ color: theme.primary }}>{title}</div>
-              <p className="text-sm mt-2" style={{ color: theme.muted }}>{desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="py-8">
-        <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-6">
-          <Card title="Invoice Performance" icon={FiTrendingUp}>
-            {invoiceLoading ? (
-              <div className="text-sm" style={{ color: theme.muted }}>Loading…</div>
-            ) : (
-              <ChartSwitcher data={invoiceData} view={invoicesView} setView={setInvoicesView} />
-            )}
-          </Card>
-
-          <Card title="Recent Emails" icon={FiMail} rightSlot={<button className="text-xs underline" onClick={() => navigate("/emails")}>View all</button>}>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-[color:var(--lb-muted)]">
-                    <th className="py-2 pr-4">Subject</th>
-                    <th className="py-2 pr-4">Client</th>
-                    <th className="py-2 pr-4">Minutes</th>
-                    <th className="py-2">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(emails || []).slice(0, 5).map((e, i) => (
-                    <tr key={e._id || i} className="border-t" style={{ borderColor: theme.surface }}>
-                      <td className="py-2 pr-4 truncate max-w-[220px]">{e.subject || "(no subject)"}</td>
-                      <td className="py-2 pr-4">{e.clientName || "—"}</td>
-                      <td className="py-2 pr-4">{e.minutes ?? 0}</td>
-                      <td className="py-2">
-                        <span className="px-2 py-1 text-xs rounded-full border" style={{ color: theme.good, borderColor: theme.surface, background: "#16a34a14" }}>{e.status || "Logged"}</span>
-                      </td>
-                    </tr>
-                  ))}
-                  {(!emails || emails.length === 0) && (
-                    <tr>
-                      <td colSpan={4} className="py-3 text-center" style={{ color: theme.muted }}>No records</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+      {/* Revenue */}
+      <section className="py-10">
+        <div className="max-w-7xl mx-auto px-6">
+          <Card title="Firm Revenue (Monthly)" icon={TrendingUp} rightSlot={<span className="text-xs text-slate-500">Invoices & analytics</span>}>
+            <ChartSwitcher data={revenueSeries} view={revenueView} setView={setRevenueView} />
+            <div className="mt-4 flex items-center justify-end text-sm text-slate-600">
+              Total: <span className="font-semibold text-slate-800 ml-1">${Intl.NumberFormat().format(Math.round(totalRevenue))}</span>
             </div>
           </Card>
         </div>
       </section>
 
-      <section className="py-8">
-        <div className="max-w-6xl mx-auto px-6 text-center">
-          <div className="text-sm" style={{ color: theme.muted }}>Works with</div>
-          <div className="mt-3 flex flex-wrap items-center justify-center gap-6">
-            <div className="px-3 py-1 border rounded" style={{ borderColor: theme.surface }}>Gmail</div>
-            <div className="px-3 py-1 border rounded" style={{ borderColor: theme.surface }}>Clio (soon)</div>
-            <div className="px-3 py-1 border rounded" style={{ borderColor: theme.surface }}>PracticePanther</div>
+      {/* Partners memo & profiles */}
+      <section className="py-10 bg-slate-50/60">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex items-end justify-between mb-4">
+            <h2 className="text-xl font-semibold text-slate-800">Partner Memos</h2>
+            <Button variant="link" onClick={() => navigate("/partners")}>View all partners</Button>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {partners.slice(0, 6).map((p) => (
+              <motion.div key={p._id || p.id} initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <div className="p-5 border rounded-2xl bg-white/80 backdrop-blur shadow" style={{ borderColor: theme.surface }}>
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full grid place-items-center font-semibold" style={{ background: theme.surface, color: theme.primary }}>
+                      {(p.name || p.fullName || "P").split(" ").map((x)=>x[0]).slice(0,2).join("")}
+                    </div>
+                    <div>
+                      <Link to={`/partners/${p._id || p.id}`} className="font-semibold text-slate-800 hover:underline">{p.name || p.fullName}</Link>
+                      <div className="text-xs text-slate-500">{p.title || "Partner"}</div>
+                    </div>
+                  </div>
+                  <p className="mt-3 text-sm text-slate-600 line-clamp-3">{p.memo || "Strategic insights, case updates and commentary. Click to read."}</p>
+                  <div className="mt-3 flex gap-3 text-xs">
+                    <Link to={`/partners/${p._id || p.id}/profile`} className="underline">Profile</Link>
+                    <Link to={`/partners/${p._id || p.id}/blogs`} className="underline">Blogs</Link>
+                    <Link to={`/partners/${p._id || p.id}/achievements`} className="underline">Achievements</Link>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+            {partners.length === 0 && <div className="text-sm text-slate-600">No partners yet.</div>}
+          </div>
+        </div>
+      </section>
+
+      {/* Leaderboards */}
+      <section className="py-10">
+        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-6">
+          <Card title="Top Lawyers" icon={Award}>
+            <div className="space-y-3">
+              {topLawyers.map((u, i) => (
+                <div key={u.user} className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-full grid place-items-center text-xs font-semibold" style={{ background: theme.surface, color: theme.primary }}>{(u.user || "U").split(" ").map((x)=>x[0]).slice(0,2).join("")}</div>
+                    <div className="text-sm text-slate-800">{u.user}</div>
+                  </div>
+                  <div className="text-sm text-slate-700">${Intl.NumberFormat().format(Math.round(u.revenue))} · {u.hours.toFixed(1)}h</div>
+                </div>
+              ))}
+              {topLawyers.length === 0 && <div className="text-sm text-slate-600">No lawyer performance yet.</div>}
+            </div>
+          </Card>
+          <Card title="Top Interns" icon={Users}>
+            <div className="space-y-3">
+              {topInterns.map((u, i) => (
+                <div key={u.user} className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-full grid place-items-center text-xs font-semibold" style={{ background: theme.surface, color: theme.primary }}>{(u.user || "U").split(" ").map((x)=>x[0]).slice(0,2).join("")}</div>
+                    <div className="text-sm text-slate-800">{u.user}</div>
+                  </div>
+                  <div className="text-sm text-slate-700">${Intl.NumberFormat().format(Math.round(u.revenue))} · {u.hours.toFixed(1)}h</div>
+                </div>
+              ))}
+              {topInterns.length === 0 && <div className="text-sm text-slate-600">No intern performance yet.</div>}
+            </div>
+          </Card>
+        </div>
+      </section>
+
+      {/* Integrations strip */}
+      <section className="py-8 bg-slate-50/60">
+        <div className="max-w-7xl mx-auto px-6 text-center">
+          <div className="text-xs uppercase tracking-wide text-slate-500">Works with</div>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-4">
+            {["Gmail", "PracticePanther", "Clio", "MyCase"].map((name) => (
+              <div key={name} className="px-3 py-1 border rounded-full text-sm text-slate-700 bg-white/70" style={{ borderColor: theme.surface }}>{name}</div>
+            ))}
           </div>
         </div>
       </section>
