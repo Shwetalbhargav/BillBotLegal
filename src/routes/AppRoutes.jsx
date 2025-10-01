@@ -25,8 +25,8 @@ const RoleRoute = ({ children, allow = [] }) => {
 // NOTE: Update these paths to match where your Login/Register files actually live.
 const LandingPage  = lazy(() => import('@/features/landing/LandingPage'));
 // If your updated files are in src/pages/auth, change these two lines accordingly:
-const Login        = lazy(() => import('@/pages/auth/Login'));     // <-- path updated
-const Register     = lazy(() => import('@/pages/auth/Register'));  // <-- path updated
+const Login        = lazy(() => import('@/features/auth/Login'));     
+const Register     = lazy(() => import('@/features/auth/Register'));  
 
 // -------- Protected (pages/*) --------
 const ClientsPage      = lazy(() => import('@/pages/ClientsPage'));
