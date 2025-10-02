@@ -12,6 +12,7 @@ export default function NavBar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
+  // Right-side nav items (now sit beside the bell on desktop)
   const menuItems = [
     { to: "/#cases", label: "Cases" },
     { to: "/#clients", label: "Clients" },
@@ -19,56 +20,69 @@ export default function NavBar() {
   ];
 
   return (
+    // Full-width light bar with bigger height
     <header className="fixed top-0 left-0 w-full z-50 bg-gray-100 border-b border-gray-200">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="h-16 flex items-center justify-between">
-          
-          {/* Brand */}
+        {/* ~100px tall nav (nice, roomy) */}
+        <div className="h-[100px] flex items-center justify-between">
+          {/* Brand (bigger logo + highlighted product name) */}
           <button
             onClick={() => navigate("/")}
-            className="flex items-center gap-2 hover:opacity-80 transition"
+            className="flex items-center gap-3 hover:opacity-90 transition"
+            aria-label="Go to home"
           >
-            <img src={logo} alt="Legal Billables" className="h-8 w-8 rounded-full object-contain" />
-            <span className="font-semibold text-slate-800">Legal Billables</span>
+            <img
+              src={logo}
+              alt="Legal Billables"
+              className="h-14 w-14 rounded-xl object-contain" // larger logo
+            />
+            {/* Highlighted product name: stronger weight, larger font, accent color */}
+            <span className="text-2xl font-extrabold tracking-tight text-indigo-800">
+              Legal Billables
+            </span>
           </button>
 
-          {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-6">
-            {menuItems.map((i) => (
-              <button
-                key={i.to}
-                onClick={() => navigate(i.to)}
-                className="px-3 py-2 rounded-md text-sm font-medium text-slate-700 hover:bg-white hover:shadow-sm hover:text-indigo-600 transition"
-              >
-                {i.label}
-              </button>
-            ))}
-          </nav>
+          {/* Right cluster: menu (moved here), bell, profile/login */}
+          <div className="flex items-center gap-5">
+            {/* Desktop menu now on the right, next to bell */}
+            <nav className="hidden md:flex items-center gap-2">
+              {menuItems.map((i) => (
+                <button
+                  key={i.to}
+                  onClick={() => navigate(i.to)}
+                  className="px-4 py-2.5 rounded-md text-base font-semibold text-slate-700 hover:bg-white hover:shadow-sm hover:text-indigo-700 transition"
+                >
+                  {i.label}
+                </button>
+              ))}
+            </nav>
 
-          {/* Right Side */}
-          <div className="flex items-center gap-4">
             {/* Notifications */}
             <button
               type="button"
-              className="relative rounded-full p-2 text-gray-500 hover:text-indigo-600 transition"
+              className="relative rounded-full p-3 text-gray-600 hover:text-indigo-700 hover:bg-white transition"
+              aria-label="Notifications"
+              title="Notifications"
             >
-              <Bell className="w-5 h-5" />
+              <Bell className="w-6 h-6" />
             </button>
 
+            {/* Auth */}
             {isAuthenticated ? (
-              <div className="relative">
+              /* Profile dropdown (desktop) */
+              <div className="relative hidden md:block">
                 <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                   className="flex items-center"
                 >
                   <img
-                    src={user?.avatar || "https://via.placeholder.com/40"}
+                    src={user?.avatar || "https://via.placeholder.com/56"}
                     alt="profile"
-                    className="h-9 w-9 rounded-full border border-gray-300"
+                    className="h-12 w-12 rounded-full border border-gray-300"
                   />
                 </button>
                 <div
-                  className={`absolute right-0 mt-2 w-48 bg-white border rounded-md shadow-lg py-1 text-sm transform transition-all duration-200 ease-out origin-top-right ${
+                  className={`absolute right-0 mt-2 w-56 bg-white border rounded-md shadow-lg py-1 text-sm transform transition-all duration-200 ease-out origin-top-right ${
                     dropdownOpen
                       ? "opacity-100 scale-100"
                       : "opacity-0 scale-95 pointer-events-none"
@@ -88,65 +102,85 @@ export default function NavBar() {
                   </button>
                   <button
                     onClick={logout}
-                    className="block w-full px-4 py-2 text-left text-red-500 hover:bg-gray-50"
+                    className="block w-full px-4 py-2 text-left text-red-600 hover:bg-gray-50"
                   >
                     Logout
                   </button>
                 </div>
               </div>
             ) : (
+              // Bigger login button to match taller navbar
               <Button
                 variant="primary"
-                size="sm"
+                size="lg"
                 onClick={() => navigate("/login")}
+                className="text-base px-5 py-3"
               >
                 Login
               </Button>
             )}
 
-            {/* Mobile Hamburger */}
+            {/* Mobile hamburger (right edge) */}
             <button
-              className="md:hidden flex items-center text-gray-600 hover:text-indigo-600 transition"
+              className="md:hidden flex items-center text-gray-700 hover:text-indigo-700 transition"
               onClick={() => setMobileOpen(!mobileOpen)}
+              aria-label="Open menu"
             >
-              {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileOpen ? <X className="w-7 h-7" /> : <Menu className="w-7 h-7" />}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile Menu */}
-      {mobileOpen && (
-        <div className="md:hidden bg-white border-t border-gray-200 shadow-sm">
-          <div className="px-4 py-3 space-y-2">
-            {menuItems.map((i) => (
-              <button
-                key={i.to}
-                onClick={() => {
-                  navigate(i.to);
-                  setMobileOpen(false);
-                }}
-                className="block w-full text-left px-3 py-2 rounded-md hover:bg-gray-50 hover:text-indigo-600 transition"
-              >
-                {i.label}
-              </button>
-            ))}
-            {!isAuthenticated && (
-              <Button
-                variant="primary"
-                size="sm"
-                className="w-full mt-2"
-                onClick={() => {
-                  navigate("/login");
-                  setMobileOpen(false);
-                }}
-              >
-                Login
-              </Button>
-            )}
-          </div>
+      {/* Mobile drawer (includes menu + auth) */}
+      <div
+        className={`md:hidden transform transition-all duration-300 ease-in-out origin-top ${
+          mobileOpen
+            ? "max-h-[700px] opacity-100 scale-100"
+            : "max-h-0 opacity-0 scale-95 overflow-hidden"
+        }`}
+      >
+        <div className="bg-white border-t border-gray-200 shadow-sm px-4 py-4 space-y-2">
+          {/* Menu (mobile) */}
+          {menuItems.map((i) => (
+            <button
+              key={i.to}
+              onClick={() => {
+                navigate(i.to);
+                setMobileOpen(false);
+              }}
+              className="block w-full text-left px-4 py-3 rounded-md text-base font-semibold hover:bg-gray-50 hover:text-indigo-700 transition"
+            >
+              {i.label}
+            </button>
+          ))}
+
+          {/* Auth (mobile) */}
+          {!isAuthenticated ? (
+            <Button
+              variant="primary"
+              size="lg"
+              className="w-full mt-2 text-base py-3"
+              onClick={() => {
+                navigate("/login");
+                setMobileOpen(false);
+              }}
+            >
+              Login
+            </Button>
+          ) : (
+            <button
+              onClick={() => {
+                logout();
+                setMobileOpen(false);
+              }}
+              className="w-full text-left px-4 py-3 rounded-md text-base font-semibold text-red-600 hover:bg-gray-50 transition"
+            >
+              Logout
+            </button>
+          )}
         </div>
-      )}
+      </div>
     </header>
   );
 }
