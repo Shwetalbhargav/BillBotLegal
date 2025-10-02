@@ -8,7 +8,7 @@ import { Bell, Menu, X } from "lucide-react";
 
 export default function NavBar() {
   const navigate = useNavigate();
-  const { isAuthenticated, logout, user } = useAuth(); // assume user object {name, email, avatar}
+  const { isAuthenticated, logout, user } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -18,44 +18,31 @@ export default function NavBar() {
     { to: "/#partners", label: "Partners" },
   ];
 
-  const profileOptions = [
-    { to: "/profile", label: "Profile Settings" },
-    { to: "/settings", label: "General Settings" },
-    { to: "/top-lawyers", label: "Top Lawyers" },
-    { to: "/blogs", label: "Blogs" },
-    { to: "/#cases", label: "Case Graph" },
-    { to: "/#clients", label: "Clients" },
-  ];
-
   return (
-    <header className="fixed top-0 left-0 w-full z-50">
-      <div className="mx-auto max-w-7xl px-6 py-3">
-        <div className="bg-[color:var(--lb-surface)]/70 backdrop-blur border border-[color:var(--lb-border)] rounded-full shadow-[var(--lb-shadow-sm)] flex items-center justify-between px-4 py-2">
+    <header className="fixed top-0 left-0 w-full z-50 bg-gray-100 border-b border-gray-200">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="h-16 flex items-center justify-between">
           
           {/* Brand */}
           <button
             onClick={() => navigate("/")}
-            className="lb-reset flex items-center gap-3 cursor-pointer hover:opacity-80 transition"
-            aria-label="Go to home"
+            className="flex items-center gap-2 hover:opacity-80 transition"
           >
-            <img src={logo} alt="Legal Billables" className="h-10 w-10 rounded-full object-contain" />
-            <span className="font-semibold">Legal Billables</span>
+            <img src={logo} alt="Legal Billables" className="h-8 w-8 rounded-full object-contain" />
+            <span className="font-semibold text-slate-800">Legal Billables</span>
           </button>
 
           {/* Desktop Nav */}
-          <nav className="hidden md:block">
-            <ul className="flex gap-6 text-sm">
-              {menuItems.map((i) => (
-                <li key={i.to}>
-                  <button
-                    onClick={() => navigate(i.to)}
-                    className="lb-reset hover:text-indigo-600 hover:underline transition"
-                  >
-                    {i.label}
-                  </button>
-                </li>
-              ))}
-            </ul>
+          <nav className="hidden md:flex items-center gap-6">
+            {menuItems.map((i) => (
+              <button
+                key={i.to}
+                onClick={() => navigate(i.to)}
+                className="px-3 py-2 rounded-md text-sm font-medium text-slate-700 hover:bg-white hover:shadow-sm hover:text-indigo-600 transition"
+              >
+                {i.label}
+              </button>
+            ))}
           </nav>
 
           {/* Right Side */}
@@ -63,22 +50,21 @@ export default function NavBar() {
             {/* Notifications */}
             <button
               type="button"
-              className="relative rounded-full p-1 text-gray-500 hover:text-indigo-600 transition"
+              className="relative rounded-full p-2 text-gray-500 hover:text-indigo-600 transition"
             >
-              <Bell className="w-6 h-6" />
+              <Bell className="w-5 h-5" />
             </button>
 
             {isAuthenticated ? (
-              // Profile Dropdown (Desktop only)
-              <div className="relative hidden md:block">
+              <div className="relative">
                 <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="flex items-center hover:opacity-80 transition"
+                  className="flex items-center"
                 >
                   <img
                     src={user?.avatar || "https://via.placeholder.com/40"}
                     alt="profile"
-                    className="h-9 w-9 rounded-full border"
+                    className="h-9 w-9 rounded-full border border-gray-300"
                   />
                 </button>
                 <div
@@ -88,25 +74,32 @@ export default function NavBar() {
                       : "opacity-0 scale-95 pointer-events-none"
                   }`}
                 >
-                  {profileOptions.map((opt) => (
-                    <button
-                      key={opt.to}
-                      onClick={() => navigate(opt.to)}
-                      className="block w-full px-4 py-2 text-left hover:bg-gray-100"
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
+                  <button
+                    onClick={() => navigate("/profile")}
+                    className="block w-full px-4 py-2 text-left hover:bg-gray-50"
+                  >
+                    Profile Settings
+                  </button>
+                  <button
+                    onClick={() => navigate("/settings")}
+                    className="block w-full px-4 py-2 text-left hover:bg-gray-50"
+                  >
+                    General Settings
+                  </button>
                   <button
                     onClick={logout}
-                    className="block w-full px-4 py-2 text-left text-red-500 hover:bg-gray-100"
+                    className="block w-full px-4 py-2 text-left text-red-500 hover:bg-gray-50"
                   >
                     Logout
                   </button>
                 </div>
               </div>
             ) : (
-              <Button variant="primary" size="sm" onClick={() => navigate("/login")}>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => navigate("/login")}
+              >
                 Login
               </Button>
             )}
@@ -120,92 +113,40 @@ export default function NavBar() {
             </button>
           </div>
         </div>
+      </div>
 
-        {/* Mobile Menu with Animation */}
-        <div
-          className={`md:hidden transform transition-all duration-300 ease-in-out origin-top ${
-            mobileOpen
-              ? "max-h-[700px] opacity-100 scale-100"
-              : "max-h-0 opacity-0 scale-95 overflow-hidden"
-          }`}
-        >
-          <div className="mt-2 rounded-lg bg-white shadow-lg border px-4 py-3">
-            {/* Profile Header (Mobile only) */}
-            {isAuthenticated && (
-              <div className="flex items-center gap-3 mb-4 pb-3 border-b">
-                <img
-                  src={user?.avatar || "https://via.placeholder.com/50"}
-                  alt="profile"
-                  className="h-12 w-12 rounded-full border"
-                />
-                <div>
-                  <p className="font-medium">{user?.name || "User"}</p>
-                  <p className="text-sm text-gray-500">{user?.email || "user@email.com"}</p>
-                </div>
-              </div>
-            )}
-
-            <ul className="flex flex-col gap-3">
-              {menuItems.map((i) => (
-                <li key={i.to}>
-                  <button
-                    onClick={() => {
-                      navigate(i.to);
-                      setMobileOpen(false);
-                    }}
-                    className="w-full text-left hover:text-indigo-600 hover:bg-gray-50 px-3 py-2 rounded transition"
-                  >
-                    {i.label}
-                  </button>
-                </li>
-              ))}
-            </ul>
-
-            {/* Profile options in mobile */}
-            {isAuthenticated && (
-              <div className="mt-4 border-t pt-3">
-                {profileOptions.map((opt) => (
-                  <button
-                    key={opt.to}
-                    onClick={() => {
-                      navigate(opt.to);
-                      setMobileOpen(false);
-                    }}
-                    className="block w-full text-left px-3 py-2 rounded hover:bg-gray-50 transition"
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-                <button
-                  onClick={() => {
-                    logout();
-                    setMobileOpen(false);
-                  }}
-                  className="block w-full text-left px-3 py-2 rounded text-red-500 hover:bg-gray-50 transition"
-                >
-                  Logout
-                </button>
-              </div>
-            )}
-
+      {/* Mobile Menu */}
+      {mobileOpen && (
+        <div className="md:hidden bg-white border-t border-gray-200 shadow-sm">
+          <div className="px-4 py-3 space-y-2">
+            {menuItems.map((i) => (
+              <button
+                key={i.to}
+                onClick={() => {
+                  navigate(i.to);
+                  setMobileOpen(false);
+                }}
+                className="block w-full text-left px-3 py-2 rounded-md hover:bg-gray-50 hover:text-indigo-600 transition"
+              >
+                {i.label}
+              </button>
+            ))}
             {!isAuthenticated && (
-              <div className="mt-4 border-t pt-3">
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => {
-                    navigate("/login");
-                    setMobileOpen(false);
-                  }}
-                  className="w-full"
-                >
-                  Login
-                </Button>
-              </div>
+              <Button
+                variant="primary"
+                size="sm"
+                className="w-full mt-2"
+                onClick={() => {
+                  navigate("/login");
+                  setMobileOpen(false);
+                }}
+              >
+                Login
+              </Button>
             )}
           </div>
         </div>
-      </div>
+      )}
     </header>
   );
 }
