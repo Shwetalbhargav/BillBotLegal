@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getClients, addClient, updateClient, deleteClient } from '@/services/api';
+import { getClients, createClient, updateClient, deleteClient } from '@/services/api';
+
 
 export const fetchClients = createAsyncThunk('clients/fetch', async () => {
   const { data } = await getClients();
@@ -7,7 +8,7 @@ export const fetchClients = createAsyncThunk('clients/fetch', async () => {
 });
 
 export const createClient = createAsyncThunk('clients/create', async (client) => {
-  const { data } = await addClient(client);
+  const { data } = await createClient(client);
   return data;
 });
 

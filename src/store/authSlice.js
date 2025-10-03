@@ -1,6 +1,6 @@
 // src/store/authSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { loginUser, getMe} from '@/services/api';
+import { loginUser, getMe } from '@/services/api';
 
 
 export const loginUserThunk = createAsyncThunk(
@@ -24,12 +24,7 @@ const { data } = await getMe();
 return { user: data.user };
 } catch (e) {
 // attempt refresh if available
-try {
-const { data } = await refreshSession();
-return { token: data.token, user: data.user };
-} catch (err) {
-return rejectWithValue('Session expired');
-}
+return rejectWithValue(e.response?.data?.message || 'Session bootstrap failed');
 }
 }
 );

@@ -1,12 +1,13 @@
 // store/analyticsSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getBillableStats, getInvoiceStats, getUnbilledBillables } from '@/services/api';
+import { getBillableAnalytics, getInvoiceAnalytics, getUnbilledAnalytics } from '@/services/api';
+
 
 export const fetchAnalytics = createAsyncThunk('analytics/fetch', async () => {
   const [billableRes, invoiceRes, unbilledRes] = await Promise.all([
-    getBillableStats(),
-    getInvoiceStats(),
-    getUnbilledBillables(),
+    getBillableAnalytics(),
+    getInvoiceAnalytics(),
+    getUnbilledAnalytics(),
   ]);
 
   const billable = normalizeBillable(billableRes?.data);

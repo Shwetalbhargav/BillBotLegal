@@ -1,6 +1,6 @@
 // src/store/usersSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { fetchUsers, getMe, updateMe } from '@/services/api';
+import { listUsers, getMe, updateUser } from '@/services/api';
 
 
 export const getMeThunk = createAsyncThunk('users/getMe', async (_, { rejectWithValue }) => {
@@ -12,19 +12,24 @@ return rejectWithValue(err.response?.data?.error || 'Failed to load profile');
 }
 });
 
-export const updateMeThunk = createAsyncThunk('users/updateMe', async (payload, { rejectWithValue }) => {
-try {
-const { data } = await updateMe(payload);
-return data.user; // updated user
-} catch (err) {
-return rejectWithValue(err.response?.data?.error || 'Failed to update profile');
-}
-});
+export const updateMeThunk = createAsyncThunk(
+  'users/updateMe',
+  async (payload, { getState, rejectWithValue }) => {
+    try {
+      const meId = getState()?.users?.me?.id || getState()?.users?.me?._id;
+      if (!meId) throw new Error('Missing current user id');
+      const { data } = await updateUser(meId, payload);
+      return data.user || data; // updated user
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.error || err.message || 'Failed to update profile');
+    }
+  }
+);
 
 
 export const fetchUsersThunk = createAsyncThunk('users/fetch', async (params, { rejectWithValue }) => {
 try {
-const { data } = await fetchUsers(params); // { items, total, page, limit }
+const { data } = await listUsers(params); // { items, total, page, limit }
 return data;
 } catch (err) {
 return rejectWithValue(err.response?.data?.error || 'Failed to fetch users');

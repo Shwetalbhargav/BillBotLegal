@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getCases, addCase, updateCase, deleteCase } from '@/services/api';
+import { getCases, createCase, updateCase, deleteCase } from '@/services/api';
 
 export const fetchCases = createAsyncThunk('cases/fetch', async () => {
   const { data } = await getCases();
@@ -7,7 +7,7 @@ export const fetchCases = createAsyncThunk('cases/fetch', async () => {
 });
 
 export const createCase = createAsyncThunk('cases/create', async (caseData) => {
-  const { data } = await addCase(caseData);
+  const { data } = await createCase(caseData);
   return data;
 });
 

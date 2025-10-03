@@ -1,8 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getBillables, addBillable, updateBillable, deleteBillable } from '@/services/api';
+import { getBillables, createBillable, updateBillable, deleteBillable } from '@/services/api';
 
 export const fetchBillables = createAsyncThunk('billables/fetch', async () => {
-  const { data } = await getBillables();
+  const { data } = await createBillable(billable);
   return data;
 });
 

@@ -1,5 +1,7 @@
 // src/services/api.js
-// Assumes you have an axios instance exported as `apiClient`
+import apiClient from './interceptors'
+
+
 
 // ---------- helpers ----------
 const qs = (params = {}) => {
@@ -185,6 +187,23 @@ const simpleProfile = (base) => ({
   update: (id, payload = {}) => apiClient.put(base, { id, ...payload }),
   remove: (id) => apiClient.delete(base, { data: { id } }),
 });
+
+ 
+
+// Adapter for profileSliceFactory (unifies method names)
+export const partnerProfiles = {
+  // reads
+  getMine: getMyPartnerProfile,
+  getByUserId: getPartnerProfileByUser,
+  getById: getPartnerProfileById,
+  list: listPartnerProfiles,
+  // writes
+  create: createPartnerProfile,
+  update: updatePartnerProfileById,
+  remove: deletePartnerProfileById,
+};
+
+
 
 export const lawyerProfiles = simpleProfile("/api/lawyer-profiles");
 export const associateProfiles = simpleProfile("/api/associate-profiles");
