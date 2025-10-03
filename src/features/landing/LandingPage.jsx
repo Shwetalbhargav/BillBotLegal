@@ -298,7 +298,7 @@ export default function LandingPage() {
     });
     const arr = Array.from(m.entries()).map(([name, value]) => ({ id: name, name, value }));
     const sorted = [...arr].sort((a, b) => b.value - a.value);
-    const q = Math.ceil(sorted.length / 4) || 1;
+
     return sorted.slice(0, q);
   }, [billable]);
 
