@@ -7,17 +7,21 @@ import {
   deleteClient as deleteClientAPI,
 } from '@/services/api';
 
-export const fetchClients = createAsyncThunk('clients/fetch', async () => {
+// Thunks (renamed to avoid any collision with API function names)
+export const fetchClientsThunk = createAsyncThunk('clients/fetch', async () => {
   const { data } = await getClients();
   return data;
 });
 
-export const createClient = createAsyncThunk('clients/create', async (client) => {
-  const { data } = await createClientAPI(client);
-  return data;
-});
+export const createClientThunk = createAsyncThunk(
+  'clients/create',
+  async (client) => {
+    const { data } = await createClientAPI(client);
+    return data;
+  }
+);
 
-export const editClient = createAsyncThunk(
+export const updateClientThunk = createAsyncThunk(
   'clients/update',
   async ({ id, client }) => {
     const { data } = await updateClientAPI(id, client);
@@ -25,10 +29,13 @@ export const editClient = createAsyncThunk(
   }
 );
 
-export const removeClient = createAsyncThunk('clients/delete', async (id) => {
-  await deleteClientAPI(id);
-  return id;
-});
+export const deleteClientThunk = createAsyncThunk(
+  'clients/delete',
+  async (id) => {
+    await deleteClientAPI(id);
+    return id;
+  }
+);
 
 const clientSlice = createSlice({
   name: 'clients',
@@ -36,26 +43,40 @@ const clientSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(fetchClients.pending, (state) => {
+      // fetch
+      .addCase(fetchClientsThunk.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
-      .addCase(fetchClients.fulfilled, (state, action) => {
+      .addCase(fetchClientsThunk.fulfilled, (state, action) => {
         state.loading = false;
         state.list = action.payload;
       })
-      .addCase(fetchClients.rejected, (state, action) => {
+      .addCase(fetchClientsThunk.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message;
+        state.error = action.error?.message || 'Failed to fetch clients';
       })
-      .addCase(createClient.fulfilled, (state, action) => {
+      // create
+      .addCase(createClientThunk.fulfilled, (state, action) => {
         state.list.push(action.payload);
       })
-      .addCase(editClient.fulfilled, (state, action) => {
+      .addCase(createClientThunk.rejected, (state, action) => {
+        state.error = action.error?.message || 'Failed to create client';
+      })
+      // update
+      .addCase(updateClientThunk.fulfilled, (state, action) => {
         const idx = state.list.findIndex((c) => c._id === action.payload._id);
         if (idx !== -1) state.list[idx] = action.payload;
       })
-      .addCase(removeClient.fulfilled, (state, action) => {
+      .addCase(updateClientThunk.rejected, (state, action) => {
+        state.error = action.error?.message || 'Failed to update client';
+      })
+      // delete
+      .addCase(deleteClientThunk.fulfilled, (state, action) => {
         state.list = state.list.filter((c) => c._id !== action.payload);
+      })
+      .addCase(deleteClientThunk.rejected, (state, action) => {
+        state.error = action.error?.message || 'Failed to delete client';
       });
   },
 });
