@@ -1,3 +1,4 @@
+// src/pages/LandingPage.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
@@ -18,14 +19,14 @@ import {
   CartesianGrid,
 } from "recharts";
 
-// ====== Local components (keep your existing ones) ======
+// ====== Local components ======
 import NavBar from "@/components/layout/NavBar";
 import Footer from "@/components/layout/Footer";
-import { Button, Badge } from "@/components/common"; // uses your existing design system
+import { Button, Badge } from "@/components/common";
 
 // ====== Redux thunks & selectors ======
 import { fetchAnalytics } from "@/store/analyticsSlice"; // billable+invoice+unbilled
-import { fetchClients } from "@/store/clientSlice";
+import { fetchClientsThunk } from "@/store/clientSlice"; // ✅ correct thunk name after rename
 import { fetchCases } from "@/store/caseSlice";
 import { fetchInvoices } from "@/store/invoiceSlice";
 import { fetchUsersThunk, getMeThunk, selectMe, selectUsers } from "@/store/usersSlice";
@@ -50,11 +51,8 @@ const theme = {
   primary: "#0b3b5a", // deep navy
   accent: "#c5a156", // gold
   surface: "#0b3b5a0d", // 5% navy
-  muted: "#6b7280",
-  good: "#16a34a",
-  bad: "#dc2626",
 };
-const COLORS = ["#2563eb", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6", "#14b8a6"]; // recharts category palette
+const COLORS = ["#2563eb", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6", "#14b8a6"];
 
 // ====== Reusable UI ======
 function Card({ title, icon: Icon, rightSlot, children, className = "" }) {
@@ -136,10 +134,10 @@ function ChartSwitcher({ data, view, setView, height = 260 }) {
               </tr>
             </thead>
             <tbody>
-              {data.map((row) => (
+              {(data || []).map((row) => (
                 <tr key={row.id} className="border-t" style={{ borderColor: theme.surface }}>
                   <td className="py-2 pr-4">{row.name}</td>
-                  <td className="py-2 font-medium">{Intl.NumberFormat().format(row.value)}</td>
+                  <td className="py-2 font-medium">{Intl.NumberFormat().format(row.value || 0)}</td>
                 </tr>
               ))}
             </tbody>
@@ -150,10 +148,10 @@ function ChartSwitcher({ data, view, setView, height = 260 }) {
       {view === "bar" && (
         <div style={{ width: "100%", height }}>
           <ResponsiveContainer>
-            <BarChart data={data}>
+            <BarChart data={data || []}>
               {common}
               <Bar dataKey="value">
-                {data.map((_, i) => (
+                {(data || []).map((_, i) => (
                   <Cell key={`c-${i}`} fill={COLORS[i % COLORS.length]} />
                 ))}
               </Bar>
@@ -165,7 +163,7 @@ function ChartSwitcher({ data, view, setView, height = 260 }) {
       {view === "line" && (
         <div style={{ width: "100%", height }}>
           <ResponsiveContainer>
-            <LineChart data={data}>
+            <LineChart data={data || []}>
               {common}
               <Line type="monotone" dataKey="value" stroke={theme.primary} dot={false} />
             </LineChart>
@@ -177,8 +175,8 @@ function ChartSwitcher({ data, view, setView, height = 260 }) {
         <div style={{ width: "100%", height }}>
           <ResponsiveContainer>
             <PieChart>
-              <Pie data={data} innerRadius={50} outerRadius={90} dataKey="value" nameKey="name">
-                {data.map((_, i) => (
+              <Pie data={data || []} innerRadius={50} outerRadius={90} dataKey="value" nameKey="name">
+                {(data || []).map((_, i) => (
                   <Cell key={`p-${i}`} fill={COLORS[i % COLORS.length]} />
                 ))}
               </Pie>
@@ -192,17 +190,7 @@ function ChartSwitcher({ data, view, setView, height = 260 }) {
   );
 }
 
-// ====== Helpers ======
-function toNameValueRows(raw, nameKey = "name", valueKey = "value") {
-  if (!raw) return [];
-  const items = Array.isArray(raw) ? raw : raw.entries || raw.items || [];
-  return items.map((r, i) => ({
-    id: r.id || r._id || i,
-    name: r[nameKey] || r.client || r.clientName || r.case || r.caseTitle || `Item ${i + 1}`,
-    value: Number(r[valueKey] ?? r.revenue ?? r.total ?? r.hours ?? 0) || 0,
-  }));
-}
-
+// ====== Page ======
 export default function LandingPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -211,9 +199,9 @@ export default function LandingPage() {
   const me = useSelector(selectMe);
   const users = useSelector(selectUsers) || [];
   const analytics = useSelector((s) => s.analytics) || {};
-  const clients = useSelector((s) => s.clients.list) || [];
-  const cases = useSelector((s) => s.cases.list) || [];
-  const invoices = useSelector((s) => s.invoices.list) || [];
+  const clients = useSelector((s) => s.clients?.list) || [];
+  const cases = useSelector((s) => s.cases?.list) || [];
+  const invoices = useSelector((s) => s.invoices?.list) || [];
 
   const [revenueView, setRevenueView] = useState("line");
   const [casesView, setCasesView] = useState("bar");
@@ -223,20 +211,29 @@ export default function LandingPage() {
     dispatch(getMeThunk());
     dispatch(fetchAnalytics());
     dispatch(fetchUsersThunk({ limit: 100 }));
-    dispatch(fetchClients());
+    dispatch(fetchClientsThunk());          // ✅ correct
     dispatch(fetchCases());
     dispatch(fetchInvoices());
   }, [dispatch]);
 
   // ====== Derived metrics ======
-  const partners = useMemo(() => users.filter((u) => /partner/i.test(u.role || "")), [users]);
-  const lawyers = useMemo(() => users.filter((u) => /lawyer|associate/i.test(u.role || "")), [users]);
-  const interns = useMemo(() => users.filter((u) => /intern/i.test(u.role || "")), [users]);
+  const partners = useMemo(
+    () => users.filter((u) => /partner/i.test((u.role || "").toString())),
+    [users]
+  );
+  const lawyers = useMemo(
+    () => users.filter((u) => /lawyer|associate/i.test((u.role || "").toString())),
+    [users]
+  );
+  const interns = useMemo(
+    () => users.filter((u) => /intern/i.test((u.role || "").toString())),
+    [users]
+  );
 
   const caseBuckets = useMemo(() => {
     const counts = { Won: 0, Settled: 0, Lost: 0, Active: 0 };
     (cases || []).forEach((c) => {
-      const s = (c.status || "").toLowerCase();
+      const s = ((c.status || c.caseStatus || "") + "").toLowerCase();
       if (s.includes("won")) counts.Won++;
       else if (s.includes("settled")) counts.Settled++;
       else if (s.includes("lost")) counts.Lost++;
@@ -246,22 +243,28 @@ export default function LandingPage() {
   }, [cases]);
 
   const revenueSeries = useMemo(() => {
-    // Build monthly revenue from invoices or analytics.invoice.entries
-    const rows = (analytics.invoice?.entries?.length ? analytics.invoice.entries : invoices) || [];
+    // Prefer analytics.invoice.entries; fall back to invoices list
+    const rows = (analytics?.invoice?.entries?.length ? analytics.invoice.entries : invoices) || [];
     const byMonth = new Map();
     rows.forEach((r) => {
-      const d = r.date ? new Date(r.date) : null;
-      const key = d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}` : "Unknown";
-      const rev = Number(r.revenue ?? r.totalRevenue ?? 0) || 0;
+      const dRaw = r.date || r.issuedAt || r.createdAt;
+      const d = dRaw ? new Date(dRaw) : null;
+      const key = d && !isNaN(d) ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}` : "Unknown";
+      const rev = Number(
+        r.revenue ?? r.totalRevenue ?? r.total ?? r.amount ?? 0
+      ) || 0;
       byMonth.set(key, (byMonth.get(key) || 0) + rev);
     });
-    const arr = Array.from(byMonth.entries())
+    return Array.from(byMonth.entries())
       .sort(([a], [b]) => (a > b ? 1 : -1))
       .map(([k, v], i) => ({ id: i, name: k, value: v }));
-    return arr;
   }, [invoices, analytics]);
 
-  const totalRevenue = useMemo(() => revenueSeries.reduce((s, r) => s + r.value, 0), [revenueSeries]);
+  const totalRevenue = useMemo(
+    () => (revenueSeries || []).reduce((s, r) => s + (r.value || 0), 0),
+    [revenueSeries]
+  );
+
   const winRate = useMemo(() => {
     const w = caseBuckets.find((x) => x.name === "Won")?.value || 0;
     const l = caseBuckets.find((x) => x.name === "Lost")?.value || 0;
@@ -270,10 +273,10 @@ export default function LandingPage() {
   }, [caseBuckets]);
 
   // Leaderboards (by revenue/hours from analytics.billable)
-  const billable = analytics.billable?.entries || [];
+  const billable = analytics?.billable?.entries || [];
   const perfByUser = useMemo(() => {
     const m = new Map();
-    billable.forEach((b) => {
+    (billable || []).forEach((b) => {
       const key = b.user || b.userName || "Unknown";
       const rev = Number(b.revenue || 0);
       const hrs = Number(b.hours || 0);
@@ -285,21 +288,34 @@ export default function LandingPage() {
     return Array.from(m.values()).sort((a, b) => b.revenue - a.revenue);
   }, [billable]);
 
-  const topLawyers = useMemo(() => perfByUser.filter((u) => lawyers.some((l) => (l.name || l.fullName) === u.user)).slice(0, 5), [perfByUser, lawyers]);
-  const topInterns = useMemo(() => perfByUser.filter((u) => interns.some((l) => (l.name || l.fullName) === u.user)).slice(0, 5), [perfByUser, interns]);
+  const topLawyers = useMemo(
+    () =>
+      perfByUser
+        .filter((u) => lawyers.some((l) => (l.name || l.fullName) === u.user))
+        .slice(0, 5),
+    [perfByUser, lawyers]
+  );
+  const topInterns = useMemo(
+    () =>
+      perfByUser
+        .filter((u) => interns.some((l) => (l.name || l.fullName) === u.user))
+        .slice(0, 5),
+    [perfByUser, interns]
+  );
 
-  // Prestigious clients (simple heuristic: clients with revenue in top quartile)
+  // Prestigious clients (top quartile by revenue)
   const clientPerf = useMemo(() => {
     const m = new Map();
-    billable.forEach((b) => {
+    (billable || []).forEach((b) => {
       const key = b.client || b.clientName || "Client";
       const rev = Number(b.revenue || 0);
       m.set(key, (m.get(key) || 0) + rev);
     });
     const arr = Array.from(m.entries()).map(([name, value]) => ({ id: name, name, value }));
     const sorted = [...arr].sort((a, b) => b.value - a.value);
-
-    return sorted.slice(0, q);
+    if (sorted.length === 0) return [];
+    const cutoff = Math.max(1, Math.ceil(sorted.length / 4)); // at least 1 item
+    return sorted.slice(0, cutoff);
   }, [billable]);
 
   // ====== UI ======
@@ -308,8 +324,14 @@ export default function LandingPage() {
       <div className="relative overflow-hidden">
         {/* Decorative backdrop */}
         <div className="absolute inset-0 -z-10">
-          <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full" style={{ background: "radial-gradient(600px at 100% 0%, #c5a15622, transparent 60%)" }} />
-          <div className="absolute -bottom-24 -left-24 h-[28rem] w-[28rem] rounded-full" style={{ background: "radial-gradient(600px at 0% 100%, #0b3b5a22, transparent 60%)" }} />
+          <div
+            className="absolute -top-24 -right-24 h-96 w-96 rounded-full"
+            style={{ background: "radial-gradient(600px at 100% 0%, #c5a15622, transparent 60%)" }}
+          />
+          <div
+            className="absolute -bottom-24 -left-24 h-[28rem] w-[28rem] rounded-full"
+            style={{ background: "radial-gradient(600px at 0% 100%, #0b3b5a22, transparent 60%)" }}
+          />
         </div>
 
         <NavBar />
@@ -322,9 +344,9 @@ export default function LandingPage() {
                 <Sparkles size={14} /> New
               </Badge>
               <h1 className="text-3xl md:text-5xl font-semibold mt-3 leading-tight" style={{ color: theme.primary }}>
-                {me ? `Welcome, ${me.name.split(" ")[0]} —` : "Modernize your firm —"}
+                {me ? `Welcome, ${String(me.name || me.fullName || "there").split(" ")[0]} —` : "Modernize your firm —"}
                 <br />
-                <span className="text-slate-800">a glamorous, data‑driven legal hub.</span>
+                <span className="text-slate-800">a glamorous, data-driven legal hub.</span>
               </h1>
               <p className="mt-4 text-slate-600">
                 Fetches user details, showcases prestigious clients, partner memos, leaderboards and living revenue charts. Built for real firms — not a college project.
@@ -340,7 +362,13 @@ export default function LandingPage() {
                 <Metric label="Partners" value={partners.length} icon={Award} />
                 <Metric label="Lawyers" value={lawyers.length} icon={Users} />
                 <Metric label="Active Clients" value={clients.length} icon={Building2} />
-                <Metric label="Win Rate" value={`${winRate}%`} icon={Trophy} trend={`${caseBuckets.find((x)=>x.name==='Won')?.value||0} won`} trendColor="text-emerald-600" />
+                <Metric
+                  label="Win Rate"
+                  value={`${winRate}%`}
+                  icon={Trophy}
+                  trend={`${caseBuckets.find((x) => x.name === "Won")?.value || 0} won`}
+                  trendColor="text-emerald-600"
+                />
               </div>
             </motion.div>
 
@@ -389,11 +417,13 @@ export default function LandingPage() {
                   <div key={c.id} className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="h-8 w-8 rounded-full grid place-items-center text-xs font-semibold" style={{ background: theme.surface, color: theme.primary }}>
-                        {c.name?.slice(0, 2).toUpperCase()}
+                        {(c.name || "C").slice(0, 2).toUpperCase()}
                       </div>
                       <div className="text-sm text-slate-800">{c.name}</div>
                     </div>
-                    <div className="text-sm font-medium text-slate-700">${Intl.NumberFormat().format(Math.round(c.value))}</div>
+                    <div className="text-sm font-medium text-slate-700">
+                      ${Intl.NumberFormat().format(Math.round(c.value || 0))}
+                    </div>
                   </div>
                 ))}
                 {clientPerf.length === 0 && <div className="text-sm text-slate-500">No client data yet.</div>}
@@ -409,13 +439,13 @@ export default function LandingPage() {
           <Card title="Firm Revenue (Monthly)" icon={TrendingUp} rightSlot={<span className="text-xs text-slate-500">Invoices & analytics</span>}>
             <ChartSwitcher data={revenueSeries} view={revenueView} setView={setRevenueView} />
             <div className="mt-4 flex items-center justify-end text-sm text-slate-600">
-              Total: <span className="font-semibold text-slate-800 ml-1">${Intl.NumberFormat().format(Math.round(totalRevenue))}</span>
+              Total: <span className="font-semibold text-slate-800 ml-1">${Intl.NumberFormat().format(Math.round(totalRevenue || 0))}</span>
             </div>
           </Card>
         </div>
       </section>
 
-      {/* Partners memo & profiles */}
+      {/* Partner Memos */}
       <section className="py-10 bg-slate-50/60">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex items-end justify-between mb-4">
@@ -451,16 +481,20 @@ export default function LandingPage() {
 
       {/* Leaderboards */}
       <section className="py-10">
-        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-6">
+        <div className="max-w-7xl mx_auto px-6 grid lg:grid-cols-2 gap-6">
           <Card title="Top Lawyers" icon={Award}>
             <div className="space-y-3">
-              {topLawyers.map((u, i) => (
+              {topLawyers.map((u) => (
                 <div key={u.user} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-full grid place-items-center text-xs font-semibold" style={{ background: theme.surface, color: theme.primary }}>{(u.user || "U").split(" ").map((x)=>x[0]).slice(0,2).join("")}</div>
+                    <div className="h-8 w-8 rounded-full grid place-items-center text-xs font-semibold" style={{ background: theme.surface, color: theme.primary }}>
+                      {(u.user || "U").split(" ").map((x)=>x[0]).slice(0,2).join("")}
+                    </div>
                     <div className="text-sm text-slate-800">{u.user}</div>
                   </div>
-                  <div className="text-sm text-slate-700">${Intl.NumberFormat().format(Math.round(u.revenue))} · {u.hours.toFixed(1)}h</div>
+                  <div className="text-sm text-slate-700">
+                    ${Intl.NumberFormat().format(Math.round(u.revenue || 0))} · {(u.hours || 0).toFixed(1)}h
+                  </div>
                 </div>
               ))}
               {topLawyers.length === 0 && <div className="text-sm text-slate-600">No lawyer performance yet.</div>}
@@ -468,13 +502,17 @@ export default function LandingPage() {
           </Card>
           <Card title="Top Interns" icon={Users}>
             <div className="space-y-3">
-              {topInterns.map((u, i) => (
+              {topInterns.map((u) => (
                 <div key={u.user} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-full grid place-items-center text-xs font-semibold" style={{ background: theme.surface, color: theme.primary }}>{(u.user || "U").split(" ").map((x)=>x[0]).slice(0,2).join("")}</div>
+                    <div className="h-8 w-8 rounded-full grid place-items-center text-xs font-semibold" style={{ background: theme.surface, color: theme.primary }}>
+                      {(u.user || "U").split(" ").map((x)=>x[0]).slice(0,2).join("")}
+                    </div>
                     <div className="text-sm text-slate-800">{u.user}</div>
                   </div>
-                  <div className="text-sm text-slate-700">${Intl.NumberFormat().format(Math.round(u.revenue))} · {u.hours.toFixed(1)}h</div>
+                  <div className="text-sm text-slate-700">
+                    ${Intl.NumberFormat().format(Math.round(u.revenue || 0))} · {(u.hours || 0).toFixed(1)}h
+                  </div>
                 </div>
               ))}
               {topInterns.length === 0 && <div className="text-sm text-slate-600">No intern performance yet.</div>}
