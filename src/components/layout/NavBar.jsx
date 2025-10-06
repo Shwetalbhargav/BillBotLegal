@@ -1,186 +1,221 @@
-// src/components/layout/NavBar.jsx
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+// ===============================
+// File: src/components/layout/NavBar.jsx (updated to show admin photo & link to Admin Profile)
+// ===============================
+import React, { useEffect, useRef, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import logo from "@/assets/logo.png";
 import { Button } from "@/components/common";
+import { ThemeSwitch } from "@/components/common/ThemeProvider";
 import useAuth from "@/hooks/useAuth";
-import { Bell, Menu, X } from "lucide-react";
+import { Bell, Menu, X, ChevronDown } from "lucide-react";
+
+const NAV_ITEMS = [
+  { to: "/#cases", label: "Cases" },
+  { to: "/#clients", label: "Clients" },
+  { to: "/#partners", label: "Partners" },
+];
 
 export default function NavBar() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated, logout, user } = useAuth();
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  // Right-side nav items (now sit beside the bell on desktop)
-  const menuItems = [
-    { to: "/#cases", label: "Cases" },
-    { to: "/#clients", label: "Clients" },
-    { to: "/#partners", label: "Partners" },
-  ];
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef(null);
+
+  // Close profile dropdown on outside click
+  useEffect(() => {
+    function onDocClick(e) {
+      if (!profileRef.current) return;
+      if (!profileRef.current.contains(e.target)) setProfileOpen(false);
+    }
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
+
+  // Close mobile on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname, location.hash]);
+
+  const go = (to) => navigate(to);
+
+  const linkBase =
+    "px-3 py-2 rounded-xl text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60";
+  const linkActive = "bg-indigo-50 text-indigo-700";
+  const linkIdle = "text-gray-700 hover:bg-white/70 hover:text-indigo-700";
+
+  // Use explicit admin photo from public unless user has a custom avatar
+  const avatarSrc = user?.avatar || "/partner/admin.jpg";
 
   return (
-    // Full-width light bar with bigger height
-    <header className="fixed top-0 left-0 w-full z-50 bg-gray-100 border-b border-gray-200">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* ~100px tall nav (nice, roomy) */}
-        <div className="h-[100px] flex items-center justify-between">
-          {/* Brand (bigger logo + highlighted product name) */}
-          <button
-            onClick={() => navigate("/")}
-            className="flex items-center gap-3 hover:opacity-90 transition"
-            aria-label="Go to home"
-          >
-            <img
-              src={logo}
-              alt="Legal Billables"
-              className="h-14 w-14 rounded-xl object-contain" // larger logo
-            />
-            {/* Highlighted product name: stronger weight, larger font, accent color */}
-            <span className="text-2xl font-extrabold tracking-tight text-indigo-800">
-              Legal Billables
-            </span>
-          </button>
+    <header className="fixed inset-x-0 top-0 z-50">
+      {/* Glassy bar */}
+      <div className="backdrop-blur-md bg-white/70 dark:bg-gray-900/60 border-b border-gray-200/70 dark:border-white/10 shadow-sm">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="h-16 sm:h-20 flex items-center justify-between">
+            {/* Brand */}
+            <button
+              onClick={() => go("/")}
+              className="flex items-center gap-3 hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60 rounded-xl"
+              aria-label="Go to home"
+            >
+              <img
+                src={logo}
+                alt="Legal Billables"
+                className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl object-contain border border-gray-200/70"
+              />
+              <span className="text-xl sm:text-2xl font-extrabold tracking-tight text-indigo-800 dark:text-indigo-300">
+                Legal Billables
+              </span>
+            </button>
 
-          {/* Right cluster: menu (moved here), bell, profile/login */}
-          <div className="flex items-center gap-5">
-            {/* Desktop menu now on the right, next to bell */}
+            {/* Desktop nav */}
             <nav className="hidden md:flex items-center gap-2">
-              {menuItems.map((i) => (
-                <button
-                  key={i.to}
-                  onClick={() => navigate(i.to)}
-                  className="px-4 py-2.5 rounded-md text-base font-semibold text-slate-700 hover:bg-white hover:shadow-sm hover:text-indigo-700 transition"
-                >
-                  {i.label}
-                </button>
-              ))}
+              {NAV_ITEMS.map((item) => {
+                const isActive =
+                  location.hash === item.to.replace("/", "") ||
+                  location.pathname + location.hash === item.to;
+                return (
+                  <button
+                    key={item.to}
+                    onClick={() => go(item.to)}
+                    className={`${linkBase} ${isActive ? linkActive : linkIdle}`}
+                  >
+                    {item.label}
+                  </button>
+                );
+              })}
             </nav>
 
-            {/* Notifications */}
-            <button
-              type="button"
-              className="relative rounded-full p-3 text-gray-600 hover:text-indigo-700 hover:bg-white transition"
-              aria-label="Notifications"
-              title="Notifications"
-            >
-              <Bell className="w-6 h-6" />
-            </button>
+            {/* Right cluster */}
+            <div className="flex items-center gap-2 sm:gap-3">
+              {/* Theme */}
+              <ThemeSwitch className="hidden sm:inline-flex" />
 
-            {/* Auth */}
-            {isAuthenticated ? (
-              /* Profile dropdown (desktop) */
-              <div className="relative hidden md:block">
-                <button
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="flex items-center"
-                >
-                  <img
-                    src={user?.avatar || "https://via.placeholder.com/56"}
-                    alt="profile"
-                    className="h-12 w-12 rounded-full border border-gray-300"
-                  />
-                </button>
-                <div
-                  className={`absolute right-0 mt-2 w-56 bg-white border rounded-md shadow-lg py-1 text-sm transform transition-all duration-200 ease-out origin-top-right ${
-                    dropdownOpen
-                      ? "opacity-100 scale-100"
-                      : "opacity-0 scale-95 pointer-events-none"
-                  }`}
-                >
-                  <button
-                    onClick={() => navigate("/profile")}
-                    className="block w-full px-4 py-2 text-left hover:bg-gray-50"
-                  >
-                    Profile Settings
-                  </button>
-                  <button
-                    onClick={() => navigate("/settings")}
-                    className="block w-full px-4 py-2 text-left hover:bg-gray-50"
-                  >
-                    General Settings
-                  </button>
-                  <button
-                    onClick={logout}
-                    className="block w-full px-4 py-2 text-left text-red-600 hover:bg-gray-50"
-                  >
-                    Logout
-                  </button>
-                </div>
-              </div>
-            ) : (
-              // Bigger login button to match taller navbar
-              <Button
-                variant="primary"
-                size="lg"
-                onClick={() => navigate("/login")}
-                className="text-base px-5 py-3"
+              {/* Notifications */}
+              <button
+                type="button"
+                className="relative rounded-2xl p-2.5 text-gray-600 hover:text-indigo-700 hover:bg-white/70 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60"
+                aria-label="Notifications"
+                title="Notifications"
               >
-                Login
-              </Button>
-            )}
+                <Bell className="w-5 h-5" />
+              </button>
 
-            {/* Mobile hamburger (right edge) */}
-            <button
-              className="md:hidden flex items-center text-gray-700 hover:text-indigo-700 transition"
-              onClick={() => setMobileOpen(!mobileOpen)}
-              aria-label="Open menu"
-            >
-              {mobileOpen ? <X className="w-7 h-7" /> : <Menu className="w-7 h-7" />}
-            </button>
+              {/* Auth */}
+              {isAuthenticated ? (
+                <div className="relative" ref={profileRef}>
+                  <button
+                    onClick={() => setProfileOpen((v) => !v)}
+                    className="flex items-center gap-2 rounded-2xl px-2 py-1.5 hover:bg-white/70 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60"
+                    aria-expanded={profileOpen}
+                    aria-haspopup="menu"
+                  >
+                    <img
+                      src={avatarSrc}
+                      alt="Profile"
+                      className="h-9 w-9 rounded-full border border-gray-200/70 object-cover"
+                    />
+                    <ChevronDown className="h-4 w-4 text-gray-500" />
+                  </button>
+
+                  {/* Dropdown */}
+                  <div
+                    className={`absolute right-0 mt-2 w-56 rounded-2xl border border-gray-200/70 bg-white dark:bg-gray-900 shadow-lg p-1 transition
+                    ${profileOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1 pointer-events-none"}`}
+                    role="menu"
+                    aria-label="Profile"
+                  >
+                    {/* Link directly to Admin Profile */}
+                    <MenuItem onClick={() => go("/admin/profile")}>Admin Profile</MenuItem>
+                    <MenuItem onClick={() => go("/settings")}>General Settings</MenuItem>
+                    <MenuItem onClick={logout} tone="danger">Logout</MenuItem>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={() => go("/login")}
+                  className="hidden sm:inline-flex"
+                >
+                  Login
+                </Button>
+              )}
+
+              {/* Mobile toggles */}
+              <ThemeSwitch className="sm:hidden" />
+              <button
+                className="md:hidden inline-flex items-center rounded-2xl p-2.5 text-gray-700 hover:text-indigo-700 hover:bg-white/70 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60"
+                onClick={() => setMobileOpen((v) => !v)}
+                aria-label="Toggle menu"
+              >
+                {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Mobile drawer (includes menu + auth) */}
+      {/* Mobile drawer */}
       <div
-        className={`md:hidden transform transition-all duration-300 ease-in-out origin-top ${
-          mobileOpen
-            ? "max-h-[700px] opacity-100 scale-100"
-            : "max-h-0 opacity-0 scale-95 overflow-hidden"
-        }`}
+        className={`md:hidden bg-white dark:bg-gray-900 border-b border-gray-200/70 dark:border-white/10 shadow-sm transition-all overflow-hidden
+        ${mobileOpen ? "max-h-[480px] opacity-100" : "max-h-0 opacity-0"}`}
       >
-        <div className="bg-white border-t border-gray-200 shadow-sm px-4 py-4 space-y-2">
-          {/* Menu (mobile) */}
-          {menuItems.map((i) => (
-            <button
-              key={i.to}
-              onClick={() => {
-                navigate(i.to);
-                setMobileOpen(false);
-              }}
-              className="block w-full text-left px-4 py-3 rounded-md text-base font-semibold hover:bg-gray-50 hover:text-indigo-700 transition"
-            >
-              {i.label}
-            </button>
-          ))}
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3 space-y-2">
+          {/* Links */}
+          <nav className="grid gap-1">
+            {NAV_ITEMS.map((item) => (
+              <button
+                key={item.to}
+                onClick={() => go(item.to)}
+                className={`${linkBase} ${linkIdle} w-full text-left`}
+              >
+                {item.label}
+              </button>
+            ))}
+            {/* Direct mobile link to Admin Profile when logged in */}
+            {isAuthenticated && (
+              <button
+                onClick={() => go("/admin/profile")}
+                className={`${linkBase} ${linkIdle} w-full text-left`}
+              >
+                Admin Profile
+              </button>
+            )}
+          </nav>
 
-          {/* Auth (mobile) */}
+          {/* Auth */}
           {!isAuthenticated ? (
             <Button
               variant="primary"
-              size="lg"
-              className="w-full mt-2 text-base py-3"
-              onClick={() => {
-                navigate("/login");
-                setMobileOpen(false);
-              }}
+              size="md"
+              className="w-full mt-1"
+              onClick={() => go("/login")}
             >
               Login
             </Button>
           ) : (
-            <button
-              onClick={() => {
-                logout();
-                setMobileOpen(false);
-              }}
-              className="w-full text-left px-4 py-3 rounded-md text-base font-semibold text-red-600 hover:bg-gray-50 transition"
-            >
+            <Button variant="secondary" size="md" className="w-full mt-1" onClick={logout}>
               Logout
-            </button>
+            </Button>
           )}
         </div>
       </div>
     </header>
+  );
+}
+
+function MenuItem({ children, onClick, tone }) {
+  const base =
+    "w-full text-left px-3 py-2 rounded-xl text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60";
+  const idle = "text-gray-700 hover:bg-gray-50";
+  const danger = "text-rose-600 hover:bg-rose-50";
+  return (
+    <button onClick={onClick} className={`${base} ${tone === "danger" ? danger : idle}`} role="menuitem">
+      {children}
+    </button>
   );
 }

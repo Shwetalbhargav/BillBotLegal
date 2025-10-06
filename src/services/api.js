@@ -203,7 +203,17 @@ export const partnerProfiles = {
   remove: deletePartnerProfileById,
 };
 
+// Add these alongside existing exports.
+export const loginAdmin = (credentials) =>
+apiClient.post("/api/admin/login", credentials); // { email, password }
 
+
+export const getAdminMe = () =>
+apiClient.get("/api/admin/me");
+
+
+export const updateAdminMe = (payload) =>
+apiClient.patch("/api/admin/me", payload); // JSON body or multipart when uploading avatar
 
 export const lawyerProfiles = simpleProfile("/api/lawyer-profiles");
 export const associateProfiles = simpleProfile("/api/associate-profiles");

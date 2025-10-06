@@ -28,11 +28,12 @@ export default function Drawer({
 
   return (
     <div className="lb-reset fixed inset-0 z-[1000]">
-      <div className="absolute inset-0 bg-black/40" onClick={onBackdrop} />
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" onClick={onBackdrop} />
       <div
         ref={panelRef}
         className={clsx(
-          "absolute top-0 bottom-0 bg-[color:var(--lb-bg)] shadow-[var(--lb-shadow-lg)] border-l border-[color:var(--lb-border)] transition-transform",
+          "absolute top-0 bottom-0 bg-[color:var(--lb-surface)] shadow-[var(--lb-shadow-lg)]",
+          "border-l border-[color:var(--lb-border)] transition-transform",
           side === "right" ? "right-0" : "left-0"
         )}
         style={{ width }}
@@ -40,16 +41,16 @@ export default function Drawer({
         aria-modal="true"
       >
         <header className="flex items-center justify-between px-5 py-4 border-b border-[color:var(--lb-border)]">
-          <h2 className="text-[var(--lb-fs-lg)] m-0">{title}</h2>
+          <h2 className="text-[var(--lb-fs-lg)] m-0 text-[color:var(--lb-text)] font-semibold">{title}</h2>
           <button
-            className="rounded p-2 hover:bg-[color:var(--lb-surface)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lb-primary-600)]"
+            className="rounded-[var(--lb-radius-sm)] p-2 hover:bg-[color:var(--lb-bg)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lb-primary-600)]"
             onClick={onClose}
             aria-label="Close"
           >
             ✕
           </button>
         </header>
-        <div className="p-5 overflow-auto h-[calc(100%-60px)]">
+        <div className="p-5 overflow-auto h-[calc(100%-60px)] text-[color:var(--lb-text)]">
           {children}
         </div>
       </div>

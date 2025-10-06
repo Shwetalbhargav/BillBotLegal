@@ -1,38 +1,60 @@
+// src/components/form/Field.jsx
 import React, { useId } from "react";
 import { clsx } from "../../utils/clsx";
 
-/**
- * Shared wrapper for label/description/error and a11y wiring.
- * Generates ids and passes them to children via render props.
- */
-export default function FormField({
-  label,
-  description,
-  error,
-  required = false,
-  children,
-  className
-}) {
-  const id = useId();
-  const describedBy = [
-    description ? `${id}-desc` : null,
-    error ? `${id}-err` : null,
-  ].filter(Boolean).join(" ") || undefined;
 
-  return (
-    <div className={clsx("lb-reset lb-field", className)}>
-      {label && (
-        <label htmlFor={id} className="font-medium">
-          {label} {required && <span aria-hidden="true" className="text-[color:var(--lb-danger-600)]">*</span>}
-        </label>
-      )}
-      {children({ inputId: id, describedBy })}
-      {description && !error && (
-        <div id={`${id}-desc`} className="lb-help">{description}</div>
-      )}
-      {error && (
-        <div id={`${id}-err`} className="lb-error">{error}</div>
-      )}
-    </div>
-  );
+export default function Field({
+label,
+htmlFor,
+required = false,
+helper,
+error,
+className,
+children,
+}) {
+const autoId = useId();
+const id = htmlFor || autoId;
+const helperId = `${id}-help`;
+const errorId = `${id}-err`;
+
+
+const describedBy = clsx(error && errorId, helper && helperId)
+?.split(" ")
+.filter(Boolean)
+.join(" ");
+
+
+return (
+<div className={clsx("lb-reset flex flex-col gap-1", className)}>
+{label && (
+<label
+htmlFor={id}
+className="text-[color:var(--lb-text)] text-[var(--lb-fs-sm)] font-medium"
+>
+{label}
+{required && <span className="text-[color:var(--lb-danger-600)]"> *</span>}
+</label>
+)}
+{/* Clone child to inject id + aria wiring if input-like */}
+{React.isValidElement(children)
+? React.cloneElement(children, {
+id,
+...(describedBy ? { "aria-describedby": describedBy } : {}),
+...(error ? { "aria-invalid": true } : {}),
+})
+: children}
+
+
+{helper && !error && (
+<p id={helperId} className="m-0 text-[color:var(--lb-muted)] text-[12px]">
+{helper}
+</p>
+)}
+{error && (
+<p id={errorId} className="m-0 text-[color:var(--lb-danger-700)] text-[12px]">
+{error}
+</p>
+)}
+</div>
+);
 }

@@ -1,32 +1,39 @@
+// src/components/table/Pagination.jsx
 import React from "react";
-import { Button } from "@/components/common";
 
-export default function Pagination({ page, pageSize, total, onPageChange, onPageSizeChange }) {
-  const pages = Math.max(1, Math.ceil((total || 0) / (pageSize || 1)));
-  const start = total ? (page - 1) * pageSize + 1 : 0;
-  const end = Math.min(total || 0, page * pageSize);
 
-  return (
-    <div className="lb-reset flex items-center justify-between gap-4 py-3">
-      <div className="text-sm text-[color:var(--lb-muted)]">
-        {total ? `Showing ${start}–${end} of ${total}` : "No records"}
-      </div>
-      <div className="flex items-center gap-2">
-        {onPageSizeChange && (
-          <select
-            className="lb-input py-1 text-sm"
-            value={pageSize}
-            onChange={(e)=>onPageSizeChange(Number(e.target.value))}
-          >
-            {[10,20,50,100].map(s => <option key={s} value={s}>{s}/page</option>)}
-          </select>
-        )}
-        <Button variant="secondary" size="sm" disabled={page<=1} onClick={()=>onPageChange(1)}>{'<<'}</Button>
-        <Button variant="secondary" size="sm" disabled={page<=1} onClick={()=>onPageChange(page-1)}>{'<'}</Button>
-        <span className="text-sm min-w-[80px] text-center">Page {page} / {pages}</span>
-        <Button variant="secondary" size="sm" disabled={page>=pages} onClick={()=>onPageChange(page+1)}>{'>'}</Button>
-        <Button variant="secondary" size="sm" disabled={page>=pages} onClick={()=>onPageChange(pages)}>{'>>'}</Button>
-      </div>
-    </div>
-  );
+function PageBtn({ disabled, active, children, onClick }) {
+return (
+<button
+type="button"
+disabled={disabled}
+onClick={onClick}
+className={[
+"h-8 min-w-8 px-2 rounded-[var(--lb-radius-sm)] border",
+active ? "bg-[color:var(--lb-primary-600)] text-white border-transparent" :
+"bg-[color:var(--lb-bg)] border-[color:var(--lb-border)] text-[color:var(--lb-text)]",
+"shadow-[var(--lb-shadow-xs)] disabled:opacity-50 disabled:cursor-not-allowed"
+].join(" ")}
+>
+{children}
+</button>
+);
+}
+
+
+export default function Pagination({ page, pages, onPage }) {
+if (pages <= 1) return null;
+const to = (p) => () => onPage(Math.max(1, Math.min(pages, p)));
+const nums = [page - 1, page, page + 1].filter((n) => n >= 1 && n <= pages);
+return (
+<div className="flex items-center gap-2 p-3">
+<PageBtn disabled={page === 1} onClick={to(1)}>{"«"}</PageBtn>
+<PageBtn disabled={page === 1} onClick={to(page - 1)}>{"‹"}</PageBtn>
+{nums.map((n) => (
+<PageBtn key={n} active={n === page} onClick={to(n)}>{n}</PageBtn>
+))}
+<PageBtn disabled={page === pages} onClick={to(page + 1)}>{"›"}</PageBtn>
+<PageBtn disabled={page === pages} onClick={to(pages)}>{"»"}</PageBtn>
+</div>
+);
 }

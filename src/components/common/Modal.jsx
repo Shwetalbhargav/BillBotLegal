@@ -10,10 +10,10 @@ export default function Modal({
   footer,
   size = "md", // sm | md | lg | xl
   preventCloseOnBackdrop = false,
+  hideClose = false,
 }) {
   const dialogRef = useRef(null);
   const triggerRef = useRef(null);
-
   useFocusTrap(dialogRef, triggerRef, open);
 
   useEffect(() => {
@@ -38,33 +38,40 @@ export default function Modal({
 
   return (
     <div
-      className="lb-reset fixed inset-0 z-[1000] flex items-center justify-center"
+      className="lb-reset fixed inset-0 z-[1000] grid place-items-center"
       aria-modal="true"
       role="dialog"
     >
-      <div className="absolute inset-0 bg-black/40" onClick={onBackdrop} />
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" onClick={onBackdrop} />
       <div
         ref={dialogRef}
         className={clsx(
-          "relative z-[1001] w-[90vw] rounded-[var(--lb-radius-lg)] bg-[color:var(--lb-bg)] shadow-[var(--lb-shadow-lg)]",
-          "border border-[color:var(--lb-border)]",
+          "relative z-[1001] w-[92vw] rounded-[var(--lb-radius-xl)]",
+          "bg-[color:var(--lb-surface)] border border-[color:var(--lb-border)]",
+          "shadow-[var(--lb-shadow-lg)]", // Soft‑UI elevated
           sizes[size]
         )}
       >
-        <header className="flex items-center justify-between px-5 py-4 border-b border-[color:var(--lb-border)]">
-          <h2 className="text-[var(--lb-fs-lg)] m-0">{title}</h2>
-          <button
-            className="rounded p-2 hover:bg-[color:var(--lb-surface)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lb-primary-600)]"
-            onClick={onClose}
-            aria-label="Close"
-            ref={triggerRef}
-          >
-            ✕
-          </button>
-        </header>
-        <div className="px-5 py-4">{children}</div>
+        {(title || !hideClose) && (
+          <header className="flex items-center justify-between gap-3 px-5 py-4 border-b border-[color:var(--lb-border)]">
+            <h2 className="m-0 text-[color:var(--lb-text)] text-[var(--lb-fs-lg)] font-semibold tracking-[-0.01em]">
+              {title}
+            </h2>
+            {!hideClose && (
+              <button
+                className="rounded-[var(--lb-radius-sm)] p-2 hover:bg-[color:var(--lb-bg)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lb-primary-600)]"
+                onClick={onClose}
+                aria-label="Close"
+                ref={triggerRef}
+              >
+                ✕
+              </button>
+            )}
+          </header>
+        )}
+        <div className="px-5 py-4 text-[color:var(--lb-text)]">{children}</div>
         {footer && (
-          <footer className="px-5 py-4 border-t border-[color:var(--lb-border)] flex justify-end gap-3">
+          <footer className="px-5 py-4 border-t border-[color:var(--lb-border)] flex justify-end gap-2 bg-[color:var(--lb-bg)] rounded-b-[var(--lb-radius-xl)]">
             {footer}
           </footer>
         )}

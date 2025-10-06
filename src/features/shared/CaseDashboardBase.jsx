@@ -766,3 +766,11 @@ function money(v, c = "INR") {
   const n = Number(v || 0);
   return new Intl.NumberFormat("en-IN", { style: "currency", currency: c }).format(n);
 }
+
+// every Base component signature
+export default function XxxxBase({
+  role,          // "admin" | "partner" | "lawyer" | "associate" | "intern"
+  readOnly,      // boolean
+  filters = {},  // e.g., { assignee: userId, author: userId }
+  mode,          // e.g., "approvals" for billables
+} = {}) { /* keep existing body; later we’ll read props where needed */ }

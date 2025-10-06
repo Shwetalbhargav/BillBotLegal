@@ -1,34 +1,29 @@
+// src/components/form/Select.jsx
 import React from "react";
-import FormField from "./FormField";
 import { clsx } from "../../utils/clsx";
 
-export default function Select({
-  label, description, error, required,
-  leftIcon, rightIcon, size = "md", children, ...props
-}) {
-  const sizes = {
-    sm: "py-1.5 text-[var(--lb-fs-sm)]",
-    md: "py-2 text-[var(--lb-fs-md)]",
-    lg: "py-2.5 text-[var(--lb-fs-lg)]",
-  };
-  return (
-    <FormField label={label} description={description} error={error} required={required}>
-      {({ inputId, describedBy }) => (
-        <div className="relative">
-          {leftIcon && <span className="absolute left-3 top-1/2 -translate-y-1/2 opacity-70" aria-hidden="true">{leftIcon}</span>}
-          <select
-            id={inputId}
-            className={clsx("lb-input appearance-none", sizes[size], leftIcon && "pl-9", rightIcon && "pr-9")}
-            aria-invalid={!!error}
-            aria-describedby={describedBy}
-            required={required}
-            {...props}
-          >
-            {children}
-          </select>
-          {rightIcon && <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 opacity-70" aria-hidden="true">{rightIcon}</span>}
-        </div>
-      )}
-    </FormField>
-  );
+
+export default function Select({ invalid = false, className, children, ...props }) {
+return (
+<div className={clsx("relative", className)}>
+<select
+className={clsx(
+"lb-reset w-full appearance-none rounded-[var(--lb-radius-md)] bg-[color:var(--lb-bg)]",
+"border border-[color:var(--lb-border)] shadow-[var(--lb-shadow-sm)]",
+"text-[color:var(--lb-text)] focus:outline-none focus-visible:ring-2",
+"focus-visible:ring-[color:var(--lb-primary-600)] px-3.5 h-10 text-[var(--lb-fs-md)]",
+invalid && "border-[color:var(--lb-danger-400)]"
+)}
+{...props}
+>
+{children}
+</select>
+<span
+aria-hidden
+className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2"
+>
+▾
+</span>
+</div>
+);
 }

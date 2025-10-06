@@ -1,87 +1,126 @@
-// Clients list using the shared DataTable pattern + UI primitives
+// ClientTable.jsx (Soft-UI Refactor)
 import React from "react";
-import DataTable from "@/components/table/DataTable";
-import TableToolbar, { ToolbarInput, ToolbarSelect } from "@/components/table/TableToolbar";
-import { Button, Badge } from "@/components/common";
+import EmptyState from "./EmptyState";
+import SkeletonRows from "./SkeletonRows";
+import { makeColumns, SOFT_TABLE, SoftHeader } from "./Column";
 
 /**
- * Props you can pass from the page:
- * data, total, page, pageSize, sort, selectedIds,
- * onPageChange, onPageSizeChange, onSortChange, onToggleRow, onToggleAll,
- * onEdit, onDelete, onCreate, onExport, onPushToClio
+ * ClientTable
+ * Soft-UI styled, accessible table for listing clients.
+ *
+ * Props:
+ *  - data: array of client rows (default [])
+ *  - columns: array of column defs:
+ *      { id, header, accessor, align?, sortable?, render?(row), headerClassName?, cellClassName? }
+ *    (Run through makeColumns to apply Soft-UI classes.)
+ *  - loading: boolean
+ *  - onSort: (colId) => void  (optional)
+ *  - sortBy: current sorted column id (optional)
+ *  - sortDirection: "asc" | "desc" (optional)
+ *  - onRowClick: (row) => void (optional)
+ *  - className: extra wrapper classes (optional)
  */
 export default function ClientTable({
   data = [],
-  total = 0,
-  page = 1,
-  pageSize = 20,
-  sort = null,
-  selectedIds = [],
-  onPageChange,
-  onPageSizeChange,
-  onSortChange,
-  onToggleRow,
-  onToggleAll,
-  onEdit,
-  onDelete,
-  onCreate,
-  onExport,
-  onPushToClio,
+  columns = [],
   loading = false,
-  filters = {},
-  setFilters = () => {},
+  onSort,
+  sortBy,
+  sortDirection,
+  onRowClick,
+  className,
 }) {
-  const columns = [
-    { id: "_sel", header: "", selection: true },
-    { id: "name", header: "Name", sortable: true, accessor: (r) => r.name, filter: <ToolbarInput placeholder="Search name" value={filters.name||""} onChange={(e)=>setFilters({ ...filters, name: e.target.value })} /> },
-    { id: "email", header: "Email", accessor: (r) => r.email, width: 260 },
-    { id: "phone", header: "Phone", accessor: (r) => r.phone, width: 160 },
-    { id: "status", header: "Status", accessor: (r) => <Badge color={r.active ? "success" : "muted"}>{r.active ? "Active" : "Paused"}</Badge>, filter: (
-        <ToolbarSelect value={filters.status||""} onChange={(e)=>setFilters({ ...filters, status: e.target.value })}>
-          <option value="">All</option>
-          <option value="active">Active</option>
-          <option value="paused">Paused</option>
-        </ToolbarSelect>
-      )
-    },
-  ];
+  const cols = makeColumns(
+    columns.length
+      ? columns
+      : // Sensible defaults if no columns are provided
+        [
+          { id: "name", header: "Client", accessor: "name", sortable: true },
+          { id: "email", header: "Email", accessor: "email" },
+          { id: "matters", header: "Matters", accessor: "mattersCount", align: "right" },
+          { id: "status", header: "Status", accessor: "status" },
+        ]
+  );
+
+  const handleHeaderClick = (col) => {
+    if (!col.sortable || !onSort) return;
+    onSort(col.id);
+  };
 
   return (
-    <>
-      <TableToolbar
-        rightActions={[
-          { label: "New Client", onClick: onCreate, variant: "primary" },
-          { label: "Export CSV", onClick: onExport, variant: "secondary" },
-        ]}
-      >
-        {/* Inline filters live on columns via filter slot; add global filters here if needed */}
-      </TableToolbar>
+    <div
+      className={`rounded-2xl border border-gray-200/70 bg-white shadow-sm overflow-hidden ${className ?? ""}`}
+    >
+      <table className={`${SOFT_TABLE.table}`}>
+        <thead className={SOFT_TABLE.thead}>
+          <tr>
+            {cols.map((col) => {
+              const isSorted = sortBy === col.id ? sortDirection : undefined;
+              return (
+                <th
+                  key={col.id}
+                  scope="col"
+                  className={`${SOFT_TABLE.th} ${col.headerClassName}`}
+                  onClick={() => handleHeaderClick(col)}
+                >
+                  <div className={col.sortable ? "flex items-center cursor-pointer" : "flex items-center"}>
+                    <SoftHeader title={col.header} sortable={!!col.sortable} sortDirection={isSorted} />
+                  </div>
+                </th>
+              );
+            })}
+          </tr>
+        </thead>
 
-      <DataTable
-        columns={columns}
-        data={data}
-        total={total}
-        page={page}
-        pageSize={pageSize}
-        sort={sort}
-        onPageChange={onPageChange}
-        onPageSizeChange={onPageSizeChange}
-        onSortChange={onSortChange}
-        selectedIds={selectedIds}
-        onToggleRow={onToggleRow}
-        onToggleAll={onToggleAll}
-        rowKey={(r) => r._id}
-        loading={loading}
-        density="comfy"
-        stickyHeader
-        rowActions={(r) => (
-          <div className="flex justify-end gap-2">
-            <Button variant="ghost" size="sm" onClick={() => onEdit?.(r)}>Edit</Button>
-            <Button variant="danger" size="sm" onClick={() => onDelete?.(r._id)}>Delete</Button>
-            <Button variant="secondary" size="sm" onClick={() => onPushToClio?.(r)}>Push to Clio</Button>
-          </div>
-        )}
-      />
-    </>
+        <tbody className={SOFT_TABLE.tbody}>
+          {/* Loading state */}
+          {loading && (
+            <tr>
+              <td colSpan={cols.length} className="px-3 py-4">
+                <SkeletonRows rows={6} cols={cols.length} />
+              </td>
+            </tr>
+          )}
+
+          {/* Empty state */}
+          {!loading && data.length === 0 && (
+            <tr>
+              <td colSpan={cols.length} className="px-3 py-10">
+                <EmptyState
+                  title="No clients found"
+                  description="Try adjusting your filters or add a new client."
+                />
+              </td>
+            </tr>
+          )}
+
+          {/* Data rows */}
+          {!loading &&
+            data.length > 0 &&
+            data.map((row, idx) => (
+              <tr
+                key={row.id ?? idx}
+                className={SOFT_TABLE.row}
+                onClick={() => onRowClick?.(row)}
+              >
+                {cols.map((col) => {
+                  const content =
+                    typeof col.render === "function"
+                      ? col.render(row)
+                      : col.accessor
+                      ? row[col.accessor]
+                      : null;
+
+                  return (
+                    <td key={`${col.id}-${row.id ?? idx}`} className={`${SOFT_TABLE.td} ${col.cellClassName}`}>
+                      {content}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

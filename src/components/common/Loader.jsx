@@ -8,14 +8,16 @@ export default function Loader({ size = 16, className, label = "Loading…" }) {
       <span
         aria-hidden="true"
         style={{
-          width: size, height: size, borderWidth: border,
+          width: size,
+          height: size,
+          borderWidth: border,
           borderStyle: "solid",
-          borderColor: "rgba(0,0,0,.15) transparent rgba(0,0,0,.15) transparent",
+          borderColor: "var(--lb-border) transparent var(--lb-border) transparent",
           borderRadius: "50%",
           animation: "lb-spin 1s linear infinite"
         }}
       />
-      <span className="sr-only">{label}</span>
+      <span className="text-[12px] text-[color:var(--lb-muted)]">{label}</span>
       <style>{`@keyframes lb-spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );

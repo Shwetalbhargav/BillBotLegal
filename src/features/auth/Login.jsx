@@ -33,12 +33,12 @@ export default function Login() {
       // authController enforces all four fields
       const { user } = await dispatch(loginUserThunk(values)).unwrap();
       const role = user?.role;
-      if (role === "partner") navigate("/partner/dashboard");
-      else if (role === "lawyer") navigate("/lawyer/dashboard");
-      else if (role === "associate") navigate("/associate/dashboard");
-      else if (role === "intern") navigate("/intern/dashboard");
-      else if (role === "admin") navigate("/admin");
-      else navigate("/dashboard");
+      if (role === "admin") navigate("/pages/AdminDashboard"); // ✅ updated redirect
+       else if (role === "partner") navigate("/partner/dashboard");
+       else if (role === "lawyer") navigate("/lawyer/dashboard");
+       else if (role === "associate") navigate("/associate/dashboard");
+       else if (role === "intern") navigate("/intern/dashboard");
+       else navigate("/dashboard");
     } catch (e) {
       setError(e?.message || "Invalid credentials");
     } finally {

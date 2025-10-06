@@ -1,124 +1,197 @@
-import React, { useMemo } from "react";
-import { Checkbox } from "@/components/form";
+// src/components/table/DataTable.jsx
+import React from "react";
+import { Table, THead, TBody, TR, TH, TD } from "./Table";
 import Pagination from "./Pagination";
-import SkeletonRows from "./SkeletonRows";
+import TableToolbar from "./TableToolbar";
+import { clsx } from "../../utils/clsx";
 
+
+function SortIcon({ dir }) {
+return (
+<span aria-hidden className="ml-1 inline-block select-none opacity-70">
+{dir === "asc" ? "▲" : dir === "desc" ? "▼" : "▵"}
+</span>
+);
+}
 export default function DataTable({
-  columns, data, total,
-  page, pageSize, onPageChange, onPageSizeChange,
-  sort, onSortChange,
-  selectedIds = [],
-  onToggleRow, onToggleAll,
-  rowKey, rowActions,
-  loading = false,
-  density = "comfy",
-  stickyHeader = true,
-  className,
-}) {
+columns, // [{ id, header, accessor?: (row)=>any, cell?:(value,row)=>Node, align, width, sortable }]
+rows, // array of objects
+searchableKeys = [],
+initialSort, // { id, dir: 'asc'|'desc' }
+pageSize = 10,
+rowSelectable = false,
+onSelectionChange,
+toolbarLeft,
+toolbarRight,
+emptyState,
+className,
+}){
+const [query, setQuery] = React.useState("");
+const [page, setPage] = React.useState(1);
+const [sort, setSort] = React.useState(initialSort || null);
+const [selected, setSelected] = React.useState(new Set());
 
-  const hasSelection = columns.some(c => c.selection);
-  const allIdsOnPage = useMemo(() => data.map(rowKey), [data, rowKey]);
-  const allSelectedOnPage = hasSelection && allIdsOnPage.length > 0 && allIdsOnPage.every(id => selectedIds.includes(id));
 
-  const cellPadding = density === "compact" ? "px-3 py-2" : "px-4 py-3";
-  const headerPadding = density === "compact" ? "px-3 py-2.5" : "px-4 py-3.5";
+React.useEffect(() => { onSelectionChange?.(Array.from(selected)); }, [selected]);
 
-  return (
-    <div className={className ?? ""}>
-      <div className="overflow-auto border border-[color:var(--lb-border)] rounded-[var(--lb-radius-lg)]">
-        <table className="min-w-full bg-[color:var(--lb-bg)]">
-          <thead className={stickyHeader ? "sticky top-0 z-10 bg-[color:var(--lb-surface)]" : ""}>
-            <tr>
-              {hasSelection && (
-                <th className={`${headerPadding} text-left border-b border-[color:var(--lb-border)] w-[36px]`}>
-                  <input
-                    type="checkbox"
-                    aria-label="Select all rows"
-                    checked={allSelectedOnPage}
-                    onChange={(e)=>onToggleAll?.(e.target.checked, allIdsOnPage)}
-                  />
-                </th>
-              )}
-              {columns.filter(c => !c.selection).map(col => (
-                <th
-                  key={col.id}
-                  className={`${headerPadding} border-b border-[color:var(--lb-border)] text-left whitespace-nowrap`}
-                  style={{ width: col.width }}
-                >
-                  <div className="flex items-center gap-2">
-                    <button
-                      className="font-semibold hover:underline disabled:no-underline disabled:opacity-60"
-                      disabled={!col.sortable}
-                      onClick={() => {
-                        if (!col.sortable) return;
-                        const next =
-                          !sort || sort.id !== col.id ? { id: col.id, desc: false } :
-                          sort.desc ? null : { id: col.id, desc: true };
-                        onSortChange?.(next);
-                      }}
-                    >
-                      {col.header}
-                    </button>
-                    {col.sortable && sort?.id === col.id && (
-                      <span aria-hidden="true">{sort.desc ? "↓" : "↑"}</span>
-                    )}
-                    {col.filter && <div className="ml-2">{col.filter}</div>}
-                  </div>
-                </th>
-              ))}
-              {rowActions && <th className={`${headerPadding} border-b border-[color:var(--lb-border)] text-right`}>Actions</th>}
-            </tr>
-          </thead>
 
-          <tbody>
-            {loading ? (
-              <SkeletonRows rows={Math.min(pageSize, 10)} cols={columns.length + (hasSelection?1:0) + (rowActions?1:0)} />
-            ) : data.length === 0 ? (
-              <tr>
-                <td colSpan={columns.length + (hasSelection?1:0) + (rowActions?1:0)} className="p-8 text-center text-[color:var(--lb-muted)]">
-                  No results
-                </td>
-              </tr>
-            ) : (
-              data.map((row) => {
-                const id = rowKey(row);
-                const selected = selectedIds.includes(id);
-                return (
-                  <tr key={id} className="hover:bg-[color:var(--lb-surface)]">
-                    {hasSelection && (
-                      <td className={`${cellPadding} border-b border-[color:var(--lb-border)]`}>
-                        <Checkbox checked={selected} onChange={(c)=>onToggleRow?.(id, c)} />
-                      </td>
-                    )}
-                    {columns.filter(c => !c.selection).map(col => {
-                      const content = col.cell ? col.cell(row) : col.accessor ? col.accessor(row) : null;
-                      const align = col.align ?? "left";
-                      return (
-                        <td key={col.id} className={`${cellPadding} border-b border-[color:var(--lb-border)] text-${align}`}>
-                          {content}
-                        </td>
-                      );
-                    })}
-                    {rowActions && (
-                      <td className={`${cellPadding} border-b border-[color:var(--lb-border)] text-right`}>
-                        {rowActions(row)}
-                      </td>
-                    )}
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+const toggleSort = (id, sortable) => {
+if (!sortable) return;
+setPage(1);
+setSort((prev) => {
+if (!prev || prev.id !== id) return { id, dir: "asc" };
+if (prev.dir === "asc") return { id, dir: "desc" };
+return null; // off
+});
+};
 
-      <Pagination
-        page={page}
-        pageSize={pageSize}
-        total={total}
-        onPageChange={onPageChange}
-        onPageSizeChange={onPageSizeChange}
-      />
-    </div>
-  );
+const filtered = React.useMemo(() => {
+if (!query) return rows;
+const q = query.toLowerCase();
+return rows.filter((r) =>
+searchableKeys.some((k) => String(r[k] ?? "").toLowerCase().includes(q))
+);
+}, [rows, query, searchableKeys]);
+
+const sorted = React.useMemo(() => {
+if (!sort) return filtered;
+const col = columns.find((c) => c.id === sort.id);
+const acc = col?.accessor || ((row) => row[col.id]);
+return [...filtered].sort((a, b) => {
+const va = acc(a);
+const vb = acc(b);
+if (va == null && vb == null) return 0;
+if (va == null) return -1;
+if (vb == null) return 1;
+if (va > vb) return sort.dir === "asc" ? 1 : -1;
+if (va < vb) return sort.dir === "asc" ? -1 : 1;
+return 0;
+});
+}, [filtered, sort, columns]);
+
+const pages = Math.max(1, Math.ceil(sorted.length / pageSize));
+const pageRows = sorted.slice((page - 1) * pageSize, page * pageSize);
+
+
+const allOnPageIds = pageRows.map((r, i) => r.id ?? i);
+const allChecked = rowSelectable && allOnPageIds.every((id) => selected.has(id));
+const someChecked = rowSelectable && !allChecked && allOnPageIds.some((id) => selected.has(id));
+
+
+const toggleAll = () => {
+setSelected((prev) => {
+const next = new Set(prev);
+if (allChecked) {
+allOnPageIds.forEach((id) => next.delete(id));
+} else {
+allOnPageIds.forEach((id) => next.add(id));
+}
+return next;
+});
+};
+
+const toggleOne = (id) => {
+setSelected((prev) => {
+const next = new Set(prev);
+next.has(id) ? next.delete(id) : next.add(id);
+return next;
+});
+};
+
+return (
+<div className={clsx("grid gap-0", className)}>
+<TableToolbar
+left={
+<div className="flex items-center gap-2">
+<input
+className={"h-9 w-64 rounded-[var(--lb-radius-md)] border border-[color:var(--lb-border)] bg-[color:var(--lb-bg)] px-3 text-sm shadow-[var(--lb-shadow-xs)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lb-primary-600)]"}
+placeholder="Search…"
+value={query}
+onChange={(e) => { setPage(1); setQuery(e.target.value); }}
+/>
+{toolbarLeft}
+</div>
+}
+right={toolbarRight}
+/>
+
+<Table>
+<THead>
+<tr>
+{rowSelectable && (
+<TH width={36} className="!px-2">
+<input
+type="checkbox"
+aria-label="Select all on page"
+checked={allChecked}
+ref={(el) => el && (el.indeterminate = someChecked)}
+onChange={toggleAll}
+className="h-4 w-4 rounded border-[color:var(--lb-border)]"
+/>
+</TH>
+)}
+{columns.map((c) => (
+<TH key={c.id} width={c.width} align={c.align}
+className={clsx(c.sortable && "cursor-pointer select-none")}
+onClick={() => toggleSort(c.id, c.sortable)}>
+<span className="inline-flex items-center">
+{c.header}
+{c.sortable && <SortIcon dir={sort?.id === c.id ? sort.dir : undefined} />}
+</span>
+</TH>
+))}
+</tr>
+</THead>
+
+
+<TBody>
+{pageRows.length === 0 && (
+<tr>
+<TD colSpan={(columns?.length || 0) + (rowSelectable ? 1 : 0)}>
+{emptyState || (
+<div className="p-8 text-center text-[color:var(--lb-muted)]">No rows found.</div>
+)}
+</TD>
+</tr>
+)}
+{pageRows.map((row, i) => {
+const id = row.id ?? i;
+return (
+<TR key={id}>
+{rowSelectable && (
+<TD className="!px-2">
+<input
+type="checkbox"
+aria-label={`Select row ${i + 1}`}
+checked={selected.has(id)}
+onChange={() => toggleOne(id)}
+className="h-4 w-4 rounded border-[color:var(--lb-border)]"
+/>
+</TD>
+)}
+
+{columns.map((c) => {
+const acc = c.accessor || ((r) => r[c.id]);
+const value = acc(row);
+const content = c.cell ? c.cell(value, row) : value;
+return (
+<TD key={c.id} align={c.align}>
+{content}
+</TD>
+);
+})}
+</TR>
+);
+})}
+</TBody>
+</Table>
+
+<div className="flex items-center justify-between border border-t-0 border-[color:var(--lb-border)] rounded-b-[var(--lb-radius-xl)] bg-[color:var(--lb-bg)]">
+<div className="px-3 py-2 text-sm text-[color:var(--lb-muted)]">
+Showing {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, sorted.length)} of {sorted.length}
+</div>
+<Pagination page={page} pages={pages} onPage={setPage} />
+</div>
+</div>
+);
 }

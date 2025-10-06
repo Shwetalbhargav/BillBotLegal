@@ -1,86 +1,177 @@
-// Cases list using the shared DataTable pattern + UI primitives
+// CaseTable.jsx (Soft-UI Refactor)
 import React from "react";
-import DataTable from "@/components/table/DataTable";
-import TableToolbar, { ToolbarInput, ToolbarSelect } from "@/components/table/TableToolbar";
-import { Button, Badge } from "@/components/common";
+import EmptyState from "./EmptyState";
+import SkeletonRows from "./SkeletonRows";
+import { makeColumns, SOFT_TABLE, SoftHeader } from "./Column";
 
 /**
- * Props you can pass from the page:
- * data, total, page, pageSize, sort, selectedIds,
- * onPageChange, onPageSizeChange, onSortChange, onToggleRow, onToggleAll,
- * onEdit, onDelete, onCreate, onExport, onPushToClio
+ * CaseTable (aka Matters)
+ * A Soft-UI styled, accessible table for listing cases/matters.
+ *
+ * Props:
+ *  - data: array (default [])
+ *  - columns: optional custom columns; if omitted sensible defaults are used
+ *      { id, header, accessor, align?, sortable?, render?(row), headerClassName?, cellClassName? }
+ *  - loading: boolean
+ *  - onSort(colId): optional
+ *  - sortBy: string
+ *  - sortDirection: "asc" | "desc"
+ *  - onRowClick(row): optional
+ *  - className: string
  */
 export default function CaseTable({
   data = [],
-  total = 0,
-  page = 1,
-  pageSize = 20,
-  sort = null,
-  selectedIds = [],
-  onPageChange,
-  onPageSizeChange,
-  onSortChange,
-  onToggleRow,
-  onToggleAll,
-  onEdit,
-  onDelete,
-  onCreate,
-  onExport,
-  onPushToClio,
+  columns = [],
   loading = false,
-  filters = {},
-  setFilters = () => {},
+  onSort,
+  sortBy,
+  sortDirection,
+  onRowClick,
+  className,
 }) {
-  const columns = [
-    { id: "_sel", header: "", selection: true },
-    { id: "title", header: "Title", sortable: true, accessor: (r) => r.title, filter: <ToolbarInput placeholder="Search title" value={filters.title||""} onChange={(e)=>setFilters({ ...filters, title: e.target.value })} /> },
-    { id: "description", header: "Description", accessor: (r) => r.description, width: 360 },
-    { id: "client", header: "Client", accessor: (r) => r.clientName || r.clientId, width: 220, filter: <ToolbarInput placeholder="Client…" value={filters.client||""} onChange={(e)=>setFilters({ ...filters, client: e.target.value })} /> },
-    { id: "status", header: "Status", accessor: (r) => <Badge color={r.status === "Open" ? "primary" : r.status === "Closed" ? "muted" : "success"}>{r.status || "Open"}</Badge>, sortable: true,
-      filter: (
-        <ToolbarSelect value={filters.status||""} onChange={(e)=>setFilters({ ...filters, status: e.target.value })}>
-          <option value="">All</option>
-          <option>Open</option>
-          <option>In Progress</option>
-          <option>Closed</option>
-        </ToolbarSelect>
-      )
+  const defaultCols = [
+    { id: "caseNumber", header: "Case #", accessor: "caseNumber", sortable: true },
+    { id: "title", header: "Title", accessor: "title", sortable: true },
+    { id: "client", header: "Client", accessor: "clientName", sortable: true },
+    {
+      id: "openedOn",
+      header: "Opened",
+      accessor: "openedOn",
+      sortable: true,
+      render: (row) =>
+        row.openedOn
+          ? new Date(row.openedOn).toLocaleDateString()
+          : "—",
+    },
+    {
+      id: "status",
+      header: "Status",
+      accessor: "status",
+      sortable: true,
+      render: (row) => (
+        <span
+          className={`inline-flex items-center px-2 py-1 rounded-xl text-xs font-medium
+            ${
+              row.status === "Open"
+                ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                : row.status === "On Hold"
+                ? "bg-amber-50 text-amber-700 border border-amber-100"
+                : "bg-gray-50 text-gray-700 border border-gray-200"
+            }`}
+        >
+          {row.status ?? "—"}
+        </span>
+      ),
+    },
+    {
+      id: "billableHours",
+      header: "Hours",
+      accessor: "billableHours",
+      align: "right",
+      sortable: true,
+      render: (row) =>
+        typeof row.billableHours === "number" ? row.billableHours.toFixed(2) : "0.00",
+    },
+    {
+      id: "unpaidBalance",
+      header: "Unpaid",
+      accessor: "unpaidBalance",
+      align: "right",
+      sortable: true,
+      render: (row) =>
+        typeof row.unpaidBalance === "number"
+          ? row.unpaidBalance.toLocaleString(undefined, {
+              style: "currency",
+              currency: "USD",
+            })
+          : "$0.00",
     },
   ];
 
+  const cols = makeColumns(columns.length ? columns : defaultCols);
+
+  const handleHeaderClick = (col) => {
+    if (!col.sortable || !onSort) return;
+    onSort(col.id);
+  };
+
   return (
-    <>
-      <TableToolbar
-        rightActions={[
-          { label: "New Case", onClick: onCreate, variant: "primary" },
-          { label: "Export CSV", onClick: onExport, variant: "secondary" },
-        ]}
-      />
-      <DataTable
-        columns={columns}
-        data={data}
-        total={total}
-        page={page}
-        pageSize={pageSize}
-        sort={sort}
-        onPageChange={onPageChange}
-        onPageSizeChange={onPageSizeChange}
-        onSortChange={onSortChange}
-        selectedIds={selectedIds}
-        onToggleRow={onToggleRow}
-        onToggleAll={onToggleAll}
-        rowKey={(r) => r._id}
-        loading={loading}
-        density="comfy"
-        stickyHeader
-        rowActions={(r) => (
-          <div className="flex justify-end gap-2">
-            <Button variant="ghost" size="sm" onClick={() => onEdit?.(r)}>Edit</Button>
-            <Button variant="danger" size="sm" onClick={() => onDelete?.(r._id)}>Delete</Button>
-            <Button variant="secondary" size="sm" onClick={() => onPushToClio?.(r)}>Push to Clio</Button>
-          </div>
-        )}
-      />
-    </>
+    <div
+      className={`rounded-2xl border border-gray-200/70 bg-white shadow-sm overflow-hidden ${className ?? ""}`}
+    >
+      <table className={`${SOFT_TABLE.table}`}>
+        <thead className={SOFT_TABLE.thead}>
+          <tr>
+            {cols.map((col) => {
+              const isSorted = sortBy === col.id ? sortDirection : undefined;
+              return (
+                <th
+                  key={col.id}
+                  scope="col"
+                  className={`${SOFT_TABLE.th} ${col.headerClassName}`}
+                  onClick={() => handleHeaderClick(col)}
+                >
+                  <div className={col.sortable ? "flex items-center cursor-pointer" : "flex items-center"}>
+                    <SoftHeader title={col.header} sortable={!!col.sortable} sortDirection={isSorted} />
+                  </div>
+                </th>
+              );
+            })}
+          </tr>
+        </thead>
+
+        <tbody className={SOFT_TABLE.tbody}>
+          {/* Loading */}
+          {loading && (
+            <tr>
+              <td colSpan={cols.length} className="px-3 py-4">
+                <SkeletonRows rows={6} cols={cols.length} />
+              </td>
+            </tr>
+          )}
+
+          {/* Empty */}
+          {!loading && data.length === 0 && (
+            <tr>
+              <td colSpan={cols.length} className="px-3 py-10">
+                <EmptyState
+                  title="No cases found"
+                  description="Try adjusting your filters or create a new case."
+                />
+              </td>
+            </tr>
+          )}
+
+          {/* Rows */}
+          {!loading &&
+            data.length > 0 &&
+            data.map((row, idx) => (
+              <tr
+                key={row.id ?? idx}
+                className={SOFT_TABLE.row}
+                onClick={() => onRowClick?.(row)}
+              >
+                {cols.map((col) => {
+                  const content =
+                    typeof col.render === "function"
+                      ? col.render(row)
+                      : col.accessor
+                      ? row[col.accessor]
+                      : null;
+
+                  return (
+                    <td
+                      key={`${col.id}-${row.id ?? idx}`}
+                      className={`${SOFT_TABLE.td} ${col.cellClassName}`}
+                    >
+                      {content ?? "—"}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

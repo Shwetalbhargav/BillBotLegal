@@ -1,29 +1,22 @@
+// src/components/form/Textarea.jsx
 import React from "react";
-import FormField from "./FormField";
 import { clsx } from "../../utils/clsx";
 
-export default function TextArea({
-  label, description, error, required,
-  rows = 4, size = "md", ...props
-}) {
-  const sizes = {
-    sm: "text-[var(--lb-fs-sm)]",
-    md: "text-[var(--lb-fs-md)]",
-    lg: "text-[var(--lb-fs-lg)]",
-  };
-  return (
-    <FormField label={label} description={description} error={error} required={required}>
-      {({ inputId, describedBy }) => (
-        <textarea
-          id={inputId}
-          className={clsx("lb-input resize-vertical", sizes[size])}
-          rows={rows}
-          aria-invalid={!!error}
-          aria-describedby={describedBy}
-          required={required}
-          {...props}
-        />
-      )}
-    </FormField>
-  );
+
+export default function Textarea({ rows = 4, invalid = false, className, ...props }) {
+return (
+<textarea
+rows={rows}
+className={clsx(
+"lb-reset w-full rounded-[var(--lb-radius-md)] bg-[color:var(--lb-bg)]",
+"border border-[color:var(--lb-border)] shadow-[var(--lb-shadow-sm)]",
+"placeholder:text-[color:var(--lb-muted)] text-[color:var(--lb-text)]",
+"focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lb-primary-600)]",
+"px-3.5 py-2 text-[var(--lb-fs-md)]",
+invalid && "border-[color:var(--lb-danger-400)]",
+className
+)}
+{...props}
+/>
+);
 }

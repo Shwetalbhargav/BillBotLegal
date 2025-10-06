@@ -20,13 +20,13 @@ export default function ConfirmDialog({
       title={title}
       preventCloseOnBackdrop={preventCloseOnBackdrop}
       footer={
-        <>
+        <div className="flex items-center gap-2">
           <Button variant="secondary" onClick={onCancel}>{cancelText}</Button>
           <Button variant={variant} onClick={onConfirm}>{confirmText}</Button>
-        </>
+        </div>
       }
     >
-      <p className="m-0 text-[color:var(--lb-muted)]">{description}</p>
+      <p className="m-0 text-[color:var(--lb-muted)] text-[14px] leading-6">{description}</p>
     </Modal>
   );
 }

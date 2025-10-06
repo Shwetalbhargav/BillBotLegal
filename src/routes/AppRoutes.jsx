@@ -16,7 +16,7 @@ const PublicOnlyRoute = ({ children }) => {
 
 const RoleRoute = ({ children, allow = [] }) => {
   const { isAuthenticated, role } = useAuth();
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isAuthenticated) return <Navigate to="/admin/login" replace />;
   if (allow.length && !allow.includes(role)) return <Navigate to="/dashboard" replace />;
   return children;
 };
@@ -41,6 +41,9 @@ const MainDashboard    = lazy(() => import('@/pages/MainDashboard'));
 const MagicOk          = lazy(() => import('@/pages/MagicOk'));
 const CheckEmail       = lazy(() => import('@/pages/CheckEmail'));
 const NotFound         = () => <div className="p-8 text-center">404 — Page not found</div>;
+const AdminLayout = lazy(() => import('@/features/admin'));
+
+
 
 export default function AppRoutes() {
   return (

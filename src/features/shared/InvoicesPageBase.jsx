@@ -217,3 +217,11 @@ function getCellValue(row, id) { switch (id) { case "invoiceNumber": return row.
 function formatCurrency(v, currency="INR") { const n = Number(v); if (!isFinite(n)) return "—"; return new Intl.NumberFormat("en-IN", { style: "currency", currency }).format(n); }
 function fmtDate(v) { if (!v) return "—"; try { return new Date(v).toLocaleDateString(); } catch { return String(v); } }
 function KV({ label, value }) { return (<div className="flex items-start justify-between gap-6"><span className="text-[color:var(--lb-muted)]">{label}</span><span className="font-medium">{value}</span></div>); }
+
+// every Base component signature
+export default function XxxxBase({
+  role,          // "admin" | "partner" | "lawyer" | "associate" | "intern"
+  readOnly,      // boolean
+  filters = {},  // e.g., { assignee: userId, author: userId }
+  mode,          // e.g., "approvals" for billables
+} = {}) { /* keep existing body; later we’ll read props where needed */ }

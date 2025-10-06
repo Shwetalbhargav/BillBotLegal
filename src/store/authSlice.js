@@ -1,6 +1,7 @@
 // src/store/authSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { loginUser, getMe } from '@/services/api';
+import { loginAdmin, getAdminMe } from '@/services/api'
 
 
 export const loginUserThunk = createAsyncThunk(
@@ -25,6 +26,19 @@ return { user: data.user };
 } catch (e) {
 // attempt refresh if available
 return rejectWithValue(e.response?.data?.message || 'Session bootstrap failed');
+}
+}
+);
+export const adminLoginThunk = createAsyncThunk(
+'auth/adminLogin',
+async ({ email, password }, { rejectWithValue }) => {
+try {
+const { data } = await loginAdmin({ email, password }); // { token, admin }
+// Persist token
+localStorage.setItem('token', data.token);
+return { user: data.admin, token: data.token };
+} catch (err) {
+return rejectWithValue(err.response?.data?.message || 'Login failed');
 }
 }
 );
@@ -85,6 +99,18 @@ if (s.role) localStorage.setItem('userRole', s.role);
 },
 });
 
+export const loadMeThunk = createAsyncThunk('auth/loadMe', async (_, { rejectWithValue }) => {
+try {
+const { data } = await getAdminMe(); // { admin }
+return data.admin;
+} catch (err) {
+return rejectWithValue('Failed to load profile');
+}
+});
 
-export const { logout, setAuth } = authSlice.actions;
+
+
+export const { logout } = authSlice.actions;
 export default authSlice.reducer;
+
+

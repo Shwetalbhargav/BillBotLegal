@@ -1,14 +1,21 @@
+// DatePicker.jsx (Soft-UI Refactor)
 import React from "react";
-import FormField from "./FormField";
-import { clsx } from "../../utils/clsx";
+import FormField from "./FormLabel"; // your unified FormField component
 
 /**
- * Lightweight date picker: uses native <input type="date"> for reliability/a11y.
- * Props: min, max, placeholder, onClear, error, required, size, withTime=false
+ * Soft-UI DatePicker
+ * Uses native <input type="date" | "datetime-local"> for accessibility and simplicity.
+ * Subtle shadows, rounded corners, and focus ring for Soft-UI theme.
  */
 export default function DatePicker({
-  label, description, error, required,
-  value, onChange, min, max,
+  label,
+  help,
+  error,
+  required,
+  value,
+  onChange,
+  min,
+  max,
   placeholder = "Select date",
   size = "md",
   withTime = false,
@@ -16,21 +23,27 @@ export default function DatePicker({
   ...props
 }) {
   const sizes = {
-    sm: "py-1.5 text-[var(--lb-fs-sm)]",
-    md: "py-2 text-[var(--lb-fs-md)]",
-    lg: "py-2.5 text-[var(--lb-fs-lg)]",
+    sm: "py-2 text-sm",
+    md: "py-2.5 text-base",
+    lg: "py-3 text-lg",
   };
 
   const type = withTime ? "datetime-local" : "date";
 
   return (
-    <FormField label={label} description={description} error={error} required={required}>
-      {({ inputId, describedBy }) => (
+    <FormField label={label} help={help} required={required}>
+      {({ id, describedBy }) => (
         <div className="relative">
           <input
-            id={inputId}
+            id={id}
             type={type}
-            className={clsx("lb-input", sizes[size], value ? "" : "text-[color:var(--lb-muted)]")}
+            className={`
+              w-full rounded-2xl border border-gray-200/70 bg-white/90
+              backdrop-blur-sm shadow-sm px-3 ${sizes[size]} text-gray-900
+              placeholder:text-gray-400 transition
+              focus:outline-none focus:ring-2 focus:ring-indigo-400/60
+              ${value ? "" : "text-gray-400/80"}
+            `}
             aria-invalid={!!error}
             aria-describedby={describedBy}
             required={required}
@@ -41,11 +54,16 @@ export default function DatePicker({
             placeholder={placeholder}
             {...props}
           />
-          {(value && onClear) && (
+
+          {value && onClear && (
             <button
               type="button"
               onClick={() => onClear?.()}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 hover:bg-[color:var(--lb-surface)]"
+              className="
+                absolute right-2 top-1/2 -translate-y-1/2 rounded-full
+                p-1.5 text-gray-500 hover:bg-gray-100 active:bg-gray-200
+                transition focus:outline-none focus:ring-2 focus:ring-indigo-400/60
+              "
               aria-label="Clear date"
             >
               ✕
