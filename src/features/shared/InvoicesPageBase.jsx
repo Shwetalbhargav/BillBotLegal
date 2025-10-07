@@ -113,7 +113,7 @@ export default function InvoicesPage({ role="intern", readOnly=false, filters: e
     { id: "client", header: "Client", accessor: (r) => r.clientName ?? r?.client?.name ?? "—", sortable: true, width: 240 },
     { id: "amount", header: "Amount", accessor: (r) => formatCurrency(r.amount ?? r.totalAmount, r.currency || "INR"), sortable: true, align: "right", width: 140 },
     { id: "status", header: "Status", accessor: (r) => <Badge color={statusColor(r.status)}>{r.status ?? "draft"}</Badge>, sortable: true, width: 140 },
-    { id: "pay", header: "", accessor: (r) => ({perms.canInvoice && !perms.readOnly && <Button size="sm" variant="ghost" onClick={() => { setPayInvoice(r); setPayOpen(true); }}>Add Payment</Button>}) },
+    { id: "pay", header: "", accessor: (r) => (perms.canInvoice && !perms.readOnly && <Button size="sm" variant="ghost" onClick={() => { setPayInvoice(r); setPayOpen(true); }}>Add Payment</Button>) },
   ];
 
   const pendingColumns = [
