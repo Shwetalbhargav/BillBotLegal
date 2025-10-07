@@ -1,3 +1,4 @@
+// src/pages/ClientsDashboardBAse.jsx
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchClients } from "@/store/clientSlice";
@@ -7,7 +8,6 @@ import { fetchCases } from "@/store/caseSlice";
 import { Input, Select } from "@/components/form";
 import { DataTable, TableToolbar, SkeletonRows } from "@/components/table";
 import { Badge, Button, Modal } from "@/components/common";
-import AiWriterInline from "@/components/AiWriterInline";
 
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString() : "—");
 const money = (n, c = "INR") =>
@@ -17,20 +17,22 @@ const money = (n, c = "INR") =>
 const toHours = (b) =>
   typeof b?.durationHours === "number" ? b.durationHours : Number(b?.durationMinutes || 0) / 60;
 
-// ---- Gmail helpers (new) ----
+/* ---------------- Gmail helpers ---------------- */
 const DEFAULT_COMPOSE_TO = "hridaan.purav@gmail.com";
-function buildGmailComposeUrl({ to, subject, body , lbPrompt}) {
+function buildGmailComposeUrl({ to, subject, body, lbPrompt }) {
   const params = new URLSearchParams({
     view: "cm",
     fs: "1",
     to,
     su: subject || "",
     body: body || "",
-    lb_prompt: lbPrompt || ""
+    lb_prompt: lbPrompt || "",
   });
   return `https://mail.google.com/mail/u/0/?${params.toString()}`;
-}/* ---------------- Role & Permission helpers (RBAC) ---------------- */
-function derivePermissions(role, explicitReadOnly=false) {
+}
+
+/* ---------------- Role & Permission helpers (RBAC) ---------------- */
+function derivePermissions(role, explicitReadOnly = false) {
   const r = String(role || "intern").toLowerCase();
   const isAdmin = r === "admin";
   const isPartner = r === "partner";
@@ -47,21 +49,39 @@ function derivePermissions(role, explicitReadOnly=false) {
 
   // scope: "all" | "team" | "self"
   const scope = isAdmin ? "all" : isPartner ? "team" : "self";
-
-  return { isAdmin, isPartner, isLawyer, isAssociate, isIntern, canEdit, canApprove, canInvoice, canDelete, canViewAnalytics, readOnly, scope };
+  return {
+    isAdmin,
+    isPartner,
+    isLawyer,
+    isAssociate,
+    isIntern,
+    canEdit,
+    canApprove,
+    canInvoice,
+    canDelete,
+    canViewAnalytics,
+    readOnly,
+    scope,
+  };
 }
 
-
-
-export default function ClientsPage({ role="intern", readOnly=false, filters: externalFilters = {} , mode, currentUserId } = {}) {
+/* ---------------- Main Component ---------------- */
+export default function ClientsPage(
+  { role = "intern", readOnly = false, filters: externalFilters = {}, mode, currentUserId } = {}
+) {
   const perms = derivePermissions(role, readOnly);
   const roleScope = perms.scope;
+  // effectiveFilters is available if you later need to pass to thunks/API
   const effectiveFilters = { ...externalFilters, scope: roleScope };
 
   const dispatch = useDispatch();
 
   // slices
-  const { list: clients = [], loading: loadingClients, error: errorClients } = useSelector((s) => s.clients || {});
+  const {
+    list: clients = [],
+    loading: loadingClients,
+    error: errorClients,
+  } = useSelector((s) => s.clients || {});
   const { list: billables = [], loading: loadingBillables } = useSelector((s) => s.billables || {});
   const { list: invoices = [], loading: loadingInvoices } = useSelector((s) => s.invoices || {});
   const { list: cases = [], loading: loadingCases } = useSelector((s) => s.cases || {});
@@ -70,14 +90,14 @@ export default function ClientsPage({ role="intern", readOnly=false, filters: ex
   const [managerFilter, setManagerFilter] = useState("");
   const [selectedClient, setSelectedClient] = useState(null);
 
-  // modal sub‑state
+  // modal sub-state
   const [dataType, setDataType] = useState("billables"); // 'billables' | 'invoices' | 'cases'
   const [preview, setPreview] = useState(null); // selected billable/invoice row
   const printRef = useRef(null);
 
   useEffect(() => {
     dispatch(fetchClients());
-  }, [dispatch]); // clients
+  }, [dispatch]);
 
   // lazy fetch others only when modal opens / data type changes
   useEffect(() => {
@@ -101,7 +121,9 @@ export default function ClientsPage({ role="intern", readOnly=false, filters: ex
   const rows = useMemo(() => {
     let r = Array.isArray(clients) ? [...clients] : [];
     if (managerFilter) {
-      r = r.filter((c) => (typeof c.accountManagerId === "object" ? c.accountManagerId?.name : "") === managerFilter);
+      r = r.filter(
+        (c) => (typeof c.accountManagerId === "object" ? c.accountManagerId?.name : "") === managerFilter
+      );
     }
     if (q.trim()) {
       const t = q.toLowerCase();
@@ -116,7 +138,7 @@ export default function ClientsPage({ role="intern", readOnly=false, filters: ex
     return r;
   }, [clients, managerFilter, q]);
 
-  // ---- TABLE COLUMNS (now with Compose button in table) ----
+  // ---- TABLE COLUMNS (Compose button uses the row `c`) ----
   const clientColumns = [
     { id: "name", header: "Client", accessor: (c) => c.name, sortable: true, width: 260 },
     { id: "email", header: "Email", accessor: (c) => c.email || c.contactInfo || "—", width: 240 },
@@ -132,38 +154,36 @@ export default function ClientsPage({ role="intern", readOnly=false, filters: ex
     {
       id: "compose",
       header: "",
+      width: 140,
       accessor: (c) => {
         const to = c.email || c.contactInfo || DEFAULT_COMPOSE_TO;
         const subj = `[LB] Update for ${c.name || "Client"}`;
         const body = `Hello${c.name ? ` ${c.name}` : ""},\n\n`;
+        const lbPrompt =
+          `Recipient: ${c.name || "Client"} (${c.email || ""}). ` +
+          `Draft a concise, professional legal update email related to the current matter. ` +
+          `Tone: formal, clear, no jargon. Include a short subject suggestion and a brief closing.`;
         return (
           <Button
-  variant="secondary"
-  size="sm"
-  onClick={() => {
-    const subj = `[LB] Update for ${selectedClient?.name || "Client"}`;
-    const body = `Hello ${selectedClient?.name || "there"},\n\n`;
-    const lbPrompt =
-      `Recipient: ${selectedClient?.name || "Client"} (${selectedClient?.email || ""}). ` +
-      `Draft a concise, professional legal update email related to the current matter. ` +
-      `Tone: formal, clear, no jargon. Include a short subject suggestion and a brief closing.`;
-
-    window.open(
-      buildGmailComposeUrl({ to: selectedClient?.email || "", subject: subj, body, lbPrompt }),
-      "_blank",
-      "noopener,noreferrer"
-    );
-  }}
->
-  Compose Email
-</Button>
+            variant="secondary"
+            size="sm"
+            onClick={() =>
+              window.open(
+                buildGmailComposeUrl({ to, subject: subj, body, lbPrompt }),
+                "_blank",
+                "noopener,noreferrer"
+              )
+            }
+          >
+            Compose Email
+          </Button>
         );
       },
-      width: 120,
     },
     {
       id: "action",
       header: "",
+      width: 80,
       accessor: (c) => (
         <Button
           variant="ghost"
@@ -177,13 +197,8 @@ export default function ClientsPage({ role="intern", readOnly=false, filters: ex
           View
         </Button>
       ),
-      width: 80,
     },
   ];
-  <AiWriterInline
-  to={selectedClient?.email || selectedClient?.contactInfo}
-  subjectSeed={`[LB] Update for ${selectedClient?.name || 'Client'}`}
-/>
 
   // ---- Modal: filtered data by client ----
   const cid = selectedClient?._id;
@@ -205,7 +220,11 @@ export default function ClientsPage({ role="intern", readOnly=false, filters: ex
 
   const billableCols = [
     { id: "date", header: "Date", accessor: (r) => fmtDate(r.date), sortable: true },
-    { id: "case", header: "Case", accessor: (r) => (typeof r.caseId === "object" ? r.caseId?.name : r.caseId) },
+    {
+      id: "case",
+      header: "Case",
+      accessor: (r) => (typeof r.caseId === "object" ? r.caseId?.name : r.caseId),
+    },
     { id: "category", header: "Category", accessor: (r) => r.category },
     { id: "description", header: "Description", accessor: (r) => r.description, width: 320 },
     { id: "hours", header: "Hours", accessor: (r) => toHours(r).toFixed(2), align: "right" },
@@ -223,7 +242,12 @@ export default function ClientsPage({ role="intern", readOnly=false, filters: ex
   ];
 
   const invoiceCols = [
-    { id: "invoiceNumber", header: "Invoice #", accessor: (r) => r.invoiceNumber ?? r.number ?? "—", sortable: true },
+    {
+      id: "invoiceNumber",
+      header: "Invoice #",
+      accessor: (r) => r.invoiceNumber ?? r.number ?? "—",
+      sortable: true,
+    },
     { id: "issue", header: "Issue Date", accessor: (r) => fmtDate(r.issueDate) },
     { id: "due", header: "Due Date", accessor: (r) => fmtDate(r.dueDate) },
     { id: "status", header: "Status", accessor: (r) => <Badge>{r.status || "draft"}</Badge> },
@@ -458,6 +482,7 @@ export default function ClientsPage({ role="intern", readOnly=false, filters: ex
   );
 }
 
+/* ---------------- UI helpers ---------------- */
 function KV({ label, value }) {
   return (
     <div className="flex items-start justify-between gap-6">
@@ -475,16 +500,7 @@ function Metric({ label, value }) {
   );
 }
 
-// every Base component signature
-export default function XxxxBase({
-  role,          // "admin" | "partner" | "lawyer" | "associate" | "intern"
-  readOnly,      // boolean
-  filters = {},  // e.g., { assignee: userId, author: userId }
-  mode,          // e.g., "approvals" for billables
-} = {}) { /* keep existing body; later we’ll read props where needed */ }
-
-
-// ---- Role-aware wrapper (named export) ----
-export function XxxxBase({ role="intern", readOnly=false, filters = {}, mode, currentUserId } = {}, props) {
+/* ---- Role-aware wrapper (named export) ---- */
+export function ClientsBase({ role = "intern", readOnly = false, filters = {}, mode, currentUserId } = {}, props) {
   return <ClientsPage role={role} readOnly={readOnly} filters={filters} mode={mode} currentUserId={currentUserId} {...props} />;
 }

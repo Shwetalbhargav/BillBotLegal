@@ -1,4 +1,4 @@
-// src/pages/AnalyticsPage.jsx — API‑integrated
+// src/pages/AnalyticsPage.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAnalytics } from "@/store/analyticsSlice";
@@ -6,7 +6,9 @@ import { getBillableStatsByCaseType } from "@/services/api";
 
 import { Button, Loader } from "@/components/common";
 import { Input, Select, DatePicker } from "@/components/form";
-import { DataTable, TableToolbar } from "@/components/table";/* ---------------- Role & Permission helpers (RBAC) ---------------- */
+import { DataTable, TableToolbar } from "@/components/table";
+
+/* ---------------- Role & Permission helpers (RBAC) ---------------- */
 function derivePermissions(role, explicitReadOnly=false) {
   const r = String(role || "intern").toLowerCase();
   const isAdmin = r === "admin";
@@ -28,13 +30,8 @@ function derivePermissions(role, explicitReadOnly=false) {
   return { isAdmin, isPartner, isLawyer, isAssociate, isIntern, canEdit, canApprove, canInvoice, canDelete, canViewAnalytics, readOnly, scope };
 }
 
-
-
 export default function AnalyticsPage({ role="intern", readOnly=false, filters: externalFilters = {} , mode, currentUserId } = {}) {
   const perms = derivePermissions(role, readOnly);
-  const roleScope = perms.scope;
-  const effectiveFilters = { ...externalFilters, scope: roleScope };
-
   const dispatch = useDispatch();
   const { billable, invoice, loading, error } = useSelector((s) => s.analytics || {});
   const cases = useSelector((s) => s.cases?.list || []);
@@ -56,8 +53,14 @@ export default function AnalyticsPage({ role="intern", readOnly=false, filters: 
         setCaseTypeLoading(true);
         const res = await getBillableStatsByCaseType();
         const arr = Array.isArray(res?.data?.items) ? res.data.items : Array.isArray(res?.data) ? res.data : [];
-        // normalize to common columns
-        const mapped = arr.map((x, i) => ({ id: String(x.id ?? i), bucket: x.caseType || x.type || "—", hours: num(x.hours), avgRate: num(x.avgRate || (num(x.revenue)/Math.max(1,num(x.hours)))), revenue: num(x.revenue), loggedPct: num(x.loggedPct) }));
+        const mapped = arr.map((x, i) => ({
+          id: String(x.id ?? i),
+          bucket: x.caseType || x.type || "—",
+          hours: num(x.hours),
+          avgRate: num(x.avgRate || (num(x.revenue)/Math.max(1,num(x.hours)))),
+          revenue: num(x.revenue),
+          loggedPct: num(x.loggedPct),
+        }));
         setCaseTypeAgg(mapped);
       } finally { setCaseTypeLoading(false); }
     })();
@@ -142,54 +145,32 @@ export default function AnalyticsPage({ role="intern", readOnly=false, filters: 
         </div>
       </div>
 
-      <TableToolbar>
-        <Input placeholder="Search client/case/user…" value={filters.q} onChange={(e) => { setPage(1); setFilters((f) => ({ ...f, q: e.target.value })); }} />
-        <Select value={filters.groupBy} onChange={(e) => { setPage(1); setFilters((f) => ({ ...f, groupBy: e.target.value })); }}>
-          <option value="user">By Attorney</option>
-          <option value="client">By Client</option>
-          <option value="case">By Case</option>
-          <option value="date">By Date</option>
-          <option value="caseType">By Case Type (server)</option>
-        </Select>
-        <Select value={JSON.stringify(filters.roles)} onChange={(e) => { setPage(1); const val = JSON.parse(e.target.value); setFilters((f) => ({ ...f, roles: val })); }}>
-          <option value={JSON.stringify(["Partner","Lawyer"])}>Partners & Lawyers</option>
-          <option value={JSON.stringify(["Partner"]) }>Partners only</option>
-          <option value={JSON.stringify(["Lawyer"])  }>Lawyers only</option>
-          <option value={JSON.stringify([])            }>All roles</option>
-        </Select>
-        <Select value={filters.caseStatus} onChange={(e) => { setPage(1); setFilters((f) => ({ ...f, caseStatus: e.target.value })); }}>
-          <option value="ALL">All Statuses</option>
-          <option value="Open">Open</option>
-          <option value="In Progress">In Progress</option>
-          <option value="Closed">Closed</option>
-        </Select>
-        <DatePicker label={null} placeholder="From" value={filters.from} onChange={(v) => { setPage(1); setFilters((f) => ({ ...f, from: v })); }} size="sm" />
-        <DatePicker label={null} placeholder="To"   value={filters.to}   onChange={(v) => { setPage(1); setFilters((f) => ({ ...f, to: v })); }} size="sm" />
-      </TableToolbar>
-
       {/* KPIs */}
-      {perms.canViewAnalytics ? <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6"> : null}
-        <KpiCard label="Total Hours" value={fmtNumber(kpis.hours)} loading={loading || (filters.groupBy === "caseType" && caseTypeLoading)} />
-        <KpiCard label="Revenue" value={fmtCurrency(kpis.revenue)} loading={loading || (filters.groupBy === "caseType" && caseTypeLoading)} />
-        <KpiCard label="Avg Rate" value={fmtCurrency(kpis.avgRate)} loading={loading || (filters.groupBy === "caseType" && caseTypeLoading)} />
-        <KpiCard label="Logged %" value={fmtPercent(kpis.loggedPct)} loading={loading || (filters.groupBy === "caseType" && caseTypeLoading)} />
-      </div>
+      {perms.canViewAnalytics && (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+          <KpiCard label="Total Hours" value={fmtNumber(kpis.hours)} loading={loading || (filters.groupBy === "caseType" && caseTypeLoading)} />
+          <KpiCard label="Revenue" value={fmtCurrency(kpis.revenue)} loading={loading || (filters.groupBy === "caseType" && caseTypeLoading)} />
+          <KpiCard label="Avg Rate" value={fmtCurrency(kpis.avgRate)} loading={loading || (filters.groupBy === "caseType" && caseTypeLoading)} />
+          <KpiCard label="Logged %" value={fmtPercent(kpis.loggedPct)} loading={loading || (filters.groupBy === "caseType" && caseTypeLoading)} />
+        </div>
+      )}
 
       {perms.canViewAnalytics && (
-      <DataTable
-        columns={columns}
-        data={paged}
-        total={total}
-        page={page}
-        pageSize={pageSize}
-        onPageChange={setPage}
-        onPageSizeChange={(s) => { setPageSize(s); setPage(1); }}
-        sort={sort}
-        onSortChange={setSort}
-        rowKey={(r) => r.id}
-        loading={!!loading || (filters.groupBy === "caseType" && caseTypeLoading)}
-        stickyHeader
-      />)}
+        <DataTable
+          columns={columns}
+          data={paged}
+          total={total}
+          page={page}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={(s) => { setPageSize(s); setPage(1); }}
+          sort={sort}
+          onSortChange={setSort}
+          rowKey={(r) => r.id}
+          loading={!!loading || (filters.groupBy === "caseType" && caseTypeLoading)}
+          stickyHeader
+        />
+      )}
 
       {error && <div className="lb-error mt-3">{String(error)}</div>}
     </div>
@@ -258,17 +239,7 @@ function KpiCard({ label, value, loading }) {
   );
 }
 
-// every Base component signature
-export default function XxxxBase({
-  role,          // "admin" | "partner" | "lawyer" | "associate" | "intern"
-  readOnly,      // boolean
-  filters = {},  // e.g., { assignee: userId, author: userId }
-  mode,          // e.g., "approvals" for billables
-} = {}) { /* keep existing body; later we’ll read props where needed */ }
-
-
-
-// ---- Role-aware wrapper (named export) ----
-export function XxxxBase({ role="intern", readOnly=false, filters = {}, mode, currentUserId } = {}, props) {
+/* ---- Role-aware wrapper (named export) ---- */
+export function AnalyticsBase({ role="intern", readOnly=false, filters = {}, mode, currentUserId } = {}, props) {
   return <AnalyticsPage role={role} readOnly={readOnly} filters={filters} mode={mode} currentUserId={currentUserId} {...props} />;
 }

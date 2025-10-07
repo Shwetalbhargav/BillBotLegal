@@ -1,10 +1,10 @@
-// src/features/billables/BillablesPage.jsx — fixed (no Switch dependency)
+// src/features/billables/BillablesPage.jsx — fixed
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchBillables } from "@/store/billableSlice";
 import { getUnbilledBillables } from "@/services/api";
 
-import { Input, Select, Switch } from "@/components/form";
+import { Input, Select } from "@/components/form";
 import { Button, Badge, Modal } from "@/components/common";
 import { DataTable, TableToolbar, SkeletonRows } from "@/components/table";
 
@@ -16,7 +16,9 @@ const fmtDate = (d) => (d ? new Date(d).toLocaleDateString() : "—");
 const hoursOf = (b) =>
   typeof b.durationHours === "number"
     ? b.durationHours
-    : Number(b.durationMinutes || 0) / 60;/* ---------------- Role & Permission helpers (RBAC) ---------------- */
+    : Number(b.durationMinutes || 0) / 60;
+
+/* ---------------- Role & Permission helpers (RBAC) ---------------- */
 function derivePermissions(role, explicitReadOnly=false) {
   const r = String(role || "intern").toLowerCase();
   const isAdmin = r === "admin";
@@ -38,12 +40,8 @@ function derivePermissions(role, explicitReadOnly=false) {
   return { isAdmin, isPartner, isLawyer, isAssociate, isIntern, canEdit, canApprove, canInvoice, canDelete, canViewAnalytics, readOnly, scope };
 }
 
-
-
 export default function BillablesPage({ role="intern", readOnly=false, filters: externalFilters = {} , mode, currentUserId } = {}) {
   const perms = derivePermissions(role, readOnly);
-  const roleScope = perms.scope;
-  const effectiveFilters = { ...externalFilters, scope: roleScope };
 
   const dispatch = useDispatch();
   const { list = [], loading, error } = useSelector((s) => s.billables || {});
@@ -54,20 +52,14 @@ export default function BillablesPage({ role="intern", readOnly=false, filters: 
   const [unbilled, setUnbilled] = useState([]);
   const printRef = useRef(null);
 
-  useEffect(() => {
-    dispatch(fetchBillables());
-  }, [dispatch]);
+  useEffect(() => { dispatch(fetchBillables()); }, [dispatch]);
 
   useEffect(() => {
     if (!showUnbilledOnly) return;
     (async () => {
       try {
         const res = await getUnbilledBillables();
-        const arr = Array.isArray(res?.data?.items)
-          ? res.data.items
-          : Array.isArray(res?.data)
-          ? res.data
-          : [];
+        const arr = Array.isArray(res?.data?.items) ? res.data.items : Array.isArray(res?.data) ? res.data : [];
         setUnbilled(arr);
       } catch (e) {
         console.error("failed to load unbilled", e);
@@ -82,8 +74,7 @@ export default function BillablesPage({ role="intern", readOnly=false, filters: 
     const map = new Map();
     for (const b of source) {
       const cid = typeof b.clientId === "object" ? b.clientId?._id : b.clientId;
-      const cname =
-        typeof b.clientId === "object" ? b.clientId?.name || cid : b.clientId || cid;
+      const cname = typeof b.clientId === "object" ? b.clientId?.name || cid : b.clientId || cid;
       if (cid && !map.has(cid)) map.set(cid, cname);
     }
     return Array.from(map, ([value, label]) => ({ value, label }));
@@ -104,9 +95,7 @@ export default function BillablesPage({ role="intern", readOnly=false, filters: 
         (b) =>
           String(b.description || "").toLowerCase().includes(t) ||
           String(b.category || "").toLowerCase().includes(t) ||
-          String(
-            (typeof b.caseId === "object" ? b.caseId?.name : b.caseId) || ""
-          )
+          String((typeof b.caseId === "object" ? b.caseId?.name : b.caseId) || "")
             .toLowerCase()
             .includes(t)
       );
@@ -117,52 +106,15 @@ export default function BillablesPage({ role="intern", readOnly=false, filters: 
 
   const columns = [
     { id: "date", header: "Date", accessor: (r) => fmtDate(r.date), sortable: true },
-    {
-      id: "client",
-      header: "Client",
-      accessor: (r) =>
-        typeof r.clientId === "object" ? r.clientId?.name : r.clientId,
-      sortable: true,
-    },
-    {
-      id: "case",
-      header: "Case",
-      accessor: (r) => (typeof r.caseId === "object" ? r.caseId?.name : r.caseId),
-      sortable: true,
-    },
+    { id: "client", header: "Client", accessor: (r) => (typeof r.clientId === "object" ? r.clientId?.name : r.clientId), sortable: true },
+    { id: "case", header: "Case", accessor: (r) => (typeof r.caseId === "object" ? r.caseId?.name : r.caseId), sortable: true },
     { id: "category", header: "Category", accessor: (r) => r.category, sortable: true },
     { id: "description", header: "Description", accessor: (r) => r.description, width: 280 },
-    {
-      id: "hours",
-      header: "Hours",
-      accessor: (r) => (hoursOf(r) || 0).toFixed(2),
-      align: "right",
-      sortable: true,
-    },
+    { id: "hours", header: "Hours", accessor: (r) => (hoursOf(r) || 0).toFixed(2), align: "right", sortable: true },
     { id: "rate", header: "Rate", accessor: (r) => money(r.rate), align: "right" },
-    {
-      id: "amount",
-      header: "Amount",
-      accessor: (r) => money(r.amount || hoursOf(r) * (Number(r.rate) || 0)),
-      align: "right",
-    },
-    {
-      id: "billed",
-      header: "Billed?",
-      accessor: (r) => (
-        <Badge>{r.invoiceId || r.status === "billed" ? "Yes" : "No"}</Badge>
-      ),
-      width: 100,
-    },
-    {
-      id: "action",
-      header: "",
-      accessor: (r) => (
-        <Button variant="ghost" size="sm" onClick={() => setSelected(r)}>
-          View
-        </Button>
-      ),
-    },
+    { id: "amount", header: "Amount", accessor: (r) => money(r.amount || hoursOf(r) * (Number(r.rate) || 0)), align: "right" },
+    { id: "billed", header: "Billed?", accessor: (r) => (<Badge>{r.invoiceId || r.status === "billed" ? "Yes" : "No"}</Badge>), width: 100 },
+    { id: "action", header: "", accessor: (r) => (<Button variant="ghost" size="sm" onClick={() => setSelected(r)}>View</Button>) },
   ];
 
   const onPrint = () => {
@@ -180,92 +132,41 @@ export default function BillablesPage({ role="intern", readOnly=false, filters: 
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-semibold">Billables</h1>
         <label className="flex items-center gap-2 cursor-pointer select-none">
-          <input
-            type="checkbox"
-            className="rounded border-gray-300"
-            checked={showUnbilledOnly}
-            onChange={(e) => setShowUnbilledOnly(e.target.checked)}
-          />
+          <input type="checkbox" className="rounded border-gray-300" checked={showUnbilledOnly} onChange={(e) => setShowUnbilledOnly(e.target.checked)} />
           <span className="text-sm text-gray-600">Unbilled only</span>
         </label>
       </div>
 
       <TableToolbar rightActions={[]}>
         <div className="flex items-center gap-3">
-          <Select
-            value={clientFilter}
-            onChange={(e) => setClientFilter(e.target.value)}
-          >
+          <Select value={clientFilter} onChange={(e) => setClientFilter(e.target.value)}>
             <option value="">All clients</option>
-            {clientOptions.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.label}
-              </option>
-            ))}
+            {clientOptions.map((c) => (<option key={c.value} value={c.value}>{c.label}</option>))}
           </Select>
-          <Input
-            placeholder="Search description, category, case…"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
+          <Input placeholder="Search description, category, case…" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
       </TableToolbar>
 
-      <DataTable
-        columns={columns}
-        data={rows}
-        loading={loading && !showUnbilledOnly}
-        rowKey={(r) => r._id || r.id}
-        skeleton={<SkeletonRows columns={columns} />}
-      />
+      <DataTable columns={columns} data={rows} loading={loading && !showUnbilledOnly} rowKey={(r) => r._id || r.id} skeleton={<SkeletonRows columns={columns} />} />
 
       {/* Preview modal */}
-      <Modal
-        open={!!selected}
-        onClose={() => setSelected(null)}
-        title="Billable Preview"
-      >
+      <Modal open={!!selected} onClose={() => setSelected(null)} title="Billable Preview">
         {selected && (
           <div ref={printRef} className="printable space-y-3">
             <div className="flex justify-between items-start">
               <div>
-                <div className="text-lg font-semibold">
-                  {selected.category || "Billable"}
-                </div>
-                <div className="text-sm text-gray-500">
-                  {fmtDate(selected.date)}
-                </div>
+                <div className="text-lg font-semibold">{selected.category || "Billable"}</div>
+                <div className="text-sm text-gray-500">{fmtDate(selected.date)}</div>
               </div>
               <Button onClick={onPrint}>Print</Button>
             </div>
             <div className="text-sm">
-              <div>
-                <strong>Client:</strong>{" "}
-                {typeof selected.clientId === "object"
-                  ? selected.clientId?.name
-                  : selected.clientId}
-              </div>
-              <div>
-                <strong>Case:</strong>{" "}
-                {typeof selected.caseId === "object"
-                  ? selected.caseId?.name
-                  : selected.caseId}
-              </div>
-              <div>
-                <strong>Description:</strong> {selected.description}
-              </div>
-              <div>
-                <strong>Hours:</strong> {(hoursOf(selected) || 0).toFixed(2)}
-              </div>
-              <div>
-                <strong>Rate:</strong> {money(selected.rate)}
-              </div>
-              <div>
-                <strong>Amount:</strong>{" "}
-                {money(
-                  selected.amount || hoursOf(selected) * (Number(selected.rate) || 0)
-                )}
-              </div>
+              <div><strong>Client:</strong> {typeof selected.clientId === "object" ? selected.clientId?.name : selected.clientId}</div>
+              <div><strong>Case:</strong> {typeof selected.caseId === "object" ? selected.caseId?.name : selected.caseId}</div>
+              <div><strong>Description:</strong> {selected.description}</div>
+              <div><strong>Hours:</strong> {(hoursOf(selected) || 0).toFixed(2)}</div>
+              <div><strong>Rate:</strong> {money(selected.rate)}</div>
+              <div><strong>Amount:</strong> {money(selected.amount || hoursOf(selected) * (Number(selected.rate) || 0))}</div>
             </div>
           </div>
         )}
@@ -276,16 +177,7 @@ export default function BillablesPage({ role="intern", readOnly=false, filters: 
   );
 }
 
-// every Base component signature
-export default function XxxxBase({
-  role,          // "admin" | "partner" | "lawyer" | "associate" | "intern"
-  readOnly,      // boolean
-  filters = {},  // e.g., { assignee: userId, author: userId }
-  mode,          // e.g., "approvals" for billables
-} = {}) { /* keep existing body; later we’ll read props where needed */ }
-
-
-// ---- Role-aware wrapper (named export) ----
-export function XxxxBase({ role="intern", readOnly=false, filters = {}, mode, currentUserId } = {}, props) {
+/* ---- Role-aware wrapper (named export) ---- */
+export function BillablesBase({ role="intern", readOnly=false, filters = {}, mode, currentUserId } = {}, props) {
   return <BillablesPage role={role} readOnly={readOnly} filters={filters} mode={mode} currentUserId={currentUserId} {...props} />;
 }
