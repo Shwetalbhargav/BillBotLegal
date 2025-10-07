@@ -1,8 +1,10 @@
+// src/store/billableSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getBillables, createBillable, updateBillable, deleteBillable } from '@/services/api';
+import { getBillables, updateBillable, deleteBillable, addBillable } from '@/services/api';
 
+// Thunks
 export const fetchBillables = createAsyncThunk('billables/fetch', async () => {
-  const { data } = await createBillable(billable);
+  const { data } = await getBillables();
   return data;
 });
 
@@ -21,28 +23,50 @@ export const removeBillable = createAsyncThunk('billables/delete', async (id) =>
   return id;
 });
 
+// Slice
 const billableSlice = createSlice({
   name: 'billables',
   initialState: { list: [], loading: false, error: null },
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(fetchBillables.pending, (state) => { state.loading = true; })
+      // Fetch
+      .addCase(fetchBillables.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(fetchBillables.fulfilled, (state, action) => {
         state.loading = false;
-        state.list = action.payload;
+        state.list = action.payload || [];
       })
       .addCase(fetchBillables.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message;
+        state.error = action.error?.message || 'Failed to fetch billables';
       })
-      .addCase(createBillable.fulfilled, (state, action) => { state.list.push(action.payload); })
+
+      // Create
+      .addCase(createBillable.fulfilled, (state, action) => {
+        state.list.push(action.payload);
+      })
+      .addCase(createBillable.rejected, (state, action) => {
+        state.error = action.error?.message || 'Failed to create billable';
+      })
+
+      // Update
       .addCase(editBillable.fulfilled, (state, action) => {
-        const idx = state.list.findIndex(b => b._id === action.payload._id);
+        const idx = state.list.findIndex((b) => b._id === action.payload._id);
         if (idx !== -1) state.list[idx] = action.payload;
       })
+      .addCase(editBillable.rejected, (state, action) => {
+        state.error = action.error?.message || 'Failed to update billable';
+      })
+
+      // Delete
       .addCase(removeBillable.fulfilled, (state, action) => {
-        state.list = state.list.filter(b => b._id !== action.payload);
+        state.list = state.list.filter((b) => b._id !== action.payload);
+      })
+      .addCase(removeBillable.rejected, (state, action) => {
+        state.error = action.error?.message || 'Failed to delete billable';
       });
   },
 });
