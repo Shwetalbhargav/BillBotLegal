@@ -29,9 +29,35 @@ function buildGmailComposeUrl({ to, subject, body , lbPrompt}) {
     lb_prompt: lbPrompt || ""
   });
   return `https://mail.google.com/mail/u/0/?${params.toString()}`;
+}/* ---------------- Role & Permission helpers (RBAC) ---------------- */
+function derivePermissions(role, explicitReadOnly=false) {
+  const r = String(role || "intern").toLowerCase();
+  const isAdmin = r === "admin";
+  const isPartner = r === "partner";
+  const isLawyer = r === "lawyer";
+  const isAssociate = r === "associate";
+  const isIntern = r === "intern";
+
+  const canEdit = isAdmin || isPartner || isLawyer;
+  const canApprove = isAdmin || isPartner;
+  const canInvoice = isAdmin || isPartner;
+  const canDelete = isAdmin;
+  const canViewAnalytics = isAdmin || isPartner;
+  const readOnly = !!explicitReadOnly || isIntern || isAssociate;
+
+  // scope: "all" | "team" | "self"
+  const scope = isAdmin ? "all" : isPartner ? "team" : "self";
+
+  return { isAdmin, isPartner, isLawyer, isAssociate, isIntern, canEdit, canApprove, canInvoice, canDelete, canViewAnalytics, readOnly, scope };
 }
 
-export default function ClientsPage() {
+
+
+export default function ClientsPage({ role="intern", readOnly=false, filters: externalFilters = {} , mode, currentUserId } = {}) {
+  const perms = derivePermissions(role, readOnly);
+  const roleScope = perms.scope;
+  const effectiveFilters = { ...externalFilters, scope: roleScope };
+
   const dispatch = useDispatch();
 
   // slices
@@ -456,3 +482,9 @@ export default function XxxxBase({
   filters = {},  // e.g., { assignee: userId, author: userId }
   mode,          // e.g., "approvals" for billables
 } = {}) { /* keep existing body; later we’ll read props where needed */ }
+
+
+// ---- Role-aware wrapper (named export) ----
+export function XxxxBase({ role="intern", readOnly=false, filters = {}, mode, currentUserId } = {}, props) {
+  return <ClientsPage role={role} readOnly={readOnly} filters={filters} mode={mode} currentUserId={currentUserId} {...props} />;
+}

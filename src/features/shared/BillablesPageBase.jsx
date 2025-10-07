@@ -16,9 +16,35 @@ const fmtDate = (d) => (d ? new Date(d).toLocaleDateString() : "—");
 const hoursOf = (b) =>
   typeof b.durationHours === "number"
     ? b.durationHours
-    : Number(b.durationMinutes || 0) / 60;
+    : Number(b.durationMinutes || 0) / 60;/* ---------------- Role & Permission helpers (RBAC) ---------------- */
+function derivePermissions(role, explicitReadOnly=false) {
+  const r = String(role || "intern").toLowerCase();
+  const isAdmin = r === "admin";
+  const isPartner = r === "partner";
+  const isLawyer = r === "lawyer";
+  const isAssociate = r === "associate";
+  const isIntern = r === "intern";
 
-export default function BillablesPage() {
+  const canEdit = isAdmin || isPartner || isLawyer;
+  const canApprove = isAdmin || isPartner;
+  const canInvoice = isAdmin || isPartner;
+  const canDelete = isAdmin;
+  const canViewAnalytics = isAdmin || isPartner;
+  const readOnly = !!explicitReadOnly || isIntern || isAssociate;
+
+  // scope: "all" | "team" | "self"
+  const scope = isAdmin ? "all" : isPartner ? "team" : "self";
+
+  return { isAdmin, isPartner, isLawyer, isAssociate, isIntern, canEdit, canApprove, canInvoice, canDelete, canViewAnalytics, readOnly, scope };
+}
+
+
+
+export default function BillablesPage({ role="intern", readOnly=false, filters: externalFilters = {} , mode, currentUserId } = {}) {
+  const perms = derivePermissions(role, readOnly);
+  const roleScope = perms.scope;
+  const effectiveFilters = { ...externalFilters, scope: roleScope };
+
   const dispatch = useDispatch();
   const { list = [], loading, error } = useSelector((s) => s.billables || {});
   const [clientFilter, setClientFilter] = useState("");
@@ -257,3 +283,9 @@ export default function XxxxBase({
   filters = {},  // e.g., { assignee: userId, author: userId }
   mode,          // e.g., "approvals" for billables
 } = {}) { /* keep existing body; later we’ll read props where needed */ }
+
+
+// ---- Role-aware wrapper (named export) ----
+export function XxxxBase({ role="intern", readOnly=false, filters = {}, mode, currentUserId } = {}, props) {
+  return <BillablesPage role={role} readOnly={readOnly} filters={filters} mode={mode} currentUserId={currentUserId} {...props} />;
+}

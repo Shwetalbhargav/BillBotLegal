@@ -1,5 +1,5 @@
 // ===============================
-// File: src/components/layout/NavBar.jsx (updated to show admin photo & link to Admin Profile)
+// File: src/components/layout/NavBar.jsx (updated to show admin photo & link to Profile Settings)
 // ===============================
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -9,6 +9,24 @@ import { ThemeSwitch } from "@/components/common/ThemeProvider";
 import useAuth from "@/hooks/useAuth";
 import { Bell, Menu, X, ChevronDown } from "lucide-react";
 
+
+function avatarFromUser(user) {
+  if (!user) return "/assets/photos/default.jpg";
+  if (user.avatar) return user.avatar;
+  const role = String(user.role || "user").toLowerCase();
+  const slug = String(user.username || (user.name || "user").split(" ")[0]).toLowerCase();
+  return `/assets/photos/${role}/${slug}.jpg`;
+}
+function profileRouteFor(role) {
+  const r = String(role||"").toLowerCase();
+  if (r === "admin") return "/profile/admin";
+              if (r === "admin") return "/profile/admin";
+              if (r === "partner") return "/profile/partner";
+  if (r === "lawyer") return "/profile/lawyer";
+  if (r === "associate") return "/profile/associate";
+  if (r === "intern") return "/profile/intern";
+  return "/profile";
+}
 const NAV_ITEMS = [
   { to: "/#cases", label: "Cases" },
   { to: "/#clients", label: "Clients" },
@@ -47,7 +65,7 @@ export default function NavBar() {
   const linkIdle = "text-gray-700 hover:bg-white/70 hover:text-indigo-700";
 
   // Use explicit admin photo from public unless user has a custom avatar
-  const avatarSrc = user?.avatar || "/partner/admin.jpg";
+  const avatarSrc = avatarFromUser(user);
 
   return (
     <header className="fixed inset-x-0 top-0 z-50">
@@ -118,6 +136,7 @@ export default function NavBar() {
                       alt="Profile"
                       className="h-9 w-9 rounded-full border border-gray-200/70 object-cover"
                     />
+                    <span className="text-sm font-medium">{user?.name || "User"}</span>
                     <ChevronDown className="h-4 w-4 text-gray-500" />
                   </button>
 
@@ -128,9 +147,9 @@ export default function NavBar() {
                     role="menu"
                     aria-label="Profile"
                   >
-                    {/* Link directly to Admin Profile */}
-                    <MenuItem onClick={() => go("/admin/profile")}>Admin Profile</MenuItem>
-                    <MenuItem onClick={() => go("/settings")}>General Settings</MenuItem>
+                    {/* Link directly to Profile Settings */}
+                    <MenuItem onClick={() => go(profileRouteFor(user?.role))}>Profile Settings</MenuItem>
+                    <MenuItem onClick={() => go(profileRouteFor(user?.role))}>Profile Settings</MenuItem>
                     <MenuItem onClick={logout} tone="danger">Logout</MenuItem>
                   </div>
                 </div>
@@ -176,13 +195,13 @@ export default function NavBar() {
                 {item.label}
               </button>
             ))}
-            {/* Direct mobile link to Admin Profile when logged in */}
+            {/* Direct mobile link to Profile Settings when logged in */}
             {isAuthenticated && (
               <button
-                onClick={() => go("/admin/profile")}
+                onClick={() => go(profileRouteFor(user?.role))}
                 className={`${linkBase} ${linkIdle} w-full text-left`}
               >
-                Admin Profile
+                Profile Settings
               </button>
             )}
           </nav>

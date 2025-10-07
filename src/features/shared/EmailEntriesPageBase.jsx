@@ -6,9 +6,35 @@ import { pushClio } from "@/store/emailSlice";
 // skeleton barrels
 import { Button, Drawer, useToast } from "@/components/common";
 import { FormField, Input, TextArea, NumberInput, Select, DatePicker } from "@/components/form";
-import { DataTable, TableToolbar } from "@/components/table";
+import { DataTable, TableToolbar } from "@/components/table";/* ---------------- Role & Permission helpers (RBAC) ---------------- */
+function derivePermissions(role, explicitReadOnly=false) {
+  const r = String(role || "intern").toLowerCase();
+  const isAdmin = r === "admin";
+  const isPartner = r === "partner";
+  const isLawyer = r === "lawyer";
+  const isAssociate = r === "associate";
+  const isIntern = r === "intern";
 
-export default function EmailEntriesPage() {
+  const canEdit = isAdmin || isPartner || isLawyer;
+  const canApprove = isAdmin || isPartner;
+  const canInvoice = isAdmin || isPartner;
+  const canDelete = isAdmin;
+  const canViewAnalytics = isAdmin || isPartner;
+  const readOnly = !!explicitReadOnly || isIntern || isAssociate;
+
+  // scope: "all" | "team" | "self"
+  const scope = isAdmin ? "all" : isPartner ? "team" : "self";
+
+  return { isAdmin, isPartner, isLawyer, isAssociate, isIntern, canEdit, canApprove, canInvoice, canDelete, canViewAnalytics, readOnly, scope };
+}
+
+
+
+export default function EmailEntriesPage({ role="intern", readOnly=false, filters: externalFilters = {} , mode, currentUserId } = {}) {
+  const perms = derivePermissions(role, readOnly);
+  const roleScope = perms.scope;
+  const effectiveFilters = { ...externalFilters, scope: roleScope };
+
   const dispatch = useDispatch();
   const toast = useToast?.();
 
@@ -143,7 +169,7 @@ export default function EmailEntriesPage() {
         <h1 className="text-2xl font-semibold">Email Entries</h1>
         <div className="flex items-center gap-2">
           <Button variant="secondary" onClick={() => dispatch(fetchEmails())}>Refresh</Button>
-          <Button onClick={openCreate}>New Entry</Button>
+          {!perms.readOnly && perms.canEdit && <Button onClick={openCreate}>New Entry</Button>}
         </div>
       </div>
 
@@ -268,3 +294,9 @@ export default function XxxxBase({
   filters = {},  // e.g., { assignee: userId, author: userId }
   mode,          // e.g., "approvals" for billables
 } = {}) { /* keep existing body; later we’ll read props where needed */ }
+
+
+// ---- Role-aware wrapper (named export) ----
+export function XxxxBase({ role="intern", readOnly=false, filters = {}, mode, currentUserId } = {}, props) {
+  return <EmailEntriesPage role={role} readOnly={readOnly} filters={filters} mode={mode} currentUserId={currentUserId} {...props} />;
+}

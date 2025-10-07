@@ -6,9 +6,35 @@ import { getBillableStatsByCaseType } from "@/services/api";
 
 import { Button, Loader } from "@/components/common";
 import { Input, Select, DatePicker } from "@/components/form";
-import { DataTable, TableToolbar } from "@/components/table";
+import { DataTable, TableToolbar } from "@/components/table";/* ---------------- Role & Permission helpers (RBAC) ---------------- */
+function derivePermissions(role, explicitReadOnly=false) {
+  const r = String(role || "intern").toLowerCase();
+  const isAdmin = r === "admin";
+  const isPartner = r === "partner";
+  const isLawyer = r === "lawyer";
+  const isAssociate = r === "associate";
+  const isIntern = r === "intern";
 
-export default function AnalyticsPage() {
+  const canEdit = isAdmin || isPartner || isLawyer;
+  const canApprove = isAdmin || isPartner;
+  const canInvoice = isAdmin || isPartner;
+  const canDelete = isAdmin;
+  const canViewAnalytics = isAdmin || isPartner;
+  const readOnly = !!explicitReadOnly || isIntern || isAssociate;
+
+  // scope: "all" | "team" | "self"
+  const scope = isAdmin ? "all" : isPartner ? "team" : "self";
+
+  return { isAdmin, isPartner, isLawyer, isAssociate, isIntern, canEdit, canApprove, canInvoice, canDelete, canViewAnalytics, readOnly, scope };
+}
+
+
+
+export default function AnalyticsPage({ role="intern", readOnly=false, filters: externalFilters = {} , mode, currentUserId } = {}) {
+  const perms = derivePermissions(role, readOnly);
+  const roleScope = perms.scope;
+  const effectiveFilters = { ...externalFilters, scope: roleScope };
+
   const dispatch = useDispatch();
   const { billable, invoice, loading, error } = useSelector((s) => s.analytics || {});
   const cases = useSelector((s) => s.cases?.list || []);
@@ -142,13 +168,14 @@ export default function AnalyticsPage() {
       </TableToolbar>
 
       {/* KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+      {perms.canViewAnalytics ? <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6"> : null}
         <KpiCard label="Total Hours" value={fmtNumber(kpis.hours)} loading={loading || (filters.groupBy === "caseType" && caseTypeLoading)} />
         <KpiCard label="Revenue" value={fmtCurrency(kpis.revenue)} loading={loading || (filters.groupBy === "caseType" && caseTypeLoading)} />
         <KpiCard label="Avg Rate" value={fmtCurrency(kpis.avgRate)} loading={loading || (filters.groupBy === "caseType" && caseTypeLoading)} />
         <KpiCard label="Logged %" value={fmtPercent(kpis.loggedPct)} loading={loading || (filters.groupBy === "caseType" && caseTypeLoading)} />
       </div>
 
+      {perms.canViewAnalytics && (
       <DataTable
         columns={columns}
         data={paged}
@@ -162,7 +189,7 @@ export default function AnalyticsPage() {
         rowKey={(r) => r.id}
         loading={!!loading || (filters.groupBy === "caseType" && caseTypeLoading)}
         stickyHeader
-      />
+      />)}
 
       {error && <div className="lb-error mt-3">{String(error)}</div>}
     </div>
@@ -239,3 +266,9 @@ export default function XxxxBase({
   mode,          // e.g., "approvals" for billables
 } = {}) { /* keep existing body; later we’ll read props where needed */ }
 
+
+
+// ---- Role-aware wrapper (named export) ----
+export function XxxxBase({ role="intern", readOnly=false, filters = {}, mode, currentUserId } = {}, props) {
+  return <AnalyticsPage role={role} readOnly={readOnly} filters={filters} mode={mode} currentUserId={currentUserId} {...props} />;
+}

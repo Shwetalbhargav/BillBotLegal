@@ -6,9 +6,35 @@ import { addInvoicePayment, getPendingSummaryByClient } from "@/services/api";
 
 import { Modal, Button, Badge } from "@/components/common";
 import { FormField, Input, NumberInput, Select, DatePicker } from "@/components/form";
-import { DataTable, TableToolbar } from "@/components/table";
+import { DataTable, TableToolbar } from "@/components/table";/* ---------------- Role & Permission helpers (RBAC) ---------------- */
+function derivePermissions(role, explicitReadOnly=false) {
+  const r = String(role || "intern").toLowerCase();
+  const isAdmin = r === "admin";
+  const isPartner = r === "partner";
+  const isLawyer = r === "lawyer";
+  const isAssociate = r === "associate";
+  const isIntern = r === "intern";
 
-export default function InvoicesPage() {
+  const canEdit = isAdmin || isPartner || isLawyer;
+  const canApprove = isAdmin || isPartner;
+  const canInvoice = isAdmin || isPartner;
+  const canDelete = isAdmin;
+  const canViewAnalytics = isAdmin || isPartner;
+  const readOnly = !!explicitReadOnly || isIntern || isAssociate;
+
+  // scope: "all" | "team" | "self"
+  const scope = isAdmin ? "all" : isPartner ? "team" : "self";
+
+  return { isAdmin, isPartner, isLawyer, isAssociate, isIntern, canEdit, canApprove, canInvoice, canDelete, canViewAnalytics, readOnly, scope };
+}
+
+
+
+export default function InvoicesPage({ role="intern", readOnly=false, filters: externalFilters = {} , mode, currentUserId } = {}) {
+  const perms = derivePermissions(role, readOnly);
+  const roleScope = perms.scope;
+  const effectiveFilters = { ...externalFilters, scope: roleScope };
+
   const dispatch = useDispatch();
   const { list = [], loading, error } = useSelector((s) => s.invoices || {});
   const [selectedId, setSelectedId] = useState("");
@@ -87,7 +113,7 @@ export default function InvoicesPage() {
     { id: "client", header: "Client", accessor: (r) => r.clientName ?? r?.client?.name ?? "—", sortable: true, width: 240 },
     { id: "amount", header: "Amount", accessor: (r) => formatCurrency(r.amount ?? r.totalAmount, r.currency || "INR"), sortable: true, align: "right", width: 140 },
     { id: "status", header: "Status", accessor: (r) => <Badge color={statusColor(r.status)}>{r.status ?? "draft"}</Badge>, sortable: true, width: 140 },
-    { id: "pay", header: "", accessor: (r) => (<Button size="sm" variant="ghost" onClick={() => { setPayInvoice(r); setPayOpen(true); }}>Add Payment</Button>) },
+    { id: "pay", header: "", accessor: (r) => ({perms.canInvoice && !perms.readOnly && <Button size="sm" variant="ghost" onClick={() => { setPayInvoice(r); setPayOpen(true); }}>Add Payment</Button>}) },
   ];
 
   const pendingColumns = [
@@ -225,3 +251,9 @@ export default function XxxxBase({
   filters = {},  // e.g., { assignee: userId, author: userId }
   mode,          // e.g., "approvals" for billables
 } = {}) { /* keep existing body; later we’ll read props where needed */ }
+
+
+// ---- Role-aware wrapper (named export) ----
+export function XxxxBase({ role="intern", readOnly=false, filters = {}, mode, currentUserId } = {}, props) {
+  return <InvoicesPage role={role} readOnly={readOnly} filters={filters} mode={mode} currentUserId={currentUserId} {...props} />;
+}
