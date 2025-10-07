@@ -22,9 +22,7 @@ const RoleRoute = ({ children, allow = [] }) => {
 };
 
 // -------- Public (features/*) --------
-// NOTE: Update these paths to match where your Login/Register files actually live.
-const LandingPage  = lazy(() => import('@/features/landing/LandingPage'));
-// If your updated files are in src/pages/auth, change these two lines accordingly:
+
 const Login        = lazy(() => import('@/features/auth/Login'));     
 const Register     = lazy(() => import('@/features/auth/Register'));  
 
@@ -50,8 +48,8 @@ export default function AppRoutes() {
     <Suspense fallback={<div className="min-h-screen grid place-items-center">Loading…</div>}>
       <Routes>
         {/* Public */}
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
+        
+        <Route path="/" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
         <Route path="/register" element={<PublicOnlyRoute><Register /></PublicOnlyRoute>} />
         <Route path="/magic-ok" element={<MagicOk />} />
         <Route path="/check-email" element={<CheckEmail />} />
