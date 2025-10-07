@@ -1,6 +1,6 @@
 // ===== src/pages/auth/Login.jsx =====
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { useForm } from "react-hook-form";
 import { motion } from "framer-motion";
@@ -16,11 +16,17 @@ export default function Login() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const form = useForm({
-    mode: "onBlur",
-    // Force explicit selection for role (required)
-    defaultValues: { name: "", mobile: "", password: "", role: "" },
-  });
+ const [search] = useSearchParams();
+ const preselectedRole = (search.get("role") || "").toLowerCase();
+ const form = useForm({
+   mode: "onBlur",
+   defaultValues: {
+     name: "",
+     mobile: "",
+     password: "",
+     role: preselectedRole, // pre-fill if provided
+   },
+ });
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -129,36 +135,31 @@ export default function Login() {
               </FormField>
 
               {/* Role (required) */}
-              <FormField name="role" label="Role" required>
-                {({ id, describedBy, error }) => (
-                  <select
-                    id={id}
-                    aria-describedby={describedBy}
-                    aria-invalid={!!error}
-                    className="w-full rounded-md bg-white/10 border border-white/30 text-white py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-white/50"
-                    {...form.register("role", { required: "Role is required" })}
-                  >
-                    <option className="bg-slate-900 text-white" value="" disabled>
-                      Select role
-                    </option>
-                    <option className="bg-slate-900 text-white" value="admin">
-                      Admin
-                    </option>
-                    <option className="bg-slate-900 text-white" value="partner">
-                      Partner
-                    </option>
-                    <option className="bg-slate-900 text-white" value="lawyer">
-                      Lawyer
-                    </option>
-                    <option className="bg-slate-900 text-white" value="associate">
-                      Associate
-                    </option>
-                    <option className="bg-slate-900 text-white" value="intern">
-                      Intern
-                    </option>
-                  </select>
-                )}
-              </FormField>
+                   {!preselectedRole ? (
+                     <FormField name="role" label="Role" required>
+                       {({ id, describedBy, error }) => (
+                         <select
+                           id={id}
+                           aria-describedby={describedBy}
+                           aria-invalid={!!error}
+                           className="w-full rounded-md bg-white/10 border border-white/30 text-white py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-white/50"
+                           {...form.register("role", { required: "Role is required" })}
+                         >
+                           <option className="bg-slate-900 text-white" value="" disabled>
+                             Select role
+                           </option>
+                           <option className="bg-slate-900 text-white" value="admin">Admin</option>
+                           <option className="bg-slate-900 text-white" value="partner">Partner</option>
+                           <option className="bg-slate-900 text-white" value="lawyer">Lawyer</option>
+                           <option className="bg-slate-900 text-white" value="associate">Associate</option>
+                           <option className="bg-slate-900 text-white" value="intern">Intern</option>
+                         </select>
+                       )}
+                     </FormField>
+                   ) : (
+                     <input type="hidden" {...form.register("role")} value={preselectedRole} />
+                   )}
+
 
               {error && <p className="text-red-300 text-sm">{error}</p>}
 
