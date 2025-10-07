@@ -49,7 +49,7 @@ export default function AppRoutes() {
       <Routes>
         {/* Public */}
         
-        <Route path="/" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
+        <Route path="/" element={<PublicOnlyRoute><RoleSelectLanding /></PublicOnlyRoute>} />
         <Route path="/register" element={<PublicOnlyRoute><Register /></PublicOnlyRoute>} />
         <Route path="/magic-ok" element={<MagicOk />} />
         <Route path="/check-email" element={<CheckEmail />} />

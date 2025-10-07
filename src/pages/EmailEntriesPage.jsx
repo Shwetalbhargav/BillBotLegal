@@ -1,6 +1,6 @@
 // src/pages/EmailEntriesPage.jsx
 import React from 'react';
-import EmailEntriesFeature from '@/features/emailEntry/EmailEntriesPage';
+import EmailEntriesFeature from '@/features/shared/EmailEntriesPageBase';
 
 const EmailEntriesPage = () => <EmailEntriesFeature />;
 

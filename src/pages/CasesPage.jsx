@@ -1,6 +1,6 @@
 // src/pages/CasesPage.jsx
 import React from 'react';
-import CaseDashboard from '@/features/cases/CaseDashboard';
+import CaseDashboard from '@/features/shared/CasesPageBase';
 
 const CasesPage = () => <CaseDashboard />;
 

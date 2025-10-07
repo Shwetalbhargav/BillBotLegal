@@ -36,23 +36,23 @@ return [
 
 
 return (
-<div className="p-6 space-y-6">
-<div className="flex items-center justify-between">
-<Heading level={2} className="text-2xl font-semibold">Overview</Heading>
-{loading && <Loader/>}
-</div>
-<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-{kpis.map(k=> <KPI key={k.label} {...k} />)}
-</div>
-<Card className="p-6">
-<Heading level={3} className="text-lg font-semibold mb-2">What to do next</Heading>
-<ul className="list-disc ml-5 text-gray-700 space-y-1">
-<li>Review pending <strong>Billable Approvals</strong> and approve entries.</li>
-<li>Convert approved billables into <strong>Invoices</strong>.</li>
-<li>Check <strong>Analytics</strong> for revenue and utilization trends.</li>
-</ul>
-</Card>
-</div>
+    <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+            <Heading level={2} className="text-2xl font-semibold">Overview</Heading>
+            {loading && <Loader/>}
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {kpis.map(k=> <KPI key={k.label} {...k} />)}
+                </div>
+            <Card className="p-6">
+            <Heading level={3} className="text-lg font-semibold mb-2">What to do next</Heading>
+                <ul className="list-disc ml-5 text-gray-700 space-y-1">
+                <li>Review pending <strong>Billable Approvals</strong> and approve entries.</li>
+                <li>Convert approved billables into <strong>Invoices</strong>.</li>
+                <li>Check <strong>Analytics</strong> for revenue and utilization trends.</li>
+                </ul>
+        </Card>
+    </div>
 );
 }
 
