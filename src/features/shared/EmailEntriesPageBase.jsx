@@ -1,3 +1,5 @@
+//src/features/shared/EmailEntriesPageBase.jsx
+
 import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchEmails, addEmail, pushClio } from "@/store/emailSlice";

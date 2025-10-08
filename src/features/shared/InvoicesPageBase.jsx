@@ -1,4 +1,4 @@
-// src/pages/InvoicesPage.jsx — API-integrated
+// src/features/shared/InvoicesPage.jsx
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchInvoices, addInvoice } from "@/store/invoiceSlice";

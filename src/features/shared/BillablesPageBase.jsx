@@ -1,4 +1,4 @@
-// src/features/billables/BillablesPage.jsx — fixed
+// src/features/BillablesPage.jsx — fixed
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchBillables } from "@/store/billableSlice";

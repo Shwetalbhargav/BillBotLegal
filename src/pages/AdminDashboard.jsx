@@ -1,4 +1,4 @@
-// src/pages/dashboards/PartnerDashboard.jsx
+// src/pages/AdminDashboard.jsx
 import React from "react";
 import Sidebar from "./Sidebar";
 import { MENUS } from "@/components/navigation/menus";

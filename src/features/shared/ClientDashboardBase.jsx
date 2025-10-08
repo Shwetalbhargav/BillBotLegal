@@ -1,4 +1,4 @@
-// src/pages/ClientsDashboardBAse.jsx
+// src/features/shared/ClientsDashboardBAse.jsx
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchClients } from "@/store/clientSlice";

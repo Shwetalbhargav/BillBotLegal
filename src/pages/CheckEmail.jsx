@@ -1,3 +1,5 @@
+//src/pages/CheckEmail.jsx
+
 import { useMemo } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { Button } from "@/components/common";

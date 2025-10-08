@@ -1,4 +1,4 @@
-// src/pages/CaseDashboard.jsx
+// src/features/shared/CaseDashboard.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Plus, RefreshCcw, Pencil, Trash2, Briefcase, User, Users, Tag,

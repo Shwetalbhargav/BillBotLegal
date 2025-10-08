@@ -1,4 +1,4 @@
-// src/pages/dashboards/Sidebar.jsx
+// src/pages/Sidebar.jsx
 import React from "react";
 import { NavLink } from "react-router-dom";
 import { MENUS } from "@/components/navigation/menus";
