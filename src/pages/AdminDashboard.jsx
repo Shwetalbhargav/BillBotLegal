@@ -2,10 +2,10 @@
 import React from "react";
 import Sidebar from "./Sidebar";
 import { MENUS } from "@/components/navigation/menus";
-import AnalyticsPageBase from "@/pages/shared/AnalyticsPageBase";
-import CaseDashboardBase from "@/pages/shared/CaseDashboardBase";
-import BillablesPageBase from "@/pages/shared/BillablesPageBase";
-import InvoicesPageBase from "@/pages/shared/InvoicesPageBase";
+import AnalyticsPageBase from "@/features/shared/AnalyticsPageBase";
+import CaseDashboardBase from "@/features/shared/CaseDashboardBase";
+import BillablesPageBase from "@/features/shared/BillablesPageBase";
+import InvoicesPageBase from "@/features/shared/InvoicesPageBase";
 import useAuth from "@/hooks/useAuth";
 
 export default function PartnerDashboard() {

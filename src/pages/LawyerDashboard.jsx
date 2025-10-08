@@ -2,10 +2,10 @@
 import React from "react";
 import Sidebar from "./Sidebar";
 import { MENUS } from "@/components/navigation/menus";
-import CaseDashboardBase from "@/pages/shared/CaseDashboardBase";
-import BillablesPageBase from "@/pages/shared/BillablesPageBase";
-import ClientDashboardBase from "@/pages/shared/ClientDashboardBase";
-import InvoicesPageBase from "@/pages/shared/InvoicesPageBase";
+import CaseDashboardBase from "@/features/shared/CaseDashboardBase";
+import BillablesPageBase from "@/features/shared/BillablesPageBase";
+import ClientDashboardBase from "@/features/shared/ClientDashboardBase";
+import InvoicesPageBase from "@/features/shared/InvoicesPageBase";
 import useAuth from "@/hooks/useAuth";
 
 export default function LawyerDashboard() {
