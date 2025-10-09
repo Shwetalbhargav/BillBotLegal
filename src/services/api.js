@@ -93,13 +93,19 @@ export const getBillableById = (id) =>
   apiClient.get(`/api/billables/${id}`);
 
 export const updateBillable = (id, payload) =>
-  apiClient.patch(`/api/billables/${id}`, payload); // backend uses PATCH
+  apiClient.put(`/api/billables/${id}`, payload); 
 
 export const deleteBillable = (id) =>
   apiClient.delete(`/api/billables/${id}`);
 
 export const createBillableFromEmail = (emailEntryId) =>
   apiClient.post(`/api/billables/from-email/${emailEntryId}`);
+
+export const addBillable = createBillable;
+export const fetchBillables = getBillables;
+export const editBillable = updateBillable;
+export const removeBillable = deleteBillable;
+export const addBillableFromEmail = createBillableFromEmail;
 
 
 // ========== INVOICES ==========
