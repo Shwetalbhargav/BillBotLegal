@@ -1,8 +1,5 @@
 // src/pages/ClientsPage.jsx
-import React from 'react';
-import ClientDashboard from '@/features/shared/CaseDashboardBase';
+import ClientsDashboardBase from '@/features/shared/ClientsDashboardBase';
 
-
-const ClientsPage = () => <ClientDashboard />;
-
+const ClientsPage = () => <ClientsDashboardBase />;
 export default ClientsPage;

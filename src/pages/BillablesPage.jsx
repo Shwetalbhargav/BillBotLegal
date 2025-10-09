@@ -1,7 +1,6 @@
 // src/pages/BillablesPage.jsx
-import React from 'react';
-import BillablesFeature from '@/features/shared/BillablesBase';
+
+import { BillablesBase as BillablesFeature } from '@/features/shared/BillablesPageBase';
 
 const BillablesPage = () => <BillablesFeature />;
-
 export default BillablesPage;

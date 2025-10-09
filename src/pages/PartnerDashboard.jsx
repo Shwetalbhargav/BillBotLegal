@@ -6,6 +6,8 @@ import AnalyticsPageBase from "@/features/shared/AnalyticsPageBase";
 import CaseDashboardBase from "@/features/shared/CaseDashboardBase";
 import BillablesPageBase from "@/features/shared/BillablesPageBase";
 import InvoicesPageBase from "@/features/shared/InvoicesPageBase";
+import ClientsDashboardBase from "@/features/shared/ClientsDashboardBase";
+
 import useAuth from "@/hooks/useAuth";
 
 export default function PartnerDashboard() {
@@ -22,6 +24,7 @@ export default function PartnerDashboard() {
         <CaseDashboardBase role={role} />
         <BillablesPageBase role={role} />
         <InvoicesPageBase role={role} />
+        <ClientsDashboardBase role={role} />
       </main>
     </div>
   );

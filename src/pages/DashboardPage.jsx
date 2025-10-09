@@ -1,6 +1,6 @@
 // src/pages/DashboardPage.jsx
 import React from 'react';
-import AdminDashboard from '@/pages/AdminDashboard';
+import AdminDashboard from './AdminDashboard';
 
 const DashboardPage = () => <AdminDashboard />;
 
