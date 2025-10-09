@@ -66,7 +66,7 @@ function derivePermissions(role, explicitReadOnly = false) {
 }
 
 /* ---------------- Main Component ---------------- */
-export default function ClientsDashboardBase(
+export default function ClientDashboardBase(
   { role = "intern", readOnly = false, filters: externalFilters = {}, mode, currentUserId } = {}
 ) {
   const perms = derivePermissions(role, readOnly);

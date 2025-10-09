@@ -4,7 +4,7 @@ import Sidebar from "./Sidebar";
 import { MENUS } from "@/components/navigation/menus";
 import CaseDashboardBase from "@/features/shared/CaseDashboardBase";
 import BillablesPageBase from "@/features/shared/BillablesPageBase";
-import ClientsDashboardBase from "@/features/shared/ClientsDashboardBase";
+import ClientDashboardBase from "@/features/shared/ClientDashboardBase";
 import InvoicesPageBase from "@/features/shared/InvoicesPageBase";
 import useAuth from "@/hooks/useAuth";
 
@@ -20,7 +20,7 @@ export default function LawyerDashboard() {
 
         <CaseDashboardBase role={role} />
         <BillablesPageBase role={role} />
-        <ClientsDashboardBase role={role} readOnly />
+        <ClientDashboardBase role={role} readOnly />
         <InvoicesPageBase role={role} readOnly />
       </main>
     </div>
