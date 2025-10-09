@@ -93,30 +93,9 @@ export default function AppRoutes() {
       <Routes>
         {/* ------------------ Public Routes ------------------ */}
         <Route element={<PublicLayout />}>
-          <Route
-            path="/"
-            element={
-              <PublicOnlyRoute>
-                <Navigate to="/login" replace />
-              </PublicOnlyRoute>
-            }
-          />
-          <Route
-            path="/login"
-            element={
-              <PublicOnlyRoute>
-                <Login />
-              </PublicOnlyRoute>
-            }
-          />
-          <Route
-            path="/register"
-            element={
-              <PublicOnlyRoute>
-                <Register />
-              </PublicOnlyRoute>
-            }
-          />
+          <Route path="/" element={<PublicOnlyRoute><Navigate to="/login" replace /></PublicOnlyRoute>}/>
+          <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>}/>
+          <Route path="/register" element={<PublicOnlyRoute><Register /></PublicOnlyRoute>}/>
           <Route path="/magic-ok" element={<MagicOk />} />
           <Route path="/check-email" element={<CheckEmail />} />
         </Route>
@@ -124,115 +103,24 @@ export default function AppRoutes() {
         {/* ---------------- Protected Routes ---------------- */}
         <Route element={<ProtectedLayout />}>
           {/* Redirect generic /dashboard → role-specific dashboard */}
-          <Route
-            path="/dashboard"
-            element={
-              <PrivateRoute>
-                <Navigate to={getRoleDashboard(role)} replace />
-              </PrivateRoute>
-            }
-          />
+          <Route path="/dashboard" element={<PrivateRoute><Navigate to={getRoleDashboard(role)} replace /></PrivateRoute>}/>
 
           {/* ---- Role Dashboards ---- */}
-          <Route
-            path="/admin/dashboard"
-            element={
-              <RoleRoute allow={["admin"]}>
-                <AdminDashboard />
-              </RoleRoute>
-            }
-          />
-          <Route
-            path="/partner/dashboard"
-            element={
-              <RoleRoute allow={["partner", "admin"]}>
-                <PartnerDashboard />
-              </RoleRoute>
-            }
-          />
-          <Route
-            path="/lawyer/dashboard"
-            element={
-              <RoleRoute allow={["lawyer", "partner", "admin"]}>
-                <LawyerDashboard />
-              </RoleRoute>
-            }
-          />
-          <Route
-            path="/associate/dashboard"
-            element={
-              <RoleRoute allow={["associate", "partner", "admin"]}>
-                <AssociateDashboard />
-              </RoleRoute>
-            }
-          />
-          <Route
-            path="/intern/dashboard"
-            element={
-              <RoleRoute allow={["intern", "admin"]}>
-                <InternDashboard />
-              </RoleRoute>
-            }
-          />
+          <Route  path="/admin/dashboard" element={<RoleRoute allow={["admin"]}><AdminDashboard /></RoleRoute> }/>
+
+          <Route path="/partner/dashboard" element={<RoleRoute allow={["partner", "admin"]}><PartnerDashboard /></RoleRoute>}/>
+          <Route path="/lawyer/dashboard"element={<RoleRoute allow={["lawyer", "partner", "admin"]}><LawyerDashboard /></RoleRoute>} />
+          <Route path="/associate/dashboard" element={<RoleRoute allow={["associate", "partner", "admin"]}><AssociateDashboard /></RoleRoute> } />
+          <Route path="/intern/dashboard" element={ <RoleRoute allow={["intern", "admin"]}> <InternDashboard /> </RoleRoute> } />
 
           {/* ---- Shared Feature Pages ---- */}
-          <Route
-            path="/clients"
-            element={
-              <PrivateRoute>
-                <ClientsPage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/cases"
-            element={
-              <PrivateRoute>
-                <CasesPage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/billables"
-            element={
-              <PrivateRoute>
-                <BillablesPage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/invoices"
-            element={
-              <PrivateRoute>
-                <InvoicesPage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/analytics"
-            element={
-              <PrivateRoute>
-                <AnalyticsPage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/email-entries"
-            element={
-              <PrivateRoute>
-                <EmailEntriesPage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/main-dashboard"
-            element={
-              <PrivateRoute>
-                <MainDashboard />
-              </PrivateRoute>
-            }
-          />
-        </Route>
+          <Route path="/clients" element={ <PrivateRoute> <ClientsPage /> </PrivateRoute> } />
+          <Route path="/cases" element={ <PrivateRoute> <CasesPage /></PrivateRoute> } />
+          <Route path="/billables" element={ <PrivateRoute> <BillablesPage /> </PrivateRoute>} />
+          <Route path="/invoices" element={ <PrivateRoute> <InvoicesPage /> </PrivateRoute> } />
+          <Route path="/analytics" element={ <PrivateRoute> <AnalyticsPage /> </PrivateRoute> } />
+          <Route path="/email-entries"element={ <PrivateRoute> <EmailEntriesPage /> </PrivateRoute> } />
+          <Route path="/main-dashboard" element={<PrivateRoute><MainDashboard /></PrivateRoute>}/></Route>
 
         {/* ----------------- 404 Fallback ----------------- */}
         <Route path="*" element={<NotFound />} />
