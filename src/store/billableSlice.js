@@ -1,6 +1,7 @@
 // src/store/billableSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getBillables, updateBillable, deleteBillable, addBillable } from '@/services/api';
+import { getBillables, updateBillable, deleteBillable, addBillable,getBillableById,
+  addBillableFromEmail, } from '@/services/api';
 
 // Thunks
 export const fetchBillables = createAsyncThunk('billables/fetch', async () => {
@@ -22,6 +23,22 @@ export const removeBillable = createAsyncThunk('billables/delete', async (id) =>
   await deleteBillable(id);
   return id;
 });
+export const fetchBillableById = createAsyncThunk(
+  'billables/fetchById',
+  async (id) => {
+    const { data } = await getBillableById(id);
+    return data;
+  }
+);
+
+export const createBillableFromEmail = createAsyncThunk(
+  'billables/createFromEmail',
+  async (emailEntryId) => {
+    const { data } = await addBillableFromEmail(emailEntryId);
+    return data;
+  }
+);
+
 
 // Slice
 const billableSlice = createSlice({

@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchBillables } from "@/store/billableSlice";
-import { getUnbilledBillables } from "@/services/api";
+import { getUnbilledAnalytics } from "@/services/api";
 
 import { Input, Select } from "@/components/form";
 import { Button, Badge, Modal } from "@/components/common";
@@ -58,7 +58,7 @@ export default function BillablesPage({ role="intern", readOnly=false, filters: 
     if (!showUnbilledOnly) return;
     (async () => {
       try {
-        const res = await getUnbilledBillables();
+        const res = await getUnbilledAnalytics();
         const arr = Array.isArray(res?.data?.items) ? res.data.items : Array.isArray(res?.data) ? res.data : [];
         setUnbilled(arr);
       } catch (e) {

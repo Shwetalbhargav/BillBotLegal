@@ -6,4 +6,11 @@ export { default as TableToolbar } from "./TableToolbar";
 export {default as CaseTable} from "./CaseTable";
 export {default as ClientTable} from "./ClientTable";
 export {default as EmptyState} from "./EmptyState";
-export {default as Table} from "./Table";
+export {
+  Table,
+  THead,
+  TBody,
+  TR,
+  TH,
+  TD
+} from "./Table";

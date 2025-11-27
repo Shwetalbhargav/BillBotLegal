@@ -8,6 +8,7 @@ import { Button } from "@/components/common";
 import { ThemeSwitch } from "@/components/common/ThemeProvider";
 import useAuth from "@/hooks/useAuth";
 import { Bell, Menu, X, ChevronDown } from "lucide-react";
+import FirmSwitchDropdown from "../Firm/FirmSwitchDropdown";
 
 
 function avatarFromUser(user) {

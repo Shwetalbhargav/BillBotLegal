@@ -14,18 +14,19 @@ return (
 );
 }
 export default function DataTable({
-columns, // [{ id, header, accessor?: (row)=>any, cell?:(value,row)=>Node, align, width, sortable }]
-rows, // array of objects
-searchableKeys = [],
-initialSort, // { id, dir: 'asc'|'desc' }
-pageSize = 10,
-rowSelectable = false,
-onSelectionChange,
-toolbarLeft,
-toolbarRight,
-emptyState,
-className,
-}){
+  columns = [],
+  rows = [],
+  searchableKeys = [],
+  initialSort,
+  pageSize = 10,
+  rowSelectable = false,
+  onSelectionChange,
+  toolbarLeft,
+  toolbarRight,
+  emptyState,
+  className,
+}) {
+
 const [query, setQuery] = React.useState("");
 const [page, setPage] = React.useState(1);
 const [sort, setSort] = React.useState(initialSort || null);

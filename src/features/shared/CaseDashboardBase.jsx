@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchCases, createCase, editCase, removeCase } from "@/store/caseSlice";
-import { getBilledBillables, getClients, listCaseTypes } from "@/services/api";
+import { getBillableAnalytics, listClients, listCaseTypes } from "@/services/api";
 import {
   fetchUsersThunk,
   selectUsers,
@@ -78,7 +78,7 @@ function CaseFormModal({ open, onClose, onSave, initial , users = [], usersLoadi
     if (!open) return;
     (async () => {
       try {
-        const [{ data: clientsData }, { data: typesData }] = await Promise.all([ getClients(), listCaseTypes() ]);
+        const [{ data: clientsData }, { data: typesData }] = await Promise.all([ listClients(), listCaseTypes() ]);
         setClients(Array.isArray(clientsData) ? clientsData : clientsData?.items || []);
         setCaseTypes(Array.isArray(typesData) ? typesData : typesData?.items || []);
       } catch (e) { console.error("Failed to load dropdown data", e); }
@@ -248,7 +248,7 @@ export default function CaseDashboard({ role="intern", readOnly=false, filters: 
   useEffect(() => {
     (async () => {
       try {
-        const res = await getBilledBillables();
+        const res = await getBillableAnalytics();
         const arr = Array.isArray(res?.data?.items) ? res.data.items : Array.isArray(res?.data) ? res.data : [];
         const map = {};
         for (const it of arr) {

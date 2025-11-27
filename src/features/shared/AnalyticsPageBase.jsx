@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAnalytics } from "@/store/analyticsSlice";
-import { getBillableStatsByCaseType } from "@/services/api";
+import { getBillableAnalytics } from "@/services/api";
 
 import { Button, Loader } from "@/components/common";
 import { Input, Select, DatePicker } from "@/components/form";
@@ -51,7 +51,7 @@ export default function AnalyticsPage({ role="intern", readOnly=false, filters: 
     (async () => {
       try {
         setCaseTypeLoading(true);
-        const res = await getBillableStatsByCaseType();
+        const res = await getBillableAnalytics();
         const arr = Array.isArray(res?.data?.items) ? res.data.items : Array.isArray(res?.data) ? res.data : [];
         const mapped = arr.map((x, i) => ({
           id: String(x.id ?? i),
