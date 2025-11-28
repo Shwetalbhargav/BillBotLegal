@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { fetchFirms, setSelectedFirmId } from "@/store/firmSlice";
 import { Button, Card, EmptyState, Heading, HeroSection, Section, Loader } from "@/components/common";
 import { NavBar, Footer } from "@/components/layout";
-import FirmSwitchDropdown from "@/components/firm/FirmSwitchDropdown";
+import FirmSwitchDropdown from "@/components/Firm/FirmSwitchDropdown";
 
 export default function FirmSelectLanding() {
   const dispatch = useDispatch();
