@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { fetchAnalytics } from "@/store/analyticsSlice";
 import { fetchCases } from "@/store/caseSlice";
-import { fetchClientsThunk } from "@/store/clientSlice";
+import { fetchClient } from "@/store/clientSlice";
 import { fetchInvoices } from "@/store/invoiceSlice";
 import { fetchBillables } from "@/store/billableSlice";
 import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
@@ -26,7 +26,7 @@ export default function MainDashboard() {
   useEffect(() => {
     dispatch(fetchAnalytics());
     dispatch(fetchCases());
-    dispatch(fetchClientsThunk());
+    dispatch(fetchClient());
     dispatch(fetchInvoices());
     dispatch(fetchBillables());
   }, [dispatch]);
