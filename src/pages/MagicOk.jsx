@@ -12,9 +12,12 @@ export default function MagicOk() {
   useEffect(() => {
     const token = new URLSearchParams(search).get("token");
     if (token) {
-      // role can be decoded from JWT or default to 'Lawyer'
-      dispatch(setAuth({ token, role: 'User' }));
-      login(token, "Lawyer");
+
+      dispatch(setAuth({ 
+        token,
+        user: { role: "User" }
+      }));
+
       navigate("/dashboard");
     } else {
       navigate("/login");
