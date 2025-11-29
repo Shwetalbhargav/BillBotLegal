@@ -17,7 +17,7 @@ import {
 // ---------- THUNKS ----------
 
 // List all clients
-export const fetchClientsThunk = createAsyncThunk(
+export const fetchClientThunk = createAsyncThunk(
   'clients/fetch',
   async () => {
     const res = await listClients();
@@ -126,15 +126,15 @@ const clientSlice = createSlice({
   extraReducers: (builder) => {
     builder
       // ----- fetch all -----
-      .addCase(fetchClientsThunk.pending, (state) => {
+      .addCase(fetchClientThunk.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchClientsThunk.fulfilled, (state, action) => {
+      .addCase(fetchClientThunk.fulfilled, (state, action) => {
         state.loading = false;
         state.list = action.payload || [];
       })
-      .addCase(fetchClientsThunk.rejected, (state, action) => {
+      .addCase(fetchClientThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error?.message || 'Failed to fetch clients';
       })

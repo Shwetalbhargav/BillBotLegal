@@ -47,9 +47,10 @@ return null; // off
 };
 
 const filtered = React.useMemo(() => {
-if (!query) return rows;
+const baseRows = Array.isArray(rows) ? rows : [];
+if (!query) return baseRows;
 const q = query.toLowerCase();
-return rows.filter((r) =>
+return baseRows.filter((r) =>
 searchableKeys.some((k) => String(r[k] ?? "").toLowerCase().includes(q))
 );
 }, [rows, query, searchableKeys]);
