@@ -1,6 +1,7 @@
 // src/features/shared/ClientsDashboardBase.jsx
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
+// ✅ Import the thunk alias we just exported
 import { fetchClients } from "@/store/clientSlice";
 import { fetchBillables } from "@/store/billableSlice";
 import { fetchInvoices } from "@/store/invoiceSlice";
@@ -501,6 +502,19 @@ function Metric({ label, value }) {
 }
 
 /* ---- Role-aware wrapper (named export) ---- */
-export function ClientsBase({ role = "intern", readOnly = false, filters = {}, mode, currentUserId } = {}, props) {
-  return <ClientsPage role={role} readOnly={readOnly} filters={filters} mode={mode} currentUserId={currentUserId} {...props} />;
+export function ClientsBase(
+  { role = "intern", readOnly = false, filters = {}, mode, currentUserId } = {},
+  props
+) {
+  // Use the same component we defined above
+  return (
+    <ClientsDashboardBase
+      role={role}
+      readOnly={readOnly}
+      filters={filters}
+      mode={mode}
+      currentUserId={currentUserId}
+      {...props}
+    />
+  );
 }

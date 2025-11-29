@@ -241,5 +241,7 @@ const clientSlice = createSlice({
   },
 });
 
-export default clientSlice.reducer;
+// ✅ Export a name that matches your import in ClientsDashboardBase.jsx
+export { fetchClientThunk as fetchClients };
 
+export default clientSlice.reducer;
