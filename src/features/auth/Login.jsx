@@ -80,27 +80,27 @@ export default function Login() {
             </div>
 
             <Form form={form} onSubmit={onSubmit} className="space-y-4">
-              <FormField name="name" label="Full name" required>
+              <FormField name="name"  required>
                 {({ id, describedBy, error }) => (
                   <Input
                     id={id}
                     aria-describedby={describedBy}
                     aria-invalid={!!error}
                     placeholder="Full name"
-                    className="bg-white/10 border-white/30 text-white placeholder-white/70"
+                    className="bg-white/10 border-white/30 text-black placeholder-white/70"
                     {...form.register("name", { required: "Name is required" })}
                   />
                 )}
               </FormField>
 
-              <FormField name="mobile" label="Mobile number" required>
+              <FormField name="mobile"  required>
                 {({ id, describedBy, error }) => (
                   <Input
                     id={id}
                     aria-describedby={describedBy}
                     aria-invalid={!!error}
                     placeholder="Mobile number"
-                    className="bg-white/10 border-white/30 text-white placeholder-white/70"
+                    className="bg-white/10 border-white/30 text-black placeholder-white/70"
                     {...form.register("mobile", {
                       required: "Mobile is required",
                       minLength: { value: 7, message: "Too short" },
@@ -109,7 +109,7 @@ export default function Login() {
                 )}
               </FormField>
 
-              <FormField name="password" label="Password" required>
+              <FormField name="password"  required>
                 {({ id, describedBy, error }) => (
                   <div className="relative">
                     <Input
@@ -118,7 +118,7 @@ export default function Login() {
                       aria-describedby={describedBy}
                       aria-invalid={!!error}
                       placeholder="Password"
-                      className="pr-20 bg-white/10 border-white/30 text-white placeholder-white/70"
+                      className="pr-20 bg-white/10 border-white/30 text-black placeholder-white/70"
                       {...form.register("password", {
                         required: "Password is required",
                       })}
@@ -134,7 +134,7 @@ export default function Login() {
                 )}
               </FormField>
 
-              <FormField name="role" label="Role" required>
+              <FormField name="role"  required>
                 {({ id, describedBy, error }) => (
                   <select
                     id={id}
