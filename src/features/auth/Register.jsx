@@ -17,7 +17,7 @@ import {
   FiX,
 } from "react-icons/fi";
 
-import { Input, Select, Switch } from "@/components/form";
+import { Switch } from "@/components/form";
 import Form from "@/components/form/Form";
 import FormField from "@/components/form/FormField";
 import { registerThunk, resetRegisterState } from "@/store/registerSlice";
@@ -115,9 +115,9 @@ export default function Register({ isModal = false, onClose }) {
     );
 
   const inputBaseClasses =
-    "w-full rounded-xl border border-slate-200/80 bg-white/95 text-slate-900 " +
-    "placeholder:text-slate-400 shadow-sm focus:outline-none " +
-    "focus:ring-2 focus:ring-indigo-400/70 focus:border-transparent";
+    "block w-full mt-1 rounded-lg border border-slate-300 bg-slate-50 " +
+    "px-3 py-2 text-slate-900 placeholder:text-slate-400 " +
+    "focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500";
 
   return (
     <Wrapper>
@@ -157,8 +157,8 @@ export default function Register({ isModal = false, onClose }) {
           >
             {({ id, describedBy, error }) => (
               <div className="relative">
-                <FiUser className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <Input
+                <FiUser className="absolute left-3 top-[2.1rem] -translate-y-1/2 text-slate-400" />
+                <input
                   id={id}
                   aria-describedby={describedBy}
                   aria-invalid={!!error}
@@ -183,8 +183,8 @@ export default function Register({ isModal = false, onClose }) {
             >
               {({ id, describedBy, error }) => (
                 <div className="relative">
-                  <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <Input
+                  <FiMail className="absolute left-3 top-[2.1rem] -translate-y-1/2 text-slate-400" />
+                  <input
                     id={id}
                     type="email"
                     aria-describedby={describedBy}
@@ -210,8 +210,8 @@ export default function Register({ isModal = false, onClose }) {
             >
               {({ id, describedBy, error }) => (
                 <div className="relative">
-                  <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <Input
+                  <FiLock className="absolute left-3 top-[2.1rem] -translate-y-1/2 text-slate-400" />
+                  <input
                     id={id}
                     type="password"
                     aria-describedby={describedBy}
@@ -232,7 +232,7 @@ export default function Register({ isModal = false, onClose }) {
             {/* Role */}
             <FormField name="role" label="Role">
               {({ id }) => (
-                <Select
+                <select
                   id={id}
                   value={form.watch("role")}
                   onChange={(e) => form.setValue("role", e.target.value)}
@@ -243,14 +243,14 @@ export default function Register({ isModal = false, onClose }) {
                       {r.label}
                     </option>
                   ))}
-                </Select>
+                </select>
               )}
             </FormField>
 
             {/* Firm ID */}
             <FormField name="firmId" label="Firm ID (optional)">
               {({ id, describedBy }) => (
-                <Input
+                <input
                   id={id}
                   aria-describedby={describedBy}
                   placeholder="645af3…"
@@ -274,8 +274,8 @@ export default function Register({ isModal = false, onClose }) {
             >
               {({ id, describedBy, error }) => (
                 <div className="relative">
-                  <FiPhone className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <Input
+                  <FiPhone className="absolute left-3 top-[2.1rem] -translate-y-1/2 text-slate-400" />
+                  <input
                     id={id}
                     aria-describedby={describedBy}
                     aria-invalid={!!error}
@@ -301,8 +301,8 @@ export default function Register({ isModal = false, onClose }) {
             >
               {({ id, describedBy }) => (
                 <div className="relative">
-                  <FiHome className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <Input
+                  <FiHome className="absolute left-3 top-[2.1rem] -translate-y-1/2 text-slate-400" />
+                  <input
                     id={id}
                     aria-describedby={describedBy}
                     placeholder="221B Baker Street"
@@ -326,21 +326,21 @@ export default function Register({ isModal = false, onClose }) {
                   className="grid grid-cols-1 md:grid-cols-12 gap-3"
                 >
                   <div className="md:col-span-5">
-                    <Input
+                    <input
                       placeholder="Degree (LLB, JD, LLM)"
                       className={inputBaseClasses}
                       {...form.register(`qualifications.${idx}.degree`)}
                     />
                   </div>
                   <div className="md:col-span-5">
-                    <Input
+                    <input
                       placeholder="University"
                       className={inputBaseClasses}
                       {...form.register(`qualifications.${idx}.university`)}
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <Input
+                    <input
                       type="number"
                       placeholder="Year"
                       className={inputBaseClasses}
@@ -423,7 +423,10 @@ export default function Register({ isModal = false, onClose }) {
         {!isModal && (
           <p className="mt-4 text-sm text-slate-600">
             Already have an account?{" "}
-            <Link to="/login" className="font-medium text-indigo-600 hover:text-indigo-700 underline">
+            <Link
+              to="/login"
+              className="font-medium text-indigo-600 hover:text-indigo-700 underline"
+            >
               Sign in
             </Link>
           </p>

@@ -5,7 +5,6 @@ import { useDispatch } from "react-redux";
 import { useForm } from "react-hook-form";
 import { motion } from "framer-motion";
 
-import { Input } from "@/components/form";
 import Form from "@/components/form/Form";
 import FormField from "@/components/form/FormField";
 import lawyer from "@/assets/lawyer.jpg";
@@ -54,9 +53,9 @@ export default function Login() {
   };
 
   const inputBaseClasses =
-    "w-full rounded-xl bg-white/95 border border-slate-200/80 " +
-    "text-slate-900 placeholder:text-slate-400 shadow-sm " +
-    "focus:outline-none focus:ring-2 focus:ring-indigo-400/70 focus:border-transparent";
+    "block w-full mt-1 rounded-lg border border-slate-300 bg-slate-50 " +
+    "px-3 py-2 text-slate-900 placeholder:text-slate-400 " +
+    "focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500";
 
   return (
     <div
@@ -91,7 +90,7 @@ export default function Login() {
               {/* Name */}
               <FormField name="name" label="Full name" required>
                 {({ id, describedBy, error }) => (
-                  <Input
+                  <input
                     id={id}
                     aria-describedby={describedBy}
                     aria-invalid={!!error}
@@ -105,7 +104,7 @@ export default function Login() {
               {/* Mobile */}
               <FormField name="mobile" label="Mobile number" required>
                 {({ id, describedBy, error }) => (
-                  <Input
+                  <input
                     id={id}
                     aria-describedby={describedBy}
                     aria-invalid={!!error}
@@ -123,7 +122,7 @@ export default function Login() {
               <FormField name="password" label="Password" required>
                 {({ id, describedBy, error }) => (
                   <div className="relative">
-                    <Input
+                    <input
                       id={id}
                       type={showPassword ? "text" : "password"}
                       aria-describedby={describedBy}
@@ -137,7 +136,7 @@ export default function Login() {
                     <button
                       type="button"
                       onClick={() => setShowPassword((s) => !s)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-xs px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-400/70"
+                      className="absolute right-3 top-[2.1rem] text-xs px-2 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-400/70"
                     >
                       {showPassword ? "Hide" : "Show"}
                     </button>
@@ -152,11 +151,7 @@ export default function Login() {
                     id={id}
                     aria-describedby={describedBy}
                     aria-invalid={!!error}
-                    className={
-                      "w-full rounded-xl bg-white/95 border border-slate-200/80 " +
-                      "text-slate-900 py-2.5 pr-10 pl-3 shadow-sm " +
-                      "focus:outline-none focus:ring-2 focus:ring-indigo-400/70 focus:border-transparent"
-                    }
+                    className={inputBaseClasses}
                     defaultValue={preselectedRole || ""}
                     {...form.register("role", { required: "Role is required" })}
                   >
