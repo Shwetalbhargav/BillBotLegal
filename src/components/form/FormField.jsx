@@ -1,60 +1,63 @@
-// src/components/form/Field.jsx
-import React, { useId } from "react";
-import { clsx } from "../../utils/clsx";
+// src/components/form/FormField.jsx
+import React from "react";
+import { useFormContext } from "react-hook-form";
 
-
-export default function Field({
-label,
-htmlFor,
-required = false,
-helper,
-error,
-className,
-children,
+export default function FormField({
+  name,
+  label,
+  help,
+  required = false,
+  className = "",
+  children,
 }) {
-const autoId = useId();
-const id = htmlFor || autoId;
-const helperId = `${id}-help`;
-const errorId = `${id}-err`;
+  const {
+    formState: { errors },
+  } = useFormContext();
 
+  const error = errors?.[name];
+  const id = `field-${name}`;
+  const describedByIds = [];
 
-const describedBy = clsx(error && errorId, helper && helperId)
-?.split(" ")
-.filter(Boolean)
-.join(" ");
+  if (help && !error) describedByIds.push(`${id}-help`);
+  if (error) describedByIds.push(`${id}-error`);
 
+  const describedBy =
+    describedByIds.length > 0 ? describedByIds.join(" ") : undefined;
 
-return (
-<div className={clsx("lb-reset flex flex-col gap-1", className)}>
-{label && (
-<label
-htmlFor={id}
-className="text-[color:var(--lb-text)] text-[var(--lb-fs-sm)] font-medium"
->
-{label}
-{required && <span className="text-[color:var(--lb-danger-600)]"> *</span>}
-</label>
-)}
-{/* Clone child to inject id + aria wiring if input-like */}
-{React.isValidElement(children)
-? React.cloneElement(children, {
-id,
-...(describedBy ? { "aria-describedby": describedBy } : {}),
-...(error ? { "aria-invalid": true } : {}),
-})
-: children}
+  return (
+    <div className={`space-y-1 ${className}`}>
+      {label && (
+        <label
+          htmlFor={id}
+          className="text-sm font-medium text-slate-800 flex items-center gap-1"
+        >
+          {label}
+          {required && <span className="text-red-500">*</span>}
+        </label>
+      )}
 
+      {/* IMPORTANT: no pointer-events-none, no disabled wrapper, no overlay */}
+      {children({
+        id,
+        describedBy,
+        error,
+      })}
 
-{helper && !error && (
-<p id={helperId} className="m-0 text-[color:var(--lb-muted)] text-[12px]">
-{helper}
-</p>
-)}
-{error && (
-<p id={errorId} className="m-0 text-[color:var(--lb-danger-700)] text-[12px]">
-{error}
-</p>
-)}
-</div>
-);
+      {help && !error && (
+        <p id={`${id}-help`} className="text-xs text-slate-500">
+          {help}
+        </p>
+      )}
+
+      {error && (
+        <p
+          id={`${id}-error`}
+          className="text-xs text-red-600"
+          role="alert"
+        >
+          {error.message || String(error)}
+        </p>
+      )}
+    </div>
+  );
 }
