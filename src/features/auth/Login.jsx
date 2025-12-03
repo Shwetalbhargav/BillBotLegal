@@ -10,15 +10,16 @@ import Form from "@/components/form/Form";
 import FormField from "@/components/form/FormField";
 import lawyer from "@/assets/lawyer.jpg";
 import { loginUserThunk } from "@/store/authSlice";
-import Register from "./Register"; 
+import Register from "./Register";
 
 export default function Login() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const [showRegister, setShowRegister] = useState(false); // <-- modal state
+  const [showRegister, setShowRegister] = useState(false);
 
   const [search] = useSearchParams();
   const preselectedRole = (search.get("role") || "").toLowerCase();
+
   const form = useForm({
     mode: "onBlur",
     defaultValues: {
@@ -57,8 +58,8 @@ export default function Login() {
       className="relative min-h-screen bg-cover bg-center"
       style={{ backgroundImage: `url(${lawyer})` }}
     >
-      {/* dark overlay under content */}
-      <div className="absolute inset-0 bg-black/50" />
+      {/* dark overlay UNDER content and non-interactive */}
+      <div className="pointer-events-none absolute inset-0 bg-black/50 z-0" />
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-10">
         <div className="flex flex-col md:flex-row items-center justify-between gap-10">
@@ -73,7 +74,7 @@ export default function Login() {
           </div>
 
           {/* sign-in card */}
-          <div className="w-full max-w-md bg-white/10 backdrop-blur-md border border-white/30 shadow-2xl rounded-2xl p-8 text-white pointer-events-auto">
+          <div className="relative z-20 w-full max-w-md bg-white/10 backdrop-blur-md border border-white/30 shadow-2xl rounded-2xl p-8 text-white pointer-events-auto">
             <div className="mb-6">
               <h2 className="text-xl font-semibold">Sign in</h2>
             </div>
@@ -193,7 +194,9 @@ export default function Login() {
       </div>
 
       {/* Register modal */}
-      {showRegister && <Register isModal onClose={() => setShowRegister(false)} />}
+      {showRegister && (
+        <Register isModal onClose={() => setShowRegister(false)} />
+      )}
     </div>
   );
 }

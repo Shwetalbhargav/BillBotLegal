@@ -61,8 +61,6 @@ export default function Register({ isModal = false, onClose }) {
   useEffect(() => {
     if (status === "succeeded") {
       alert("Your account was created successfully.");
-      // if opened as modal, close it and stay on login;
-      // otherwise navigate back to /login route
       if (isModal && onClose) onClose();
       else navigate("/login", { replace: true });
       dispatch(resetRegisterState());
@@ -105,13 +103,10 @@ export default function Register({ isModal = false, onClose }) {
     }
   };
 
-  // Container for page vs modal
   const Wrapper = ({ children }) =>
     isModal ? (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-        <div className="w-full max-w-2xl mx-4">
-          {children}
-        </div>
+        <div className="w-full max-w-2xl mx-4">{children}</div>
       </div>
     ) : (
       <div className="min-h-screen flex items-center justify-center px-6">
@@ -121,7 +116,7 @@ export default function Register({ isModal = false, onClose }) {
 
   return (
     <Wrapper>
-      <div className="relative rounded-2xl bg-white shadow-2xl p-6 md:p-8">
+      <div className="relative z-50 rounded-2xl bg-white shadow-2xl p-6 md:p-8">
         {/* close button when used as modal */}
         {isModal && (
           <button
