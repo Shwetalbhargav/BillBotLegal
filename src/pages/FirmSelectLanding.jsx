@@ -8,9 +8,7 @@ import { Button, Loader } from "@/components/common";
 import { FaBalanceScale, FaArrowRight } from "react-icons/fa";
 
 // Hero artwork
-import flagImg from "@/assets/flag.png";
-import gavelImg from "@/assets/gavel.jpg";
-import justiceImg from "@/assets/justice.png";
+import heroImg from "@/assets/firmselect1.png";
 
 export default function FirmSelectLanding() {
   const dispatch = useDispatch();
@@ -39,21 +37,22 @@ export default function FirmSelectLanding() {
   const handleContinue = () => {
     if (!localFirmId) return;
     dispatch(setSelectedFirmId(localFirmId));
-    navigate("/login"); // or "/dashboard" depending on your flow
+    navigate("/login"); // or wherever next
   };
 
   const selectedFirm = firms.find((f) => f.id === localFirmId);
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-black text-white">
-      {/* Background flag */}
+      {/* Background hero image */}
       <img
-        src={flagImg}
-        alt="Indian flag"
-        className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-70"
+        src={heroImg}
+        alt="Hero background"
+        className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-90"
       />
-      {/* Dark overlay */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/80 via-black/75 to-black/95" />
+
+      {/* Black gradient overlay */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/70 via-black/80 to-black/95" />
 
       {/* Content */}
       <main className="relative z-10 flex min-h-screen flex-col">
@@ -75,13 +74,12 @@ export default function FirmSelectLanding() {
           {/* Left: copy + selection card */}
           <div className="max-w-xl">
             <h1 className="font-serif text-4xl leading-tight text-amber-50 sm:text-5xl">
-              We fight for your{" "}
-              <span className="text-amber-300">justice</span>
+              We fight for your <span className="text-amber-300">justice</span>
             </h1>
             <p className="mt-4 text-sm leading-relaxed text-amber-100/80 sm:text-base">
-              Select your firm to continue to your AI-powered billing
-              workspace. We’ll tailor billable rules, summaries, and
-              integrations for your team.
+              Select your firm to continue to your AI-powered billing workspace.
+              We’ll tailor billable rules, summaries, and integrations for your
+              team.
             </p>
 
             {/* Card */}
@@ -168,23 +166,8 @@ export default function FirmSelectLanding() {
             </div>
           </div>
 
-          {/* Right: justice statue + gavel images */}
-          <div className="relative mt-6 w-full max-w-md lg:mt-0 lg:max-w-lg">
-            <img
-              src={justiceImg}
-              alt="Lady Justice statue"
-              className="relative z-10 mx-auto w-full max-w-md
-                          mix-blend-lighten opacity-90
-                          drop-shadow-[0_25px_40px_rgba(0,0,0,0.6)]]"
-            />
-            <img
-              src={gavelImg}
-              alt="Judge's gavel"
-              className="relative z-10 mx-auto w-full max-w-md
-                          mix-blend-lighten opacity-90
-                          drop-shadow-[0_25px_40px_rgba(0,0,0,0.6)]]"
-            />
-          </div>
+          {/* Right side spacer so layout stays two-column on large screens */}
+          <div className="hidden lg:block flex-1" />
         </section>
       </main>
     </div>
