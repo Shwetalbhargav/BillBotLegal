@@ -435,3 +435,4 @@ export default function Register({ isModal = false, onClose }) {
     </Wrapper>
   );
 }
+
