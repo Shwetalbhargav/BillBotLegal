@@ -59,11 +59,21 @@ export default function Login() {
 
   // in Login.jsx
 return (
-  <div className="min-h-screen flex items-center justify-center bg-slate-100">
-    <div className="w-full max-w-md bg-white shadow-2xl rounded-2xl p-8 text-slate-900">
+  <div
+    className="min-h-screen flex items-center justify-center relative bg-cover bg-center"
+    style={{ backgroundImage: `url(${lawyer})` }}
+  >
+    {/* Elegant dark legal-style gradient overlay */}
+    <div className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/60 to-black/40 backdrop-blur-[1px]" />
+
+    {/* Login card */}
+    <div className="relative z-10 w-full max-w-md rounded-2xl 
+      bg-white/10 border border-white/20 shadow-2xl
+      backdrop-blur-xl p-8 text-white"
+    >
       <div className="mb-6">
-        <h2 className="text-xl font-semibold">Sign in</h2>
-        <p className="mt-1 text-sm text-slate-500">
+        <h2 className="text-2xl font-semibold text-white">Sign in</h2>
+        <p className="mt-1 text-sm text-gray-200">
           Enter your details to access your dashboard.
         </p>
       </div>
@@ -77,7 +87,7 @@ return (
               aria-describedby={describedBy}
               aria-invalid={!!error}
               placeholder="Jane Attorney"
-              className={inputBaseClasses}
+              className={`${inputBaseClasses} bg-white/20 border-white/30 text-white placeholder:text-gray-300`}
               {...form.register("name", { required: "Name is required" })}
             />
           )}
@@ -91,7 +101,7 @@ return (
               aria-describedby={describedBy}
               aria-invalid={!!error}
               placeholder="+1 555 0100"
-              className={inputBaseClasses}
+              className={`${inputBaseClasses} bg-white/20 border-white/30 text-white placeholder:text-gray-300`}
               {...form.register("mobile", {
                 required: "Mobile is required",
                 minLength: { value: 7, message: "Too short" },
@@ -110,7 +120,7 @@ return (
                 aria-describedby={describedBy}
                 aria-invalid={!!error}
                 placeholder="••••••••"
-                className={`${inputBaseClasses} pr-20`}
+                className={`${inputBaseClasses} bg-white/20 border-white/30 text-white placeholder:text-gray-300 pr-20`}
                 {...form.register("password", {
                   required: "Password is required",
                 })}
@@ -118,7 +128,8 @@ return (
               <button
                 type="button"
                 onClick={() => setShowPassword((s) => !s)}
-                className="absolute right-3 top-[2.1rem] text-xs px-2 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-400/70"
+                className="absolute right-3 top-[2.1rem] text-xs px-2 py-1 
+                  rounded-md bg-white/20 hover:bg-white/30 text-gray-200"
               >
                 {showPassword ? "Hide" : "Show"}
               </button>
@@ -133,24 +144,24 @@ return (
               id={id}
               aria-describedby={describedBy}
               aria-invalid={!!error}
-              className={inputBaseClasses}
+              className={`${inputBaseClasses} bg-white/20 border-white/30 text-white placeholder:text-gray-300`}
               defaultValue={preselectedRole || ""}
               {...form.register("role", { required: "Role is required" })}
             >
-              <option value="" disabled>
+              <option value="" disabled className="text-gray-700">
                 Select role
               </option>
-              <option value="admin">Admin</option>
-              <option value="partner">Partner</option>
-              <option value="lawyer">Lawyer</option>
-              <option value="associate">Associate</option>
-              <option value="intern">Intern</option>
+              <option value="admin" className="text-black">Admin</option>
+              <option value="partner" className="text-black">Partner</option>
+              <option value="lawyer" className="text-black">Lawyer</option>
+              <option value="associate" className="text-black">Associate</option>
+              <option value="intern" className="text-black">Intern</option>
             </select>
           )}
         </FormField>
 
         {error && (
-          <p className="text-red-600 text-sm" role="alert">
+          <p className="text-red-300 text-sm" role="alert">
             {error}
           </p>
         )}
@@ -160,17 +171,20 @@ return (
           disabled={submitting}
           whileHover={{ y: -2, scale: 1.01 }}
           whileTap={{ scale: 0.98 }}
-          className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 text-white font-medium px-4 py-2 shadow-lg shadow-indigo-900/20 disabled:opacity-60 disabled:cursor-not-allowed transition"
+          className="w-full inline-flex items-center justify-center gap-2 rounded-xl 
+          bg-indigo-600/80 hover:bg-indigo-600 
+          text-white font-medium px-4 py-2 shadow-xl 
+          shadow-black/40 disabled:opacity-60 disabled:cursor-not-allowed transition"
         >
           {submitting ? "Signing in…" : "Sign in"}
         </motion.button>
       </Form>
 
-      <p className="mt-4 text-sm text-slate-600">
+      <p className="mt-4 text-sm text-gray-200">
         No account?{" "}
         <button
           type="button"
-          className="font-medium text-indigo-600 hover:text-indigo-700 underline-offset-2 underline"
+          className="font-medium text-indigo-300 hover:text-indigo-200 underline-offset-2 underline"
           onClick={() => setShowRegister(true)}
         >
           Create one
@@ -183,5 +197,6 @@ return (
     </div>
   </div>
 );
+
 
 }     
