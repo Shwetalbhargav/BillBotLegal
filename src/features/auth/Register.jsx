@@ -1,10 +1,21 @@
-// ===== src/pages/auth/Register.jsx (updated) =====
+// ===== src/pages/auth/Register.jsx =====
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm, useFieldArray } from "react-hook-form";
 import { motion } from "framer-motion";
-import { FiUserPlus, FiUser, FiMail, FiLock, FiPhone, FiHome, FiBookOpen, FiTrash2, FiPlus } from "react-icons/fi";
+import {
+  FiUserPlus,
+  FiUser,
+  FiMail,
+  FiLock,
+  FiPhone,
+  FiHome,
+  FiBookOpen,
+  FiTrash2,
+  FiPlus,
+  FiX,
+} from "react-icons/fi";
 
 import { Input, Select, Switch } from "@/components/form";
 import Form from "@/components/form/Form";
@@ -19,7 +30,7 @@ const ROLES = [
   { label: "Admin", value: "admin" },
 ];
 
-export default function Register() {
+export default function Register({ isModal = false, onClose }) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const slice = useSelector((s) => s.register) ?? { status: "idle", error: null };
@@ -42,19 +53,24 @@ export default function Register() {
     },
   });
 
-  const { fields, append, remove } = useFieldArray({ control: form.control, name: "qualifications" });
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "qualifications",
+  });
 
   useEffect(() => {
     if (status === "succeeded") {
       alert("Your account was created successfully.");
-      navigate("/login", { replace: true });
+      // if opened as modal, close it and stay on login;
+      // otherwise navigate back to /login route
+      if (isModal && onClose) onClose();
+      else navigate("/login", { replace: true });
       dispatch(resetRegisterState());
     }
-  }, [status, navigate, dispatch]);
+  }, [status, navigate, dispatch, isModal, onClose]);
 
   useEffect(() => {
     if (status === "failed" && error) {
-      // surface server error at top-level
       form.setError("email", { message: error });
     }
   }, [status, error, form]);
@@ -89,9 +105,35 @@ export default function Register() {
     }
   };
 
+  // Container for page vs modal
+  const Wrapper = ({ children }) =>
+    isModal ? (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+        <div className="w-full max-w-2xl mx-4">
+          {children}
+        </div>
+      </div>
+    ) : (
+      <div className="min-h-screen flex items-center justify-center px-6">
+        <div className="w-full max-w-xl">{children}</div>
+      </div>
+    );
+
   return (
-    <div className="min-h-screen flex items-center justify-center px-6">
-      <div className="w-full max-w-xl">
+    <Wrapper>
+      <div className="relative rounded-2xl bg-white shadow-2xl p-6 md:p-8">
+        {/* close button when used as modal */}
+        {isModal && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute right-4 top-4 text-gray-500 hover:text-gray-700"
+            aria-label="Close"
+          >
+            <FiX className="text-xl" />
+          </button>
+        )}
+
         <div className="flex items-center gap-2 mb-6">
           <FiUserPlus className="text-xl" />
           <h2 className="text-xl font-semibold">Create your account</h2>
@@ -99,9 +141,15 @@ export default function Register() {
 
         <Form form={form} onSubmit={onSubmit} className="space-y-4">
           {/* Name */}
-          <FormField name="name" label={
-            <span className="inline-flex items-center gap-2"><FiUser /> Full name</span>
-          } required>
+          <FormField
+            name="name"
+            label={
+              <span className="inline-flex items-center gap-2">
+                <FiUser /> Full name
+              </span>
+            }
+            required
+          >
             {({ id, describedBy, error }) => (
               <div className="relative">
                 <FiUser className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
@@ -119,7 +167,15 @@ export default function Register() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Email */}
-            <FormField name="email" label={<span className="inline-flex items-center gap-2"><FiMail /> Email</span>} required>
+            <FormField
+              name="email"
+              label={
+                <span className="inline-flex items-center gap-2">
+                  <FiMail /> Email
+                </span>
+              }
+              required
+            >
               {({ id, describedBy, error }) => (
                 <div className="relative">
                   <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
@@ -137,7 +193,16 @@ export default function Register() {
             </FormField>
 
             {/* Password */}
-            <FormField name="password" label={<span className="inline-flex items-center gap-2"><FiLock /> Password</span>} required help="At least 8 characters.">
+            <FormField
+              name="password"
+              label={
+                <span className="inline-flex items-center gap-2">
+                  <FiLock /> Password
+                </span>
+              }
+              required
+              help="At least 8 characters."
+            >
               {({ id, describedBy, error }) => (
                 <div className="relative">
                   <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
@@ -179,14 +244,27 @@ export default function Register() {
             {/* Firm ID */}
             <FormField name="firmId" label="Firm ID (optional)">
               {({ id, describedBy }) => (
-                <Input id={id} aria-describedby={describedBy} placeholder="645af3…" {...form.register("firmId")} />
+                <Input
+                  id={id}
+                  aria-describedby={describedBy}
+                  placeholder="645af3…"
+                  {...form.register("firmId")}
+                />
               )}
             </FormField>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Mobile */}
-            <FormField name="mobile" label={<span className="inline-flex items-center gap-2"><FiPhone /> Mobile</span>} required>
+            <FormField
+              name="mobile"
+              label={
+                <span className="inline-flex items-center gap-2">
+                  <FiPhone /> Mobile
+                </span>
+              }
+              required
+            >
               {({ id, describedBy, error }) => (
                 <div className="relative">
                   <FiPhone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
@@ -206,30 +284,58 @@ export default function Register() {
             </FormField>
 
             {/* Address */}
-            <FormField name="address" label={<span className="inline-flex items-center gap-2"><FiHome /> Address</span>}>
+            <FormField
+              name="address"
+              label={
+                <span className="inline-flex items-center gap-2">
+                  <FiHome /> Address
+                </span>
+              }
+            >
               {({ id, describedBy }) => (
                 <div className="relative">
                   <FiHome className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-                  <Input id={id} aria-describedby={describedBy} placeholder="221B Baker Street" className="pl-10" {...form.register("address")} />
+                  <Input
+                    id={id}
+                    aria-describedby={describedBy}
+                    placeholder="221B Baker Street"
+                    className="pl-10"
+                    {...form.register("address")}
+                  />
                 </div>
               )}
             </FormField>
           </div>
 
-          {/* Qualifications dynamic list */}
+          {/* Qualifications */}
           <div className="space-y-2">
-            <label className="text-sm font-medium inline-flex items-center gap-2"><FiBookOpen /> Qualifications</label>
+            <label className="text-sm font-medium inline-flex items-center gap-2">
+              <FiBookOpen /> Qualifications
+            </label>
             <div className="space-y-3">
               {fields.map((field, idx) => (
-                <div key={field.id} className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                <div
+                  key={field.id}
+                  className="grid grid-cols-1 md:grid-cols-12 gap-3"
+                >
                   <div className="md:col-span-5">
-                    <Input placeholder="Degree (LLB, JD, LLM)" {...form.register(`qualifications.${idx}.degree`)} />
+                    <Input
+                      placeholder="Degree (LLB, JD, LLM)"
+                      {...form.register(`qualifications.${idx}.degree`)}
+                    />
                   </div>
                   <div className="md:col-span-5">
-                    <Input placeholder="University" {...form.register(`qualifications.${idx}.university`)} />
+                    <Input
+                      placeholder="University"
+                      {...form.register(`qualifications.${idx}.university`)}
+                    />
                   </div>
                   <div className="md:col-span-2">
-                    <Input type="number" placeholder="Year" {...form.register(`qualifications.${idx}.year`)} />
+                    <Input
+                      type="number"
+                      placeholder="Year"
+                      {...form.register(`qualifications.${idx}.year`)}
+                    />
                   </div>
                   <div className="md:col-span-12 flex justify-end">
                     <motion.button
@@ -248,7 +354,9 @@ export default function Register() {
                 type="button"
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
-                onClick={() => append({ degree: "", university: "", year: "" })}
+                onClick={() =>
+                  append({ degree: "", university: "", year: "" })
+                }
                 className="inline-flex items-center gap-2 rounded-lg px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700"
               >
                 <FiPlus /> Add another qualification
@@ -260,15 +368,24 @@ export default function Register() {
             name="terms"
             label={
               <span className="text-sm">
-                I agree to the <a className="underline" href="/legal/terms">Terms</a> and {" "}
-                <a className="underline" href="/legal/privacy">Privacy Policy</a>.
+                I agree to the{" "}
+                <a className="underline" href="/legal/terms">
+                  Terms
+                </a>{" "}
+                and{" "}
+                <a className="underline" href="/legal/privacy">
+                  Privacy Policy
+                </a>
+                .
               </span>
             }
           >
             {() => (
               <Switch
                 checked={!!form.watch("terms")}
-                onChange={(v) => form.setValue("terms", !!v, { shouldValidate: true })}
+                onChange={(v) =>
+                  form.setValue("terms", !!v, { shouldValidate: true })
+                }
                 aria-invalid={!!form.formState.errors?.terms}
               />
             )}
@@ -287,14 +404,20 @@ export default function Register() {
             whileTap={{ scale: 0.98 }}
             className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 text-white font-medium px-4 py-2 shadow-lg shadow-indigo-900/20 disabled:opacity-60 disabled:cursor-not-allowed transition"
           >
-            <FiUserPlus /> {status === "loading" || submitting ? "Creating…" : "Create account"}
+            <FiUserPlus />{" "}
+            {status === "loading" || submitting ? "Creating…" : "Create account"}
           </motion.button>
         </Form>
 
-        <p className="mt-4 text-sm">
-          Already have an account? <Link to="/login" className="underline">Sign in</Link>
-        </p>
+        {!isModal && (
+          <p className="mt-4 text-sm">
+            Already have an account?{" "}
+            <Link to="/login" className="underline">
+              Sign in
+            </Link>
+          </p>
+        )}
       </div>
-    </div>
+    </Wrapper>
   );
 }

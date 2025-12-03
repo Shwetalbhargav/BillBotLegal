@@ -1,127 +1,188 @@
 // src/pages/FirmSelectLanding.jsx
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
 import { fetchFirms, setSelectedFirmId } from "@/store/firmSlice";
-import { Button, Card, EmptyState, Heading, HeroSection, Section, Loader } from "@/components/common";
-import { NavBar, Footer } from "@/components/layout";
-import FirmSwitchDropdown from "@/components/Firm/FirmSwitchDropdown";
+import { Button, Loader } from "@/components/common";
+import { FaBalanceScale, FaArrowRight } from "react-icons/fa";
+
+// Hero artwork
+import flagImg from "@/assets/flag.png";
+import gavelImg from "@/assets/gavel.jpg";
+import justiceImg from "@/assets/justice.png";
 
 export default function FirmSelectLanding() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { items: firms, loading, error, selectedFirmId } = useSelector(
+  const { items: firms = [], loading, error, selectedFirmId } = useSelector(
     (state) => state.firm || {}
   );
+
+  const [localFirmId, setLocalFirmId] = useState(selectedFirmId || "");
 
   // Load firms on first mount
   useEffect(() => {
     dispatch(fetchFirms());
   }, [dispatch]);
 
-  const handleSelectFirm = (firmId) => {
-    dispatch(setSelectedFirmId(firmId));
+  // Keep local selection in sync with store / loaded firms
+  useEffect(() => {
+    if (selectedFirmId) {
+      setLocalFirmId(selectedFirmId);
+    } else if (!selectedFirmId && firms.length > 0 && !localFirmId) {
+      setLocalFirmId(firms[0].id);
+    }
+  }, [selectedFirmId, firms, localFirmId]);
 
-    // 🔁 Decide what "next step" is for your flow:
-    // - send them to login for that firm
-    // - or straight to dashboard if already authed
-    navigate("/login"); // or "/dashboard"
+  const handleContinue = () => {
+    if (!localFirmId) return;
+    dispatch(setSelectedFirmId(localFirmId));
+    navigate("/login"); // or "/dashboard" depending on your flow
   };
 
+  const selectedFirm = firms.find((f) => f.id === localFirmId);
+
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
-      <NavBar />
+    <div className="relative min-h-screen overflow-hidden bg-black text-white">
+      {/* Background flag */}
+      <img
+        src={flagImg}
+        alt="Indian flag"
+        className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-70"
+      />
+      {/* Dark overlay */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/80 via-black/75 to-black/95" />
 
-      {/* Hero / Intro */}
-      <main className="flex-1">
-        <HeroSection
-          title="Welcome to Legal Billables"
-          subtitle="Select your firm to continue to your AI-powered billing workspace."
-          cta={null}
-        />
+      {/* Content */}
+      <main className="relative z-10 flex min-h-screen flex-col">
+        {/* Top bar (brand + CTA, not shared NavBar) */}
+        <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 pt-6">
+          <div className="text-2xl font-semibold tracking-wide text-amber-200 font-serif">
+            FirmSelection
+          </div>
+          <Button
+            variant="secondary"
+            className="rounded-full border border-amber-400/50 bg-black/40 px-4 py-1.5 text-sm font-medium text-amber-100 backdrop-blur-sm hover:bg-amber-500/90 hover:text-black"
+          >
+            Get Appointment
+          </Button>
+        </header>
 
-        <Section className="max-w-5xl mx-auto pb-16">
-          <Heading
-            title="Choose your firm"
-            subtitle="We’ll tailor the experience, billing rules, and integrations to your firm."
-          />
+        {/* Hero body */}
+        <section className="mx-auto flex w-full max-w-6xl flex-1 flex-col items-center gap-10 px-6 pb-16 pt-10 lg:flex-row lg:items-center lg:justify-between">
+          {/* Left: copy + selection card */}
+          <div className="max-w-xl">
+            <h1 className="font-serif text-4xl leading-tight text-amber-50 sm:text-5xl">
+              We fight for your{" "}
+              <span className="text-amber-300">justice</span>
+            </h1>
+            <p className="mt-4 text-sm leading-relaxed text-amber-100/80 sm:text-base">
+              Select your firm to continue to your AI-powered billing
+              workspace. We’ll tailor billable rules, summaries, and
+              integrations for your team.
+            </p>
 
-          {/* Loading state */}
-          {loading && (
-            <div className="flex items-center justify-center py-10">
-              <Loader />
-            </div>
-          )}
+            {/* Card */}
+            <div className="mt-8 max-w-md rounded-3xl border border-amber-400/40 bg-black/70 p-6 shadow-2xl backdrop-blur-md">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-500/15 text-amber-300">
+                  <FaBalanceScale className="text-xl" />
+                </span>
+                <div>
+                  <h2 className="text-base font-semibold text-amber-50">
+                    Choose your firm
+                  </h2>
+                  <p className="text-xs text-amber-100/70">
+                    Your selection controls access, matters, and billing data.
+                  </p>
+                </div>
+              </div>
 
-          {/* Error state */}
-          {!loading && error && (
-            <div className="mt-6 rounded-2xl border border-rose-200/70 bg-rose-50 px-4 py-3 text-sm text-rose-900">
-              {error || "Something went wrong loading firms."}
-            </div>
-          )}
-
-          {/* No firms */}
-          {!loading && !error && firms?.length === 0 && (
-            <div className="mt-8">
-              <EmptyState
-                title="No firms found"
-                description="It looks like there are no firms configured yet. An admin can create one from the dashboard."
-                action={
-                  <Button onClick={() => navigate("/register")}>
-                    Create a firm
-                  </Button>
-                }
-              />
-            </div>
-          )}
-
-          {/* Firms grid */}
-          {!loading && !error && firms?.length > 0 && (
-            <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {firms.map((firm) => (
-                <Card
-                  key={firm.id}
-                  className="flex flex-col justify-between rounded-2xl border border-gray-200/70 bg-white/90 shadow-sm hover:shadow-md transition-shadow"
-                >
-                  <div>
-                    <h3 className="text-base font-semibold text-gray-900">
-                      {firm.name}
-                    </h3>
-                    {firm.tagline && (
-                      <p className="mt-1 text-sm text-gray-500 line-clamp-2">
-                        {firm.tagline}
-                      </p>
-                    )}
-                    {firm.primaryContact && (
-                      <p className="mt-2 text-xs text-gray-400">
-                        Admin: {firm.primaryContact}
-                      </p>
-                    )}
+              <div className="mt-5 space-y-4">
+                {/* Loading state */}
+                {loading && (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader />
                   </div>
+                )}
 
-                  <div className="mt-4">
-                    <Button
-                      className="w-full"
-                      onClick={() => handleSelectFirm(firm.id)}
+                {/* Error state */}
+                {!loading && error && (
+                  <div className="rounded-2xl border border-rose-300/70 bg-rose-900/60 px-3 py-2 text-xs text-rose-50">
+                    {error || "Something went wrong loading firms."}
+                  </div>
+                )}
+
+                {/* No firms */}
+                {!loading && !error && firms.length === 0 && (
+                  <p className="text-xs text-amber-100/70">
+                    No firms are configured yet. Ask your administrator to
+                    create a firm in the dashboard.
+                  </p>
+                )}
+
+                {/* Firm select */}
+                {!loading && !error && firms.length > 0 && (
+                  <>
+                    <label
+                      htmlFor="firm-select"
+                      className="block text-xs font-medium uppercase tracking-wide text-amber-200/80"
                     >
-                      {selectedFirmId === firm.id
-                        ? "Continue"
-                        : "Use this firm"}
+                      Select firm
+                    </label>
+                    <select
+                      id="firm-select"
+                      value={localFirmId || ""}
+                      onChange={(e) => setLocalFirmId(e.target.value)}
+                      className="w-full rounded-2xl border border-amber-400/40 bg-black/70 px-3 py-2 text-sm text-amber-50 outline-none ring-0 backdrop-blur-sm focus:border-amber-300 focus:ring-2 focus:ring-amber-400/60"
+                    >
+                      <option value="" disabled>
+                        — Choose a firm —
+                      </option>
+                      {firms.map((firm) => (
+                        <option key={firm.id} value={firm.id}>
+                          {firm.name}
+                        </option>
+                      ))}
+                    </select>
+
+                    {selectedFirm?.tagline && (
+                      <p className="text-xs text-amber-100/70">
+                        {selectedFirm.tagline}
+                      </p>
+                    )}
+
+                    <Button
+                      className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-500 px-4 py-2.5 text-sm font-semibold text-black shadow-lg shadow-amber-900/50 hover:bg-amber-400"
+                      onClick={handleContinue}
+                      disabled={!localFirmId}
+                    >
+                      Continue
+                      <FaArrowRight className="text-sm" />
                     </Button>
-                  </div>
-                </Card>
-              ))}
+                  </>
+                )}
+              </div>
             </div>
-          )}
-        </Section>
+          </div>
+
+          {/* Right: justice statue + gavel images */}
+          <div className="relative mt-6 w-full max-w-md lg:mt-0 lg:max-w-lg">
+            <img
+              src={justiceImg}
+              alt="Lady Justice statue"
+              className="relative z-10 mx-auto w-full max-w-md drop-shadow-[0_25px_40px_rgba(0,0,0,0.6)]"
+            />
+            <img
+              src={gavelImg}
+              alt="Judge's gavel"
+              className="absolute -bottom-10 left-4 w-40 max-w-[45%] -rotate-6 drop-shadow-[0_18px_30px_rgba(0,0,0,0.7)]"
+            />
+          </div>
+        </section>
       </main>
-      {/* Firm Switcher */}
-          <FirmSwitchDropdown />
-
-
-      <Footer />
     </div>
   );
 }
