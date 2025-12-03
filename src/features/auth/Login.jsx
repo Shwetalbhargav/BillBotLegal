@@ -10,7 +10,7 @@ import Form from "@/components/form/Form";
 import FormField from "@/components/form/FormField";
 import lawyer from "@/assets/lawyer.jpg";
 import { loginUserThunk } from "@/store/authSlice";
-import Register from "@/pages/auth/Register"; // <-- import modal
+import Register from "@features/auth/Register"; 
 
 export default function Login() {
   const navigate = useNavigate();
