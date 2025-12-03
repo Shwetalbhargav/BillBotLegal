@@ -173,12 +173,16 @@ export default function FirmSelectLanding() {
             <img
               src={justiceImg}
               alt="Lady Justice statue"
-              className="relative z-10 mx-auto w-full max-w-md drop-shadow-[0_25px_40px_rgba(0,0,0,0.6)]"
+              className="relative z-10 mx-auto w-full max-w-md
+                          mix-blend-lighten opacity-90
+                          drop-shadow-[0_25px_40px_rgba(0,0,0,0.6)]]"
             />
             <img
               src={gavelImg}
               alt="Judge's gavel"
-              className="absolute -bottom-10 left-4 w-40 max-w-[45%] -rotate-6 drop-shadow-[0_18px_30px_rgba(0,0,0,0.7)]"
+              className="relative z-10 mx-auto w-full max-w-md
+                          mix-blend-lighten opacity-90
+                          drop-shadow-[0_25px_40px_rgba(0,0,0,0.6)]]"
             />
           </div>
         </section>
