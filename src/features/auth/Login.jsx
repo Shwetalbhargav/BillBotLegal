@@ -53,54 +53,64 @@ export default function Login() {
     }
   };
 
+  const inputBaseClasses =
+    "w-full rounded-xl bg-white/95 border border-slate-200/80 " +
+    "text-slate-900 placeholder:text-slate-400 shadow-sm " +
+    "focus:outline-none focus:ring-2 focus:ring-indigo-400/70 focus:border-transparent";
+
   return (
     <div
       className="relative min-h-screen bg-cover bg-center"
       style={{ backgroundImage: `url(${lawyer})` }}
     >
       {/* dark overlay UNDER content and non-interactive */}
-      <div className="pointer-events-none absolute inset-0 bg-black/50 z-0" />
+      <div className="pointer-events-none absolute inset-0 bg-black/60 z-0" />
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-10">
         <div className="flex flex-col md:flex-row items-center justify-between gap-10">
           {/* left hero text */}
-          <div className="max-w-xl text-white text-center md:text-left">
-            <h1 className="text-4xl md:text-5xl font-semibold leading-tight drop-shadow-lg">
+          <div className="max-w-xl text-white text-center md:text-left drop-shadow-lg">
+            <h1 className="text-4xl md:text-5xl font-semibold leading-tight">
               Log every billable minute
             </h1>
-            <p className="mt-3 text-base md:text-xl text-white/90 drop-shadow">
+            <p className="mt-3 text-base md:text-xl text-white/90">
               Email time tracking + GPT summaries + one-click push to Clio.
             </p>
           </div>
 
           {/* sign-in card */}
-          <div className="relative z-20 w-full max-w-md bg-white/10 backdrop-blur-md border border-white/30 shadow-2xl rounded-2xl p-8 text-white pointer-events-auto">
+          <div className="relative z-20 w-full max-w-md bg-white/95 backdrop-blur-sm border border-slate-200 shadow-2xl rounded-2xl p-8 text-slate-900 pointer-events-auto">
             <div className="mb-6">
               <h2 className="text-xl font-semibold">Sign in</h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Enter your details to access your dashboard.
+              </p>
             </div>
 
             <Form form={form} onSubmit={onSubmit} className="space-y-4">
-              <FormField name="name"  required>
+              {/* Name */}
+              <FormField name="name" label="Full name" required>
                 {({ id, describedBy, error }) => (
                   <Input
                     id={id}
                     aria-describedby={describedBy}
                     aria-invalid={!!error}
-                    placeholder="Full name"
-                    className="bg-white/10 border-white/30 text-black placeholder-white/70"
+                    placeholder="Jane Attorney"
+                    className={inputBaseClasses}
                     {...form.register("name", { required: "Name is required" })}
                   />
                 )}
               </FormField>
 
-              <FormField name="mobile"  required>
+              {/* Mobile */}
+              <FormField name="mobile" label="Mobile number" required>
                 {({ id, describedBy, error }) => (
                   <Input
                     id={id}
                     aria-describedby={describedBy}
                     aria-invalid={!!error}
-                    placeholder="Mobile number"
-                    className="bg-white/10 border-white/30 text-black placeholder-white/70"
+                    placeholder="+1 555 0100"
+                    className={inputBaseClasses}
                     {...form.register("mobile", {
                       required: "Mobile is required",
                       minLength: { value: 7, message: "Too short" },
@@ -109,7 +119,8 @@ export default function Login() {
                 )}
               </FormField>
 
-              <FormField name="password"  required>
+              {/* Password */}
+              <FormField name="password" label="Password" required>
                 {({ id, describedBy, error }) => (
                   <div className="relative">
                     <Input
@@ -117,8 +128,8 @@ export default function Login() {
                       type={showPassword ? "text" : "password"}
                       aria-describedby={describedBy}
                       aria-invalid={!!error}
-                      placeholder="Password"
-                      className="pr-20 bg-white/10 border-white/30 text-black placeholder-white/70"
+                      placeholder="••••••••"
+                      className={`${inputBaseClasses} pr-20`}
                       {...form.register("password", {
                         required: "Password is required",
                       })}
@@ -126,7 +137,7 @@ export default function Login() {
                     <button
                       type="button"
                       onClick={() => setShowPassword((s) => !s)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-sm px-2 py-1 rounded-md bg-white/20 hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-white/50"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-xs px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-400/70"
                     >
                       {showPassword ? "Hide" : "Show"}
                     </button>
@@ -134,39 +145,38 @@ export default function Login() {
                 )}
               </FormField>
 
-              <FormField name="role"  required>
+              {/* Role */}
+              <FormField name="role" label="Role" required>
                 {({ id, describedBy, error }) => (
                   <select
                     id={id}
                     aria-describedby={describedBy}
                     aria-invalid={!!error}
-                    className="w-full rounded-md bg-white/10 border border-white/30 text-white py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-white/50"
+                    className={
+                      "w-full rounded-xl bg-white/95 border border-slate-200/80 " +
+                      "text-slate-900 py-2.5 pr-10 pl-3 shadow-sm " +
+                      "focus:outline-none focus:ring-2 focus:ring-indigo-400/70 focus:border-transparent"
+                    }
                     defaultValue={preselectedRole || ""}
                     {...form.register("role", { required: "Role is required" })}
                   >
-                    <option className="bg-slate-900 text-white" value="" disabled>
+                    <option value="" disabled>
                       Select role
                     </option>
-                    <option className="bg-slate-900 text-white" value="admin">
-                      Admin
-                    </option>
-                    <option className="bg-slate-900 text-white" value="partner">
-                      Partner
-                    </option>
-                    <option className="bg-slate-900 text-white" value="lawyer">
-                      Lawyer
-                    </option>
-                    <option className="bg-slate-900 text-white" value="associate">
-                      Associate
-                    </option>
-                    <option className="bg-slate-900 text-white" value="intern">
-                      Intern
-                    </option>
+                    <option value="admin">Admin</option>
+                    <option value="partner">Partner</option>
+                    <option value="lawyer">Lawyer</option>
+                    <option value="associate">Associate</option>
+                    <option value="intern">Intern</option>
                   </select>
                 )}
               </FormField>
 
-              {error && <p className="text-red-300 text-sm">{error}</p>}
+              {error && (
+                <p className="text-red-600 text-sm" role="alert">
+                  {error}
+                </p>
+              )}
 
               <motion.button
                 type="submit"
@@ -179,11 +189,11 @@ export default function Login() {
               </motion.button>
             </Form>
 
-            <p className="mt-4 text-sm text-white/90">
+            <p className="mt-4 text-sm text-slate-600">
               No account?{" "}
               <button
                 type="button"
-                className="underline"
+                className="font-medium text-indigo-600 hover:text-indigo-700 underline-offset-2 underline"
                 onClick={() => setShowRegister(true)}
               >
                 Create one
