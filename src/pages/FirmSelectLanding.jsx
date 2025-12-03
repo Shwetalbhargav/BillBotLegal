@@ -48,7 +48,8 @@ export default function FirmSelectLanding() {
       <img
         src={heroImg}
         alt="Hero background"
-        className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-90"
+        className="pointer-events-none absolute inset-0 h-full w-full object-contain opacity-90"
+        style={{ backgroundColor: "black" }}
       />
 
       {/* Black gradient overlay */}
