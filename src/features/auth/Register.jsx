@@ -1,4 +1,3 @@
-// ===== src/features/auth/Register.jsx =====
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -33,7 +32,10 @@ const ROLES = [
 export default function Register({ isModal = false, onClose }) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const slice = useSelector((s) => s.register) ?? { status: "idle", error: null };
+  const slice = useSelector((s) => s.register) ?? {
+    status: "idle",
+    error: null,
+  };
   const { status, error } = slice;
 
   const [submitting, setSubmitting] = useState(false);
@@ -103,16 +105,17 @@ export default function Register({ isModal = false, onClose }) {
     }
   };
 
-  
-    const commonInput =
+  // ---------- styling helpers ----------
+  const commonInput =
     "block w-full mt-1 rounded-lg px-3 py-2 " +
     "focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500";
 
   const lightInput =
     "border-slate-300 bg-slate-50 text-slate-900 placeholder:text-slate-400";
 
+  // darker grey glass background in modal
   const darkInput =
-    "border-white/30 bg-white/15 text-white placeholder:text-gray-300";
+    "border-white/25 bg-slate-900/40 text-white placeholder:text-gray-300";
 
   const inputBaseClasses = `${commonInput} ${isModal ? darkInput : lightInput}`;
 
@@ -129,7 +132,7 @@ export default function Register({ isModal = false, onClose }) {
 
   const Wrapper = ({ children }) =>
     isModal ? (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
         <div className="w-full max-w-2xl mx-4">{children}</div>
       </div>
     ) : (
@@ -138,8 +141,7 @@ export default function Register({ isModal = false, onClose }) {
       </div>
     );
 
-  
-
+  // ---------- render ----------
   return (
     <Wrapper>
       <div className={cardClasses}>
@@ -148,7 +150,7 @@ export default function Register({ isModal = false, onClose }) {
           <button
             type="button"
             onClick={onClose}
-            className="absolute right-4 top-4 text-slate-400 hover:text-slate-600"
+            className="absolute right-4 top-4 text-gray-200 hover:text-white"
             aria-label="Close"
           >
             <FiX className="text-xl" />
@@ -157,11 +159,11 @@ export default function Register({ isModal = false, onClose }) {
 
         <div className="flex items-center gap-2 mb-2">
           <FiUserPlus className="text-xl text-indigo-400" />
-          <h2 className="text-xl font-semibold ${headingColor}">
+          <h2 className={`text-xl font-semibold ${headingColor}`}>
             Create your account
           </h2>
         </div>
-        <p className="mb-6 text-sm ${subheadingColor}">
+        <p className={`mb-6 text-sm ${subheadingColor}`}>
           Set up your profile so we can start logging every billable minute.
         </p>
 
@@ -170,7 +172,7 @@ export default function Register({ isModal = false, onClose }) {
           <FormField
             name="name"
             label={
-              <span className="inline-flex items-center gap-2">
+              <span className={`inline-flex items-center gap-2 ${labelMuted}`}>
                 <FiUser /> Full name
               </span>
             }
@@ -178,7 +180,7 @@ export default function Register({ isModal = false, onClose }) {
           >
             {({ id, describedBy, error }) => (
               <div className="relative">
-                <FiUser className="text-sm font-medium inline-flex items-center gap-2 ${labelMuted}" />
+                <FiUser className="absolute left-3 top-[2.1rem] -translate-y-1/2 text-gray-400" />
                 <input
                   id={id}
                   aria-describedby={describedBy}
@@ -196,7 +198,7 @@ export default function Register({ isModal = false, onClose }) {
             <FormField
               name="email"
               label={
-                <span className="inline-flex items-center gap-2">
+                <span className={`inline-flex items-center gap-2 ${labelMuted}`}>
                   <FiMail /> Email
                 </span>
               }
@@ -204,7 +206,7 @@ export default function Register({ isModal = false, onClose }) {
             >
               {({ id, describedBy, error }) => (
                 <div className="relative">
-                  <FiMail className="text-sm font-medium inline-flex items-center gap-2 ${labelMuted}" />
+                  <FiMail className="absolute left-3 top-[2.1rem] -translate-y-1/2 text-gray-400" />
                   <input
                     id={id}
                     type="email"
@@ -222,7 +224,7 @@ export default function Register({ isModal = false, onClose }) {
             <FormField
               name="password"
               label={
-                <span className="inline-flex items-center gap-2">
+                <span className={`inline-flex items-center gap-2 ${labelMuted}`}>
                   <FiLock /> Password
                 </span>
               }
@@ -231,7 +233,7 @@ export default function Register({ isModal = false, onClose }) {
             >
               {({ id, describedBy, error }) => (
                 <div className="relative">
-                  <FiLock className="text-sm font-medium inline-flex items-center gap-2 ${labelMuted}" />
+                  <FiLock className="absolute left-3 top-[2.1rem] -translate-y-1/2 text-gray-400" />
                   <input
                     id={id}
                     type="password"
@@ -257,10 +259,16 @@ export default function Register({ isModal = false, onClose }) {
                   id={id}
                   value={form.watch("role")}
                   onChange={(e) => form.setValue("role", e.target.value)}
-                  className={inputBaseClasses}
+                  className={`${inputBaseClasses} ${
+                    isModal ? "text-white" : "text-slate-900"
+                  }`}
                 >
                   {ROLES.map((r) => (
-                    <option key={r.value} value={r.value}>
+                    <option
+                      key={r.value}
+                      value={r.value}
+                      className="text-black"
+                    >
                       {r.label}
                     </option>
                   ))}
@@ -287,7 +295,7 @@ export default function Register({ isModal = false, onClose }) {
             <FormField
               name="mobile"
               label={
-                <span className="text-sm font-medium inline-flex items-center gap-2 ${labelMuted}">
+                <span className={`inline-flex items-center gap-2 ${labelMuted}`}>
                   <FiPhone /> Mobile
                 </span>
               }
@@ -295,7 +303,7 @@ export default function Register({ isModal = false, onClose }) {
             >
               {({ id, describedBy, error }) => (
                 <div className="relative">
-                  <FiPhone className="absolute left-3 top-[2.1rem] -translate-y-1/2 text-slate-400" />
+                  <FiPhone className="absolute left-3 top-[2.1rem] -translate-y-1/2 text-gray-400" />
                   <input
                     id={id}
                     aria-describedby={describedBy}
@@ -315,14 +323,14 @@ export default function Register({ isModal = false, onClose }) {
             <FormField
               name="address"
               label={
-                <span className="inline-flex items-center gap-2">
+                <span className={`inline-flex items-center gap-2 ${labelMuted}`}>
                   <FiHome /> Address
                 </span>
               }
             >
               {({ id, describedBy }) => (
                 <div className="relative">
-                  <FiHome className="text-sm font-medium inline-flex items-center gap-2 ${labelMuted}" />
+                  <FiHome className="absolute left-3 top-[2.1rem] -translate-y-1/2 text-gray-400" />
                   <input
                     id={id}
                     aria-describedby={describedBy}
@@ -337,7 +345,9 @@ export default function Register({ isModal = false, onClose }) {
 
           {/* Qualifications */}
           <div className="space-y-2">
-            <label className="text-sm font-medium inline-flex items-center gap-2 ${labelMuted}">
+            <label
+              className={`text-sm font-medium inline-flex items-center gap-2 ${labelMuted}`}
+            >
               <FiBookOpen /> Qualifications
             </label>
             <div className="space-y-3">
@@ -374,7 +384,11 @@ export default function Register({ isModal = false, onClose }) {
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
                       onClick={() => remove(idx)}
-                      className="inline-flex items-center gap-2 rounded-lg px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm"
+                      className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${
+                        isModal
+                          ? "bg-white/10 hover:bg-white/20 text-gray-100"
+                          : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                      }`}
                     >
                       <FiTrash2 /> Remove
                     </motion.button>
@@ -388,7 +402,11 @@ export default function Register({ isModal = false, onClose }) {
                 onClick={() =>
                   append({ degree: "", university: "", year: "" })
                 }
-                className="inline-flex items-center gap-2 rounded-lg px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-sm"
+                className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${
+                  isModal
+                    ? "bg-indigo-500/80 hover:bg-indigo-400 text-white"
+                    : "bg-indigo-50 hover:bg-indigo-100 text-indigo-700"
+                }`}
               >
                 <FiPlus /> Add another qualification
               </motion.button>
@@ -399,7 +417,11 @@ export default function Register({ isModal = false, onClose }) {
           <FormField
             name="terms"
             label={
-              <span className="text-sm text-slate-700">
+              <span
+                className={`text-sm ${
+                  isModal ? "text-gray-100" : "text-slate-700"
+                }`}
+              >
                 I agree to the{" "}
                 <a className="underline" href="/legal/terms">
                   Terms
@@ -424,7 +446,12 @@ export default function Register({ isModal = false, onClose }) {
           </FormField>
 
           {error && (
-            <p className="text-sm text-red-600" role="alert">
+            <p
+              className={`text-sm ${
+                isModal ? "text-red-300" : "text-red-600"
+              }`}
+              role="alert"
+            >
               {typeof error === "string" ? error : "Registration failed"}
             </p>
           )}
@@ -434,7 +461,7 @@ export default function Register({ isModal = false, onClose }) {
             disabled={submitting || status === "loading"}
             whileHover={{ y: -2, scale: 1.01 }}
             whileTap={{ scale: 0.98 }}
-            className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 text-white font-medium px-4 py-2 shadow-lg shadow-indigo-900/20 disabled:opacity-60 disabled:cursor-not-allowed transition"
+            className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 text-white font-medium px-4 py-2 shadow-lg shadow-black/40 disabled:opacity-60 disabled:cursor-not-allowed transition"
           >
             <FiUserPlus />
             {status === "loading" || submitting ? "Creating…" : "Create account"}
@@ -442,7 +469,7 @@ export default function Register({ isModal = false, onClose }) {
         </Form>
 
         {!isModal && (
-          <p className="mt-4 text-sm ${footerText}">
+          <p className={`mt-4 text-sm ${footerText}`}>
             Already have an account?{" "}
             <Link
               to="/login"
@@ -456,4 +483,3 @@ export default function Register({ isModal = false, onClose }) {
     </Wrapper>
   );
 }
-
