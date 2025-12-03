@@ -103,6 +103,30 @@ export default function Register({ isModal = false, onClose }) {
     }
   };
 
+  
+    const commonInput =
+    "block w-full mt-1 rounded-lg px-3 py-2 " +
+    "focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500";
+
+  const lightInput =
+    "border-slate-300 bg-slate-50 text-slate-900 placeholder:text-slate-400";
+
+  const darkInput =
+    "border-white/30 bg-white/15 text-white placeholder:text-gray-300";
+
+  const inputBaseClasses = `${commonInput} ${isModal ? darkInput : lightInput}`;
+
+  const headingColor = isModal ? "text-white" : "text-slate-900";
+  const subheadingColor = isModal ? "text-gray-200" : "text-slate-500";
+  const labelMuted = isModal ? "text-gray-100" : "text-slate-800";
+  const footerText = isModal ? "text-gray-200" : "text-slate-600";
+
+  const cardClasses = isModal
+    ? "relative z-50 rounded-2xl bg-white/10 border border-white/20 " +
+      "shadow-2xl p-6 md:p-8 backdrop-blur-xl text-white"
+    : "relative z-50 rounded-2xl bg-white border border-slate-200 " +
+      "shadow-2xl p-6 md:p-8 text-slate-900";
+
   const Wrapper = ({ children }) =>
     isModal ? (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -114,14 +138,11 @@ export default function Register({ isModal = false, onClose }) {
       </div>
     );
 
-  const inputBaseClasses =
-    "block w-full mt-1 rounded-lg border border-slate-300 bg-slate-50 " +
-    "px-3 py-2 text-slate-900 placeholder:text-slate-400 " +
-    "focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500";
+  
 
   return (
     <Wrapper>
-      <div className="relative z-50 rounded-2xl bg-white shadow-2xl p-6 md:p-8 border border-slate-200">
+      <div className={cardClasses}>
         {/* close button when used as modal */}
         {isModal && (
           <button
@@ -135,12 +156,12 @@ export default function Register({ isModal = false, onClose }) {
         )}
 
         <div className="flex items-center gap-2 mb-2">
-          <FiUserPlus className="text-xl text-indigo-600" />
-          <h2 className="text-xl font-semibold text-slate-900">
+          <FiUserPlus className="text-xl text-indigo-400" />
+          <h2 className="text-xl font-semibold ${headingColor}">
             Create your account
           </h2>
         </div>
-        <p className="mb-6 text-sm text-slate-500">
+        <p className="mb-6 text-sm ${subheadingColor}">
           Set up your profile so we can start logging every billable minute.
         </p>
 
@@ -157,7 +178,7 @@ export default function Register({ isModal = false, onClose }) {
           >
             {({ id, describedBy, error }) => (
               <div className="relative">
-                <FiUser className="absolute left-3 top-[2.1rem] -translate-y-1/2 text-slate-400" />
+                <FiUser className="text-sm font-medium inline-flex items-center gap-2 ${labelMuted}" />
                 <input
                   id={id}
                   aria-describedby={describedBy}
@@ -183,7 +204,7 @@ export default function Register({ isModal = false, onClose }) {
             >
               {({ id, describedBy, error }) => (
                 <div className="relative">
-                  <FiMail className="absolute left-3 top-[2.1rem] -translate-y-1/2 text-slate-400" />
+                  <FiMail className="text-sm font-medium inline-flex items-center gap-2 ${labelMuted}" />
                   <input
                     id={id}
                     type="email"
@@ -210,7 +231,7 @@ export default function Register({ isModal = false, onClose }) {
             >
               {({ id, describedBy, error }) => (
                 <div className="relative">
-                  <FiLock className="absolute left-3 top-[2.1rem] -translate-y-1/2 text-slate-400" />
+                  <FiLock className="text-sm font-medium inline-flex items-center gap-2 ${labelMuted}" />
                   <input
                     id={id}
                     type="password"
@@ -266,7 +287,7 @@ export default function Register({ isModal = false, onClose }) {
             <FormField
               name="mobile"
               label={
-                <span className="inline-flex items-center gap-2">
+                <span className="text-sm font-medium inline-flex items-center gap-2 ${labelMuted}">
                   <FiPhone /> Mobile
                 </span>
               }
@@ -301,7 +322,7 @@ export default function Register({ isModal = false, onClose }) {
             >
               {({ id, describedBy }) => (
                 <div className="relative">
-                  <FiHome className="absolute left-3 top-[2.1rem] -translate-y-1/2 text-slate-400" />
+                  <FiHome className="text-sm font-medium inline-flex items-center gap-2 ${labelMuted}" />
                   <input
                     id={id}
                     aria-describedby={describedBy}
@@ -316,7 +337,7 @@ export default function Register({ isModal = false, onClose }) {
 
           {/* Qualifications */}
           <div className="space-y-2">
-            <label className="text-sm font-medium inline-flex items-center gap-2 text-slate-800">
+            <label className="text-sm font-medium inline-flex items-center gap-2 ${labelMuted}">
               <FiBookOpen /> Qualifications
             </label>
             <div className="space-y-3">
@@ -421,7 +442,7 @@ export default function Register({ isModal = false, onClose }) {
         </Form>
 
         {!isModal && (
-          <p className="mt-4 text-sm text-slate-600">
+          <p className="mt-4 text-sm ${footerText}">
             Already have an account?{" "}
             <Link
               to="/login"
