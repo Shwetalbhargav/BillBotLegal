@@ -8,13 +8,14 @@ import BillablesPageBase from "@/features/shared/BillablesPageBase";
 import InvoicesPageBase from "@/features/shared/InvoicesPageBase";
 import useAuth from "@/hooks/useAuth";
 
-export default function PartnerDashboard() {
+export default function AdminDashboard() {
   const { user } = useAuth();
-  const role = user?.role?.toLowerCase() || "partner";
+  const role = user?.role?.toLowerCase() || "admin";
+
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <Sidebar role={role} menu={MENUS.partner} />
+      <Sidebar role={role} menu={MENUS.admin} />
       <main className="flex-1 p-6 space-y-8">
         <h1 className="text-2xl font-semibold">Partner Dashboard</h1>
 

@@ -33,24 +33,21 @@ export default function Login() {
   const [error, setError] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
 
-  const onSubmit = async (values) => {
-    setSubmitting(true);
-    setError(null);
-    try {
-      const { user } = await dispatch(loginUserThunk(values)).unwrap();
-      const role = user?.role;
-      if (role === "admin") navigate("/pages/AdminDashboard");
-      else if (role === "partner") navigate("/partner/dashboard");
-      else if (role === "lawyer") navigate("/lawyer/dashboard");
-      else if (role === "associate") navigate("/associate/dashboard");
-      else if (role === "intern") navigate("/intern/dashboard");
-      else navigate("/dashboard");
-    } catch (e) {
-      setError(e?.message || "Invalid credentials");
-    } finally {
-      setSubmitting(false);
-    }
-  };
+      const onSubmit = async (values) => {
+      setSubmitting(true);
+      setError(null);
+      try {
+        const { user } = await dispatch(loginUserThunk(values)).unwrap();
+
+        // No need to branch on role here – /dashboard will redirect
+        navigate("/dashboard", { replace: true });
+      } catch (e) {
+        setError(e?.message || "Invalid credentials");
+      } finally {
+        setSubmitting(false);
+      }
+    };
+
 
   const inputBaseClasses =
     "block w-full mt-1 rounded-lg border border-slate-300 bg-slate-50 " +
