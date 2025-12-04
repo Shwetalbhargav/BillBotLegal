@@ -31,17 +31,58 @@ export const fetchAnalytics = createAsyncThunk('analytics/fetch', async () => {
     getBilledByUserAnalytics(),
   ]);
 
+  const billable = normalizeBillable(billableRes?.data);
+  const invoice = normalizeInvoice(invoiceRes?.data);
+  const unbilled = normalizeUnbilled(unbilledRes?.data);
+
+  // billables-by-case-type → array OR { summaryByCaseType: [...] }
+  const caseData = caseRes?.data;
+  const byCaseTypeEntries = Array.isArray(caseData)
+    ? caseData
+    : Array.isArray(caseData?.summaryByCaseType)
+    ? caseData.summaryByCaseType
+    : [];
+
+  // unbilled-by-client → { invoices: [...] }
+  const ubcData = unbilledClientRes?.data;
+  const unbilledByClientEntries = Array.isArray(ubcData?.invoices)
+    ? ubcData.invoices
+    : Array.isArray(ubcData)
+    ? ubcData
+    : [];
+
+  // unbilled-by-user → { ok: true, data: [...] }
+  const ubuData = unbilledUserRes?.data;
+  const unbilledByUserEntries = Array.isArray(ubuData?.data)
+    ? ubuData.data
+    : [];
+
+  // billed-by-client → array
+  const bbcData = billedClientRes?.data;
+  const billedByClientEntries = Array.isArray(bbcData)
+    ? bbcData
+    : Array.isArray(bbcData?.clients)
+    ? bbcData.clients
+    : [];
+
+  // billed-by-user → { ok: true, data: [...] }
+  const bbuData = billedUserRes?.data;
+  const billedByUserEntries = Array.isArray(bbuData?.data)
+    ? bbuData.data
+    : [];
+
   return {
-    billable: normalizeBillable(billableRes?.data),
-    invoice: normalizeInvoice(invoiceRes?.data),
-    unbilled: normalizeUnbilled(unbilledRes?.data),
-    byCaseType: { entries: caseRes?.data?.summaryByCaseType || [] },
-    unbilledByClient: { entries: unbilledClientRes?.data?.unbilledByClient || [] },
-    unbilledByUser: { entries: unbilledUserRes?.data?.unbilledByUser || [] },
-    billedByClient: { entries: billedClientRes?.data?.billedByClient || [] },
-    billedByUser: { entries: billedUserRes?.data?.billedByUser || [] },
+    billable,
+    invoice,
+    unbilled,
+    byCaseType: { entries: byCaseTypeEntries },
+    unbilledByClient: { entries: unbilledByClientEntries },
+    unbilledByUser: { entries: unbilledByUserEntries },
+    billedByClient: { entries: billedByClientEntries },
+    billedByUser: { entries: billedByUserEntries },
   };
 });
+
 
 const slice = createSlice({
   name: 'analytics',

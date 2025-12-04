@@ -21,6 +21,13 @@ export const fetchCases = createAsyncThunk('cases/fetch', async () => {
   const { data } = await apiGetCases();
   return data;
 });
+...
+.addCase(fetchCases.fulfilled, (state, action) => {
+  state.loading = false;
+  state.list = action.payload || [];
+});
+:contentReference[oaicite:5]{index=5}
+
 
 // Create new case
 export const createCase = createAsyncThunk('cases/create', async (caseData) => {

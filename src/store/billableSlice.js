@@ -6,8 +6,14 @@ import { getBillables, updateBillable, deleteBillable, addBillable,getBillableBy
 // Thunks
 export const fetchBillables = createAsyncThunk('billables/fetch', async () => {
   const { data } = await getBillables();
-  return data;
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.data)) return data.data;
+  if (Array.isArray(data?.items)) return data.items;
+  if (Array.isArray(data?.entries)) return data.entries;
+  return [];
 });
+
+
 
 export const createBillable = createAsyncThunk('billables/create', async (billable) => {
   const { data } = await addBillable(billable);

@@ -350,16 +350,15 @@ export const getBilledByUserAnalytics = (params = {}) =>
 // If your router uses '/activities' or different paths, adjust the base.
 
 export const activityApi = {
-  // Example: backend could expose GET /activity or /activity/feed
-  list: (subPath = "", params = {}) =>
-    apiClient.get(`/api/activity${subPath}${qs(params)}`),
-  get: (subPath = "", params = {}) =>
-    apiClient.get(`/api/activity${subPath}${qs(params)}`),
-  post: (subPath = "", payload = {}) =>
-    apiClient.post(`/api/activity${subPath}`, payload),
+  list: (params = {}) =>
+    apiClient.get(`/api/activities${qs(params)}`),
+  get: (id) =>
+    apiClient.get(`/api/activities/${id}`),
   create: (payload = {}) =>
     apiClient.post(`/api/activities`, payload),
+  
 };
+
 
 
 

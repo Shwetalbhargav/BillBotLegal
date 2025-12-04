@@ -21,9 +21,15 @@ export const fetchClientThunk = createAsyncThunk(
   'clients/fetch',
   async () => {
     const res = await listClients();
-    return res.data.data; // array of clients
+    const data = res.data;
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.data)) return data.data;
+    if (Array.isArray(data?.items)) return data.items;
+    return [];
   }
 );
+
+
 
 // Create client
 export const createClientThunk = createAsyncThunk(
