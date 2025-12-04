@@ -19,14 +19,14 @@ import {
 // List all cases (optionally filtered via params later if needed)
 export const fetchCases = createAsyncThunk('cases/fetch', async () => {
   const { data } = await apiGetCases();
-  return data;
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.data)) return data.data;
+  if (Array.isArray(data?.items)) return data.items;
+  if (Array.isArray(data?.entries)) return data.entries;
+  return [];
 });
-...
-.addCase(fetchCases.fulfilled, (state, action) => {
-  state.loading = false;
-  state.list = action.payload || [];
-});
-:contentReference[oaicite:5]{index=5}
+
+
 
 
 // Create new case
