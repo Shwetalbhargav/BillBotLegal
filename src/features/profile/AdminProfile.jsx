@@ -7,5 +7,12 @@ import { fetchAdminMe as fetchMine, updateAdminMeThunk as updateMine } from "@/s
 
 export default function AdminProfile() {
   const thunks = { fetchMine, updateMine };
-  return <ProfileBase title="Admin Profile" sliceThunks={thunks} />;
+
+  return (
+    <ProfileBase
+      title="Admin Profile"
+      sliceThunks={thunks}
+      avatar={adminImg}   
+    />
+  );
 }
