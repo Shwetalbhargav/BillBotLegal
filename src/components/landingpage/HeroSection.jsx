@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { PieChart, Pie, Tooltip, ResponsiveContainer } from "recharts";
-
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/common";
 import { fetchAnalytics } from "@/store/analyticsSlice";
 import { fetchCases } from "@/store/caseSlice";
@@ -11,6 +11,7 @@ import { fetchCases } from "@/store/caseSlice";
 import heroBg from "@/assets/Loginpage.png";
 
 const HeroSection = () => {
+  const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const analytics = useSelector((s) => s.analytics);
