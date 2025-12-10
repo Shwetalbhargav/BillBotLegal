@@ -1,6 +1,6 @@
 // src/components/landingpage/index.js
 
-export { default as Section } from "../common/Section";
+
 
 // Landing page sections
 export { default as HeroSection } from "./HeroSection";
