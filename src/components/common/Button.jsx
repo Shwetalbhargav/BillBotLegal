@@ -1,26 +1,41 @@
-// Button.jsx (Soft-UI Refactor)
+// src/components/common/Button.jsx
+// Soft-UI Button
 import React from "react";
 import { clsx } from "../../utils/clsx";
 
 const VARIANTS = {
   primary:
-    // Indigo primary with soft shadow + hover/active states
-    "bg-indigo-600 text-white shadow-sm hover:bg-indigo-500 active:bg-indigo-600 focus-visible:ring-indigo-400/60",
+    "bg-[color:var(--lb-primary-600)] text-white border-transparent " +
+    "shadow-[var(--lb-shadow-sm)] hover:shadow-[var(--lb-shadow-md)] " +
+    "hover:brightness-105 active:brightness-95",
+
   secondary:
-    // Subtle surface button
-    "bg-white text-gray-900 border border-gray-200/70 shadow-sm hover:bg-gray-50 active:bg-gray-100 focus-visible:ring-indigo-300/50",
-  danger:
-    "bg-rose-600 text-white shadow-sm hover:bg-rose-500 active:bg-rose-600 focus-visible:ring-rose-400/60",
+    "bg-[color:var(--lb-surface)] text-[color:var(--lb-text)] " +
+    "border-[color:var(--lb-border)] shadow-[var(--lb-shadow-sm)] " +
+    "hover:bg-[color:var(--lb-bg)]",
+
+  subtle:
+    "bg-[color:var(--lb-bg)] text-[color:var(--lb-text)] border-transparent " +
+    "shadow-none hover:bg-[color:var(--lb-surface)]",
+
   ghost:
-    "bg-transparent text-gray-700 hover:bg-gray-50 active:bg-gray-100 focus-visible:ring-indigo-300/50",
+    "bg-transparent text-[color:var(--lb-text)] border-transparent " +
+    "shadow-none hover:bg-[color:var(--lb-bg)]",
+
+  danger:
+    "bg-red-500 text-white border-transparent shadow-[var(--lb-shadow-sm)] " +
+    "hover:bg-red-500/90",
+
   link:
-    "bg-transparent text-indigo-600 underline-offset-2 hover:underline focus-visible:ring-indigo-300/50",
+    "bg-transparent border-transparent shadow-none px-0 py-0 " +
+    "text-[color:var(--lb-primary-600)] hover:underline",
 };
 
 const SIZES = {
-  sm: "text-sm px-3 py-2 rounded-xl",
-  md: "text-base px-4 py-2.5 rounded-2xl",
-  lg: "text-lg px-5 py-3 rounded-2xl",
+  xs: "h-7 px-3 text-[11px]",
+  sm: "h-8 px-3.5 text-[12px]",
+  md: "h-9 px-4 text-[13px]",
+  lg: "h-10 px-5 text-[14px]",
 };
 
 export function Button({
@@ -29,7 +44,7 @@ export function Button({
   size = "md",
   loading = false,
   fullWidth = false,
-  disabled = false,
+  disabled,
   iconLeft,
   iconRight,
   className,
@@ -41,47 +56,33 @@ export function Button({
   return (
     <Tag
       className={clsx(
-        "inline-flex items-center justify-center gap-2 font-medium antialiased",
-        "transition-colors focus:outline-none focus-visible:ring-2",
-        VARIANTS[variant],
-        SIZES[size],
+        "lb-reset inline-flex items-center justify-center gap-2",
+        "rounded-[999px] border font-medium tracking-[0.01em]",
+        "transition-shadow duration-150 ease-out",
+        "focus-visible:outline-none focus-visible:ring-2",
+        "focus-visible:ring-[color:var(--lb-primary-600)] focus-visible:ring-offset-1",
+        "disabled:opacity-60 disabled:cursor-not-allowed",
+        VARIANTS[variant] || VARIANTS.primary,
+        SIZES[size] || SIZES.md,
         fullWidth && "w-full",
-        isDisabled && "opacity-60 cursor-not-allowed",
         className
       )}
-      aria-busy={loading || undefined}
-      disabled={Tag === "button" ? isDisabled : undefined}
+      disabled={isDisabled}
       {...props}
     >
       {loading ? (
         <span className="inline-flex items-center gap-2">
-          <svg
-            className="h-4 w-4 animate-spin"
-            viewBox="0 0 24 24"
+          <span
+            className="h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin"
             aria-hidden="true"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-              fill="none"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-            />
-          </svg>
-          <span>Loading…</span>
+          />
+          <span className="text-[12px]">Loading…</span>
         </span>
       ) : (
         <>
-          {iconLeft ? <span aria-hidden="true">{iconLeft}</span> : null}
+          {iconLeft && <span aria-hidden="true">{iconLeft}</span>}
           <span>{children}</span>
-          {iconRight ? <span aria-hidden="true">{iconRight}</span> : null}
+          {iconRight && <span aria-hidden="true">{iconRight}</span>}
         </>
       )}
     </Tag>

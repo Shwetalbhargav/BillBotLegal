@@ -1,18 +1,20 @@
+// src/components/common/index.js
+
 export { default as Button } from "./Button";
-export { default as Loader } from "./Loader";
+export { default as Card } from "./Card";
 export { default as Badge } from "./Badge";
+
+export { default as Section } from "./Section";
+export { default as Heading } from "./Heading";
+
+export { default as InlineAlert } from "./InlineAlert";
+export { default as Loader } from "./Loader";
+
 export { default as Modal } from "./Modal";
-export { default as Drawer } from "./Drawer";
 export { default as ConfirmDialog } from "./ConfirmDialog";
-export { default as ToastProvider, useToast } from "./ToastProvider";
-export { default as ThemeProvider, useTheme, ThemeSwitch } from "./ThemeProvider";
-export {default as Card} from "./Card";
-export {default as EmailBillables} from "./EmailBillables";
-export {default as EmptyState} from "./EmptyState";
-export {default as Features} from "./Features";
-export {default as Heading} from "./Heading";
-export {default as HeroSection} from "./HeroSection";
-export {default as InlineAlert} from "./InlineAlert";
-export {default as Kbd} from "./Kbd";
-export {default as Section} from "./Section";
-export {default as Testimonials} from "./Testimonials";
+export { default as Drawer } from "./Drawer";
+
+export { default as EmptyState } from "./EmptyState";
+
+export { default as ThemeProvider } from "./ThemeProvider";
+export { default as ToastProvider } from "./ToastProvider";

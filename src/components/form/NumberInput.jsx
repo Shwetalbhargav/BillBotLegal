@@ -1,6 +1,7 @@
-// NumberInput.jsx
+// src/components/form/NumberInput.jsx
 import React, { useCallback } from "react";
-import FormField from "./FormLabel"; // <- this file exports the FormField wrapper
+import FormField from "./FormField";
+import { clsx } from "../../utils/clsx";
 
 export default function NumberInput({
   label,
@@ -16,9 +17,9 @@ export default function NumberInput({
   ...props
 }) {
   const sizes = {
-    sm: "text-sm py-2",
-    md: "text-base py-2.5",
-    lg: "text-lg py-3",
+    sm: "text-[13px] py-2",
+    md: "text-[14px] py-2.5",
+    lg: "text-[15px] py-3",
   };
 
   const clamp = (v) => {
@@ -38,15 +39,16 @@ export default function NumberInput({
   );
 
   return (
-    <FormField label={label} help={help} required={required}>
+    <FormField name={props.name} label={label} help={help} required={required}>
       {({ id, describedBy, error }) => (
-        <div className="inline-flex items-stretch rounded-2xl shadow-sm bg-white border border-gray-200/70 overflow-hidden">
+        <div className="inline-flex items-stretch rounded-2xl bg-[color:var(--lb-surface)] border border-[color:var(--lb-border)] shadow-[var(--lb-shadow-sm)] overflow-hidden">
           <button
             type="button"
-            className={`px-3 select-none transition
-              focus:outline-none focus:ring-2 focus:ring-indigo-400/60
-              hover:bg-gray-50 active:bg-gray-100
-              text-gray-700`}
+            className={clsx(
+              "px-3 select-none text-[13px] text-[color:var(--lb-muted)]",
+              "hover:bg-[color:var(--lb-bg)] active:bg-[color:var(--lb-bg)]/80",
+              "focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lb-primary-600)]"
+            )}
             onClick={() => change(-step)}
             aria-label="Decrease"
           >
@@ -64,19 +66,23 @@ export default function NumberInput({
             aria-invalid={!!error}
             aria-describedby={describedBy}
             required={required}
-            className={`w-24 text-center border-x border-gray-200/70 bg-white
-              placeholder:text-gray-400 ${sizes[size]}
-              focus:outline-none focus:ring-2 focus:ring-indigo-400/60`}
+            className={clsx(
+              "w-24 text-center border-x border-[color:var(--lb-border)] bg-[color:var(--lb-surface)]",
+              "placeholder:text-[color:var(--lb-muted)]",
+              "focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lb-primary-600)]",
+              sizes[size]
+            )}
             style={{ MozAppearance: "textfield" }}
             {...props}
           />
 
           <button
             type="button"
-            className={`px-3 select-none transition
-              focus:outline-none focus:ring-2 focus:ring-indigo-400/60
-              hover:bg-gray-50 active:bg-gray-100
-              text-gray-700`}
+            className={clsx(
+              "px-3 select-none text-[13px] text-[color:var(--lb-muted)]",
+              "hover:bg-[color:var(--lb-bg)] active:bg-[color:var(--lb-bg)]/80",
+              "focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lb-primary-600)]"
+            )}
             onClick={() => change(step)}
             aria-label="Increase"
           >

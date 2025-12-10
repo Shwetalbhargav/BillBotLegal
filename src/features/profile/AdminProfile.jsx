@@ -1,18 +1,12 @@
-
 // src/features/profile/AdminProfile.jsx
 import React from "react";
 import ProfileBase from "./ProfileBase";
-// Admin uses its own slice; pass explicit thunks so base uses admin API for save/fetch if desired
-import { fetchAdminMe as fetchMine, updateAdminMeThunk as updateMine } from "@/store/AdminSlice";
+import {
+  fetchAdminMe as fetchMine,
+  updateAdminMeThunk as updateMine,
+} from "@/store/AdminSlice"; // keep your existing slice import :contentReference[oaicite:1]{index=1}
 
 export default function AdminProfile() {
   const thunks = { fetchMine, updateMine };
-
-  return (
-    <ProfileBase
-      title="Admin Profile"
-      sliceThunks={thunks}
-      avatar={adminImg}   
-    />
-  );
+  return <ProfileBase title="Admin Profile" sliceThunks={thunks} />;
 }

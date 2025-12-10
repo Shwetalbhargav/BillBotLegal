@@ -1,28 +1,27 @@
-// Column.js (Soft-UI Refactor)
-// Generic helpers to standardize table column styling (headers, cells, alignment, sortable affordance)
-// Replace any old lb-* class props with these Tailwind-based defaults.
+// src/components/table/Column.jsx
+// Soft-UI helpers to standardize column styling.
 
 import React from "react";
 
 /** Base Soft-UI tokens */
 export const SOFT_TABLE = {
   header:
-    "px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-600 select-none",
+    "px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] " +
+    "text-[color:var(--lb-muted)] select-none",
   cell:
-    "px-3 py-2 text-sm text-gray-900",
+    "px-3 py-2 text-[13px] text-[color:var(--lb-text)]",
   row:
-    "hover:bg-gray-50 transition-colors",
-  // Use on the <table> wrapper if needed:
+    "hover:bg-[color:var(--lb-bg)] transition-colors",
   table:
-    "w-full border-separate border-spacing-0 rounded-2xl overflow-hidden",
+    "w-full border-separate border-spacing-0",
   thead:
-    "bg-gradient-to-b from-white to-gray-50 border-b border-gray-200/70",
+    "bg-[color:var(--lb-bg)]",
   tbody:
-    "bg-white",
+    "bg-[color:var(--lb-surface)]",
   th:
     "text-left align-middle",
   td:
-    "align-middle border-t border-gray-100",
+    "align-middle border-t border-[color:var(--lb-border)]/60",
 };
 
 /** Alignment mapping */
@@ -33,14 +32,14 @@ const alignClass = (align) =>
     ? "text-center"
     : "text-left";
 
-/**
- * Sort indicator (pure CSS/Unicode; swap if your table lib gives you sort state)
- */
+/** Simple sort indicator */
 export function SortIndicator({ direction }) {
-  if (!direction) return <span className="inline-block w-3" aria-hidden="true" />;
+  if (!direction)
+    return <span className="inline-block w-3" aria-hidden="true" />;
+
   return (
     <span
-      className="inline-block w-3 ml-1 text-gray-400"
+      className="inline-block w-3 ml-1 text-[color:var(--lb-muted)]"
       aria-hidden="true"
     >
       {direction === "desc" ? "▾" : "▴"}
@@ -49,17 +48,16 @@ export function SortIndicator({ direction }) {
 }
 
 /**
- * Compose Soft-UI classes onto a column definition.
- * Works with plain objects you use to render headers/cells manually,
- * or with many table libs that accept `headerClassName` / `cellClassName`.
+ * Decorate a column definition with soft-UI header/cell classes.
  *
- * Supported incoming props on each column:
- *  - id, header, accessor, render (Cell), align ("left" | "center" | "right")
+ * Props on each column:
+ *  - id, header, accessor, cell, align ("left" | "center" | "right")
  *  - headerClassName, cellClassName
- *  - sortable (boolean) – optional, for header affordance only
+ *  - sortable (boolean)
  */
 export function withSoftUI(col) {
   const align = alignClass(col.align);
+
   return {
     ...col,
     headerClassName: [
@@ -76,18 +74,12 @@ export function withSoftUI(col) {
   };
 }
 
-/**
- * Apply Soft-UI styling to an array of column defs.
- */
+/** Map an array of column defs */
 export function makeColumns(defs = []) {
   return defs.map(withSoftUI);
 }
 
-/**
- * Optional convenience header renderer if you don’t have one already.
- * Usage inside your <th>:
- *   <SoftHeader title="Client" sortable sortDirection={state} />
- */
+/** Optional convenience header component */
 export function SoftHeader({ title, sortable, sortDirection }) {
   return (
     <div className="flex items-center">
@@ -97,12 +89,13 @@ export function SoftHeader({ title, sortable, sortDirection }) {
   );
 }
 
-/**
- * Optional convenience cell wrapper to keep padding/typography consistent
- * if you render cells manually.
- */
+/** Optional soft cell wrapper */
 export function SoftCell({ className = "", children }) {
-  return <div className={[SOFT_TABLE.cell, className].join(" ")}>{children}</div>;
+  return (
+    <div className={[SOFT_TABLE.cell, className].join(" ")}>
+      {children}
+    </div>
+  );
 }
 
 export default {

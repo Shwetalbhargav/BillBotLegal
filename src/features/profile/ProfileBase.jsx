@@ -1,4 +1,3 @@
-
 // src/features/profile/ProfileBase.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -6,25 +5,116 @@ import { Button } from "@/components/common";
 import { Input, TextArea } from "@/components/form";
 import { selectMe, updateMeThunk } from "@/store/usersSlice";
 
+// ---- Avatar pools (pulled from /src/assets/...) ----
+// NOTE: paths are relative to this file: src/features/profile/ProfileBase.jsx
+
+const toUrls = (mods) =>
+  Object.values(mods).map((m) => (typeof m === "string" ? m : m.default));
+
+// adjust folder names to match your actual casing exactly
+const associateAvatars = toUrls(
+  import.meta.glob("../../assets/associate/*.{jpg,jpeg,png}", {
+    eager: true,
+    as: "url",
+  })
+);
+
+const internAvatars = toUrls(
+  import.meta.glob("../../assets/Interns/*.{jpg,jpeg,png}", {
+    eager: true,
+    as: "url",
+  })
+);
+
+const lawyerAvatars = toUrls(
+  import.meta.glob("../../assets/Lawyers/*.{jpg,jpeg,png}", {
+    eager: true,
+    as: "url",
+  })
+);
+
+const partnerAvatars = toUrls(
+  import.meta.glob("../../assets/partner/*.{jpg,jpeg,png}", {
+    eager: true,
+    as: "url",
+  })
+);
+
+// if you ever add a dedicated /assets/admin folder, you can point there;
+// for now admin shares the partner pool (includes admin.jpg)
+const roleAvatarPools = {
+  associate: associateAvatars,
+  intern: internAvatars,
+  lawyer: lawyerAvatars,
+  partner: partnerAvatars,
+  admin: partnerAvatars,
+};
+
+const FALLBACK_AVATAR =
+  partnerAvatars[0] ||
+  associateAvatars[0] ||
+  internAvatars[0] ||
+  lawyerAvatars[0] ||
+  "";
+
+// simple stable hash so each user always gets the same image
+function hashString(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i += 1) {
+    h = (h * 31 + str.charCodeAt(i)) | 0;
+  }
+  return Math.abs(h);
+}
+
 function avatarFor(user) {
-  const role = String(user?.role || "user").toLowerCase();
-  const base1 = "/assets/photos";        // preferred
-  const base2 = "/assests/photos";       // typo-safe per project note
-  const slug = String(user?.username || (user?.name || "user").split(" ")[0] || "user").toLowerCase();
-  if (user?.avatar) return user.avatar;
-  return `${base1}/${role}/${slug}.jpg`;
+  if (!user) return FALLBACK_AVATAR;
+
+  // explicit avatar from backend wins
+  if (user.avatar) return user.avatar;
+
+  const role = String(user.role || "user").toLowerCase();
+  const pool = roleAvatarPools[role];
+
+  if (pool && pool.length) {
+    const key =
+      String(user.id ?? user.email ?? user.username ?? user.name ?? "user");
+    const idx = hashString(key) % pool.length;
+    return pool[idx];
+  }
+
+  // legacy fallback (in case you still have old assets)
+  const base1 = "/assets/photos";
+  const slug = String(
+    user?.username || (user?.name || "user").split(" ")[0] || "user"
+  ).toLowerCase();
+
+  return FALLBACK_AVATAR || `${base1}/${role}/${slug}.jpg`;
 }
 
 export default function ProfileBase({ title, sliceThunks }) {
   const dispatch = useDispatch();
   const me = useSelector(selectMe);
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", phone: "", bio: "" });
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    bio: "",
+  });
 
   // If a role-specific API exists (sliceThunks.fetchMine), call it; otherwise fall back to users/me in store
-  useEffect(() => { if (sliceThunks?.fetchMine) dispatch(sliceThunks.fetchMine()); }, [dispatch]);
   useEffect(() => {
-    if (me) setForm({ name: me.name || "", email: me.email || "", phone: me.phone || me.mobile || "", bio: me.bio || "" });
+    if (sliceThunks?.fetchMine) dispatch(sliceThunks.fetchMine());
+  }, [dispatch, sliceThunks]);
+
+  useEffect(() => {
+    if (me)
+      setForm({
+        name: me.name || "",
+        email: me.email || "",
+        phone: me.phone || me.mobile || "",
+        bio: me.bio || "",
+      });
   }, [me]);
 
   const avatar = useMemo(() => avatarFor(me), [me]);
@@ -46,7 +136,9 @@ export default function ProfileBase({ title, sliceThunks }) {
           <Button onClick={() => setEditing(true)}>Edit Profile</Button>
         ) : (
           <div className="flex gap-2">
-            <Button variant="secondary" onClick={() => setEditing(false)}>Cancel</Button>
+            <Button variant="secondary" onClick={() => setEditing(false)}>
+              Cancel
+            </Button>
             <Button onClick={onSave}>Save</Button>
           </div>
         )}
@@ -56,22 +148,79 @@ export default function ProfileBase({ title, sliceThunks }) {
         <div className="md:col-span-1">
           <div className="rounded-2xl border border-[color:var(--lb-border)] bg-[color:var(--lb-surface)] p-4">
             <div className="flex flex-col items-center gap-3">
-              <img src={avatar} alt="Avatar" className="h-28 w-28 rounded-full object-cover border" />
+              <img
+                src={avatar}
+                alt="Avatar"
+                className="h-28 w-28 rounded-full object-cover border"
+              />
               <div className="text-center">
-                <div className="font-semibold text-lg">{me?.name || "—"}</div>
-                <div className="text-sm text-[color:var(--lb-muted)] capitalize">{me?.role || "user"}</div>
+                <div className="font-semibold text-lg">
+                  {me?.name || "—"}
+                </div>
+                <div className="text-sm text-[color:var(--lb-muted)] capitalize">
+                  {me?.role || "user"}
+                </div>
               </div>
-              <div className="text-sm text-center text-[color:var(--lb-muted)]">{me?.email}</div>
+              <div className="text-sm text-center text-[color:var(--lb-muted)]">
+                {me?.email}
+              </div>
             </div>
           </div>
         </div>
 
         <div className="md:col-span-2">
           <div className="rounded-2xl border border-[color:var(--lb-border)] bg-[color:var(--lb-surface)] p-4 space-y-4">
-            <Field label="Full Name">{editing ? <Input value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} /> : <span className="font-medium">{me?.name || "—"}</span>}</Field>
-            <Field label="Email">{editing ? <Input value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} /> : <span className="font-medium">{me?.email || "—"}</span>}</Field>
-            <Field label="Phone">{editing ? <Input value={form.phone} onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))} /> : <span className="font-medium">{me?.phone || me?.mobile || "—"}</span>}</Field>
-            <Field label="Bio">{editing ? <TextArea rows={5} value={form.bio} onChange={(e) => setForm(f => ({ ...f, bio: e.target.value }))} /> : <div className="whitespace-pre-wrap">{me?.bio || "—"}</div>}</Field>
+            <Field label="Full Name">
+              {editing ? (
+                <Input
+                  value={form.name}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, name: e.target.value }))
+                  }
+                />
+              ) : (
+                <span className="font-medium">{me?.name || "—"}</span>
+              )}
+            </Field>
+            <Field label="Email">
+              {editing ? (
+                <Input
+                  value={form.email}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, email: e.target.value }))
+                  }
+                />
+              ) : (
+                <span className="font-medium">{me?.email || "—"}</span>
+              )}
+            </Field>
+            <Field label="Phone">
+              {editing ? (
+                <Input
+                  value={form.phone}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, phone: e.target.value }))
+                  }
+                />
+              ) : (
+                <span className="font-medium">
+                  {me?.phone || me?.mobile || "—"}
+                </span>
+              )}
+            </Field>
+            <Field label="Bio">
+              {editing ? (
+                <TextArea
+                  rows={5}
+                  value={form.bio}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, bio: e.target.value }))
+                  }
+                />
+              ) : (
+                <div className="whitespace-pre-wrap">{me?.bio || "—"}</div>
+              )}
+            </Field>
           </div>
         </div>
       </div>

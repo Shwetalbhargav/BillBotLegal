@@ -13,10 +13,14 @@ import { Badge, Button, Modal } from "@/components/common";
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString() : "—");
 const money = (n, c = "INR") =>
   isFinite(Number(n))
-    ? new Intl.NumberFormat("en-IN", { style: "currency", currency: c }).format(Number(n))
+    ? new Intl.NumberFormat("en-IN", { style: "currency", currency: c }).format(
+        Number(n)
+      )
     : "—";
 const toHours = (b) =>
-  typeof b?.durationHours === "number" ? b.durationHours : Number(b?.durationMinutes || 0) / 60;
+  typeof b?.durationHours === "number"
+    ? b.durationHours
+    : Number(b?.durationMinutes || 0) / 60;
 
 /* ---------------- Gmail helpers ---------------- */
 const DEFAULT_COMPOSE_TO = "hridaan.purav@gmail.com";
@@ -83,9 +87,15 @@ export default function ClientsDashboardBase(
     loading: loadingClients,
     error: errorClients,
   } = useSelector((s) => s.clients || {});
-  const { list: billables = [], loading: loadingBillables } = useSelector((s) => s.billables || {});
-  const { list: invoices = [], loading: loadingInvoices } = useSelector((s) => s.invoices || {});
-  const { list: cases = [], loading: loadingCases } = useSelector((s) => s.cases || {});
+  const { list: billables = [], loading: loadingBillables } = useSelector(
+    (s) => s.billables || {}
+  );
+  const { list: invoices = [], loading: loadingInvoices } = useSelector(
+    (s) => s.invoices || {}
+  );
+  const { list: cases = [], loading: loadingCases } = useSelector(
+    (s) => s.cases || {}
+  );
 
   const [q, setQ] = useState("");
   const [managerFilter, setManagerFilter] = useState("");
@@ -112,7 +122,10 @@ export default function ClientsDashboardBase(
   const managerOptions = useMemo(() => {
     const names = new Map();
     for (const c of clients) {
-      const m = typeof c.accountManagerId === "object" ? c.accountManagerId?.name : null;
+      const m =
+        typeof c.accountManagerId === "object"
+          ? c.accountManagerId?.name
+          : null;
       if (m) names.set(m, m);
     }
     return Array.from(names.values()).map((n) => ({ label: n, value: n }));
@@ -123,15 +136,22 @@ export default function ClientsDashboardBase(
     let r = Array.isArray(clients) ? [...clients] : [];
     if (managerFilter) {
       r = r.filter(
-        (c) => (typeof c.accountManagerId === "object" ? c.accountManagerId?.name : "") === managerFilter
+        (c) =>
+          (typeof c.accountManagerId === "object"
+            ? c.accountManagerId?.name
+            : "") === managerFilter
       );
     }
     if (q.trim()) {
       const t = q.toLowerCase();
       r = r.filter(
         (c) =>
-          String(c.name || "").toLowerCase().includes(t) ||
-          String(c.email || c.contactInfo || "").toLowerCase().includes(t) ||
+          String(c.name || "")
+            .toLowerCase()
+            .includes(t) ||
+          String(c.email || c.contactInfo || "")
+            .toLowerCase()
+            .includes(t) ||
           String(c.phone || "").toLowerCase().includes(t)
       );
     }
@@ -141,17 +161,42 @@ export default function ClientsDashboardBase(
 
   // ---- TABLE COLUMNS (Compose button uses the row `c`) ----
   const clientColumns = [
-    { id: "name", header: "Client", accessor: (c) => c.name, sortable: true, width: 260 },
-    { id: "email", header: "Email", accessor: (c) => c.email || c.contactInfo || "—", width: 240 },
-    { id: "phone", header: "Phone", accessor: (c) => c.phone || "—", width: 140 },
+    {
+      id: "name",
+      header: "Client",
+      accessor: (c) => c.name,
+      sortable: true,
+      width: 260,
+    },
+    {
+      id: "email",
+      header: "Email",
+      accessor: (c) => c.email || c.contactInfo || "—",
+      width: 240,
+    },
+    {
+      id: "phone",
+      header: "Phone",
+      accessor: (c) => c.phone || "—",
+      width: 140,
+    },
     {
       id: "manager",
       header: "Account Manager",
-      accessor: (c) => (typeof c.accountManagerId === "object" ? c.accountManagerId?.name : "—"),
+      accessor: (c) =>
+        typeof c.accountManagerId === "object"
+          ? c.accountManagerId?.name
+          : "—",
       sortable: true,
       width: 220,
     },
-    { id: "created", header: "Created", accessor: (c) => fmtDate(c.createdAt), sortable: true, width: 120 },
+    {
+      id: "created",
+      header: "Created",
+      accessor: (c) => fmtDate(c.createdAt),
+      sortable: true,
+      width: 120,
+    },
     {
       id: "compose",
       header: "",
@@ -168,6 +213,7 @@ export default function ClientsDashboardBase(
           <Button
             variant="secondary"
             size="sm"
+            className="rounded-full"
             onClick={() =>
               window.open(
                 buildGmailComposeUrl({ to, subject: subj, body, lbPrompt }),
@@ -189,6 +235,7 @@ export default function ClientsDashboardBase(
         <Button
           variant="ghost"
           size="sm"
+          className="rounded-full"
           onClick={() => {
             setSelectedClient(c);
             setDataType("billables");
@@ -206,36 +253,78 @@ export default function ClientsDashboardBase(
 
   const billablesForClient = useMemo(() => {
     const arr = Array.isArray(billables) ? billables : [];
-    return arr.filter((b) => (typeof b.clientId === "object" ? b.clientId?._id : b.clientId) === cid);
+    return arr.filter(
+      (b) =>
+        (typeof b.clientId === "object" ? b.clientId?._id : b.clientId) === cid
+    );
   }, [billables, cid]);
 
   const invoicesForClient = useMemo(() => {
     const arr = Array.isArray(invoices) ? invoices : [];
-    return arr.filter((inv) => (typeof inv.clientId === "object" ? inv.clientId?._id : inv.clientId) === cid);
+    return arr.filter(
+      (inv) =>
+        (typeof inv.clientId === "object" ? inv.clientId?._id : inv.clientId) ===
+        cid
+    );
   }, [invoices, cid]);
 
   const casesForClient = useMemo(() => {
     const arr = Array.isArray(cases) ? cases : [];
-    return arr.filter((cs) => (typeof cs.clientId === "object" ? cs.clientId?._id : cs.clientId) === cid);
+    return arr.filter(
+      (cs) =>
+        (typeof cs.clientId === "object" ? cs.clientId?._id : cs.clientId) ===
+        cid
+    );
   }, [cases, cid]);
 
   const billableCols = [
-    { id: "date", header: "Date", accessor: (r) => fmtDate(r.date), sortable: true },
+    {
+      id: "date",
+      header: "Date",
+      accessor: (r) => fmtDate(r.date),
+      sortable: true,
+    },
     {
       id: "case",
       header: "Case",
-      accessor: (r) => (typeof r.caseId === "object" ? r.caseId?.name : r.caseId),
+      accessor: (r) =>
+        typeof r.caseId === "object" ? r.caseId?.name : r.caseId,
     },
     { id: "category", header: "Category", accessor: (r) => r.category },
-    { id: "description", header: "Description", accessor: (r) => r.description, width: 320 },
-    { id: "hours", header: "Hours", accessor: (r) => toHours(r).toFixed(2), align: "right" },
-    { id: "rate", header: "Rate", accessor: (r) => money(r.rate), align: "right" },
-    { id: "amount", header: "Amount", accessor: (r) => money(r.amount), align: "right" },
+    {
+      id: "description",
+      header: "Description",
+      accessor: (r) => r.description,
+      width: 320,
+    },
+    {
+      id: "hours",
+      header: "Hours",
+      accessor: (r) => toHours(r).toFixed(2),
+      align: "right",
+    },
+    {
+      id: "rate",
+      header: "Rate",
+      accessor: (r) => money(r.rate),
+      align: "right",
+    },
+    {
+      id: "amount",
+      header: "Amount",
+      accessor: (r) => money(r.amount),
+      align: "right",
+    },
     {
       id: "act",
       header: "",
       accessor: (r) => (
-        <Button variant="ghost" size="sm" onClick={() => setPreview({ type: "billable", data: r })}>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="rounded-full"
+          onClick={() => setPreview({ type: "billable", data: r })}
+        >
           Preview
         </Button>
       ),
@@ -249,15 +338,38 @@ export default function ClientsDashboardBase(
       accessor: (r) => r.invoiceNumber ?? r.number ?? "—",
       sortable: true,
     },
-    { id: "issue", header: "Issue Date", accessor: (r) => fmtDate(r.issueDate) },
-    { id: "due", header: "Due Date", accessor: (r) => fmtDate(r.dueDate) },
-    { id: "status", header: "Status", accessor: (r) => <Badge>{r.status || "draft"}</Badge> },
-    { id: "total", header: "Total", accessor: (r) => money(r.totalAmount ?? r.amount), align: "right" },
+    {
+      id: "issue",
+      header: "Issue Date",
+      accessor: (r) => fmtDate(r.issueDate),
+    },
+    {
+      id: "due",
+      header: "Due Date",
+      accessor: (r) => fmtDate(r.dueDate),
+    },
+    {
+      id: "status",
+      header: "Status",
+      accessor: (r) => <Badge>{r.status || "draft"}</Badge>,
+    },
+    {
+      id: "total",
+      header: "Total",
+      accessor: (r) =>
+        money(r.totalAmount ?? r.amount, r.currency || "INR"),
+      align: "right",
+    },
     {
       id: "act",
       header: "",
       accessor: (r) => (
-        <Button variant="ghost" size="sm" onClick={() => setPreview({ type: "invoice", data: r })}>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="rounded-full"
+          onClick={() => setPreview({ type: "invoice", data: r })}
+        >
           Preview
         </Button>
       ),
@@ -265,8 +377,18 @@ export default function ClientsDashboardBase(
   ];
 
   const caseCols = [
-    { id: "name", header: "Case", accessor: (r) => r.name ?? r.caseName ?? "—", sortable: true, width: 280 },
-    { id: "status", header: "Status", accessor: (r) => <Badge tone="secondary">{r.status || "—"}</Badge> },
+    {
+      id: "name",
+      header: "Case",
+      accessor: (r) => r.name ?? r.caseName ?? "—",
+      sortable: true,
+      width: 280,
+    },
+    {
+      id: "status",
+      header: "Status",
+      accessor: (r) => <Badge tone="secondary">{r.status || "—"}</Badge>,
+    },
     { id: "created", header: "Created", accessor: (r) => fmtDate(r.createdAt) },
   ];
 
@@ -298,7 +420,7 @@ export default function ClientsDashboardBase(
       @media print {
         body * { visibility: hidden; }
         .printable, .printable * { visibility: visible; }
-        .printable { position: absolute; inset: 0; width: 100%; box-shadow: none !important; }
+        .printable { position: absolute; inset: 0; width: 100%; box-shadow: none !important; border-radius: 0 !important; }
       }`;
     const tag = document.createElement("style");
     tag.innerHTML = css;
@@ -308,30 +430,87 @@ export default function ClientsDashboardBase(
   };
 
   return (
-    <div className="lb-reset p-6">
-      <h1 className="text-2xl font-semibold mb-4">Clients</h1>
-
-      <TableToolbar rightActions={[]}>
-        <div className="flex items-center gap-3">
-          <Input placeholder="Search name, email, phone…" value={q} onChange={(e) => setQ(e.target.value)} />
-          <Select value={managerFilter} onChange={(e) => setManagerFilter(e.target.value)}>
-            <option value="">All account managers</option>
-            {managerOptions.map((m) => (
-              <option key={m.value} value={m.value}>
-                {m.label}
-              </option>
-            ))}
-          </Select>
+    <div className="lb-reset min-h-screen px-4 py-6 bg-[color:var(--lb-app-bg,#f3f4f6)]">
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* Header card */}
+        <div className="rounded-[2rem] border border-[color:var(--lb-border)] bg-[color:var(--lb-surface,#ffffff)] shadow-[0_18px_45px_rgba(15,23,42,0.08)] px-5 py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-[0.7rem] uppercase tracking-[0.16em] text-[color:var(--lb-muted,#6b7280)] mb-1">
+              Clients
+            </p>
+            <h1 className="text-2xl md:text-3xl font-semibold">
+              Client Overview
+            </h1>
+            <p className="text-sm text-[color:var(--lb-muted,#6b7280)] mt-1">
+              View all clients, quickly open their matters, billables and
+              invoices, or start a new email update.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 items-stretch sm:items-end">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[color:var(--lb-border)] bg-white px-3 py-1.5 text-xs text-[color:var(--lb-muted)] shadow-[0_10px_30px_rgba(15,23,42,0.10)]">
+              <span className="font-medium text-[color:var(--lb-fg,#111827)]">
+                {rows.length}
+              </span>
+              <span>clients</span>
+            </div>
+            <Button
+              variant="secondary"
+              className="rounded-full self-end"
+              onClick={() => dispatch(fetchClients())}
+            >
+              Refresh
+            </Button>
+          </div>
         </div>
-      </TableToolbar>
 
-      <DataTable
-        columns={clientColumns}
-        data={rows}
-        loading={loadingClients}
-        rowKey={(r) => r._id}
-        skeleton={<SkeletonRows columns={clientColumns} />}
-      />
+        {/* Main table card */}
+        <div className="rounded-[2rem] border border-[color:var(--lb-border)] bg-[color:var(--lb-surface,#ffffff)] shadow-[0_18px_45px_rgba(15,23,42,0.06)] px-5 py-5 space-y-4">
+          <TableToolbar rightActions={[]} className="!border-none !px-0 !pt-0 !pb-3">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between w-full">
+              <div className="flex flex-wrap gap-3 items-center">
+                <Input
+                  placeholder="Search name, email, phone…"
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  className="rounded-full md:min-w-[260px]"
+                />
+                <Select
+                  value={managerFilter}
+                  onChange={(e) => setManagerFilter(e.target.value)}
+                  className="rounded-full min-w-[180px]"
+                >
+                  <option value="">All account managers</option>
+                  {managerOptions.map((m) => (
+                    <option key={m.value} value={m.value}>
+                      {m.label}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              <div className="text-xs text-[color:var(--lb-muted)] md:text-right">
+                {rows.length} record{rows.length === 1 ? "" : "s"} shown
+              </div>
+            </div>
+          </TableToolbar>
+
+          <div className="rounded-[1.75rem] border border-[color:var(--lb-border)] bg-[color:var(--lb-surface,#ffffff)] overflow-hidden shadow-[0_12px_32px_rgba(15,23,42,0.04)]">
+            <DataTable
+              columns={clientColumns}
+              data={rows}
+              loading={loadingClients}
+              rowKey={(r) => r._id}
+              skeleton={<SkeletonRows columns={clientColumns} />}
+              stickyHeader
+            />
+          </div>
+
+          {errorClients && (
+            <div className="mt-3 rounded-2xl border border-red-200 bg-red-50/80 px-4 py-3 text-sm text-red-700 shadow-[0_12px_32px_rgba(248,113,113,0.35)]">
+              {String(errorClients)}
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* CLIENT MODAL */}
       <Modal
@@ -344,31 +523,46 @@ export default function ClientsDashboardBase(
       >
         {selectedClient && (
           <div className="space-y-4">
-            {/* Client header */}
             <div className="flex flex-col gap-4 max-h-[78vh] overflow-auto">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                <KV label="Email" value={selectedClient.email || selectedClient.contactInfo || "—"} />
-                <KV label="Phone" value={selectedClient.phone || "—"} />
-                <KV
-                  label="Account Manager"
-                  value={
-                    typeof selectedClient.accountManagerId === "object"
-                      ? selectedClient.accountManagerId?.name
-                      : "—"
-                  }
-                />
-                <KV label="Created" value={fmtDate(selectedClient.createdAt)} />
+              {/* Client header card */}
+              <div className="rounded-2xl border border-[color:var(--lb-border)] bg-[color:var(--lb-surface,#ffffff)] px-4 py-3 shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                  <KV
+                    label="Email"
+                    value={
+                      selectedClient.email ||
+                      selectedClient.contactInfo ||
+                      "—"
+                    }
+                  />
+                  <KV label="Phone" value={selectedClient.phone || "—"} />
+                  <KV
+                    label="Account Manager"
+                    value={
+                      typeof selectedClient.accountManagerId === "object"
+                        ? selectedClient.accountManagerId?.name
+                        : "—"
+                    }
+                  />
+                  <KV
+                    label="Created"
+                    value={fmtDate(selectedClient.createdAt)}
+                  />
+                </div>
               </div>
 
-              {/* Data type toolbar */}
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500">Data type:</span>
+              {/* Data type selector */}
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-[color:var(--lb-muted)]">
+                  Show activity:
+                </span>
                 <Select
                   value={dataType}
                   onChange={(e) => {
                     setDataType(e.target.value);
                     setPreview(null);
                   }}
+                  className="rounded-full min-w-[160px]"
                 >
                   <option value="billables">Billables</option>
                   <option value="invoices">Invoices</option>
@@ -376,28 +570,42 @@ export default function ClientsDashboardBase(
                 </Select>
               </div>
 
-              {/* Type table */}
-              <DataTable
-                columns={modalTable.cols}
-                data={modalTable.rows}
-                loading={modalTable.loading}
-                rowKey={(r) => r._id || r.invoiceNumber || `${r.name}-${r.createdAt}`}
-                skeleton={<SkeletonRows columns={modalTable.cols} />}
-              />
+              {/* Activity table */}
+              <div className="rounded-2xl border border-[color:var(--lb-border)] bg-[color:var(--lb-surface,#ffffff)] shadow-[0_12px_32px_rgba(15,23,42,0.04)]">
+                <DataTable
+                  columns={modalTable.cols}
+                  data={modalTable.rows}
+                  loading={modalTable.loading}
+                  rowKey={(r) =>
+                    r._id || r.invoiceNumber || `${r.name}-${r.createdAt}`
+                  }
+                  skeleton={<SkeletonRows columns={modalTable.cols} />}
+                  stickyHeader
+                />
+              </div>
 
-              {/* Row preview (billable/invoice) */}
+              {/* Row preview (billable / invoice) */}
               {preview && (
-                <div className="rounded-2xl bg-white ring-1 ring-black/5 shadow p-4">
+                <div className="rounded-2xl border border-[color:var(--lb-border)] bg-[color:var(--lb-surface,#ffffff)] shadow-[0_16px_40px_rgba(15,23,42,0.16)] p-4">
                   {preview.type === "billable" ? (
-                    <div ref={printRef} className="printable">
-                      <div className="flex items-start justify-between">
+                    <div ref={printRef} className="printable space-y-4">
+                      <div className="flex items-start justify-between gap-3">
                         <div>
-                          <div className="text-lg font-semibold">Billable</div>
-                          <div className="text-sm text-gray-500">{fmtDate(preview.data.date)}</div>
+                          <div className="text-lg font-semibold">
+                            Billable Entry
+                          </div>
+                          <div className="text-sm text-[color:var(--lb-muted)]">
+                            {fmtDate(preview.data.date)}
+                          </div>
                         </div>
-                        <Button onClick={onPrint}>Print</Button>
+                        <Button
+                          onClick={onPrint}
+                          className="rounded-full px-4 text-sm"
+                        >
+                          Print
+                        </Button>
                       </div>
-                      <div className="mt-3 grid grid-cols-1 gap-2 text-sm">
+                      <div className="grid grid-cols-1 gap-2 text-sm">
                         <KV
                           label="Client"
                           value={
@@ -414,29 +622,53 @@ export default function ClientsDashboardBase(
                               : preview.data.caseId
                           }
                         />
-                        <KV label="Category" value={preview.data.category} />
-                        <KV label="Description" value={preview.data.description} />
+                        <KV
+                          label="Category"
+                          value={preview.data.category || "—"}
+                        />
+                        <KV
+                          label="Description"
+                          value={preview.data.description || "—"}
+                        />
                       </div>
-                      <div className="mt-4 grid grid-cols-3 gap-3">
-                        <Metric label="Hours" value={toHours(preview.data).toFixed(2)} />
-                        <Metric label="Rate" value={money(preview.data.rate)} />
-                        <Metric label="Amount" value={money(preview.data.amount)} />
+                      <div className="grid grid-cols-3 gap-3 mt-3">
+                        <Metric
+                          label="Hours"
+                          value={toHours(preview.data).toFixed(2)}
+                        />
+                        <Metric
+                          label="Rate"
+                          value={money(preview.data.rate)}
+                        />
+                        <Metric
+                          label="Amount"
+                          value={money(preview.data.amount)}
+                        />
                       </div>
                     </div>
                   ) : preview.type === "invoice" ? (
-                    <div ref={printRef} className="printable">
-                      <div className="flex items-start justify-between">
+                    <div ref={printRef} className="printable space-y-4">
+                      <div className="flex items-start justify-between gap-3">
                         <div>
                           <div className="text-lg font-semibold">
-                            Invoice #{preview.data.invoiceNumber ?? preview.data.number ?? "—"}
+                            Invoice{" "}
+                            {preview.data.invoiceNumber ??
+                              preview.data.number ??
+                              "—"}
                           </div>
-                          <div className="text-sm text-gray-500">
-                            Issue: {fmtDate(preview.data.issueDate)} · Due: {fmtDate(preview.data.dueDate)}
+                          <div className="text-sm text-[color:var(--lb-muted)]">
+                            Issue: {fmtDate(preview.data.issueDate)} · Due:{" "}
+                            {fmtDate(preview.data.dueDate)}
                           </div>
                         </div>
-                        <Button onClick={onPrint}>Print</Button>
+                        <Button
+                          onClick={onPrint}
+                          className="rounded-full px-4 text-sm"
+                        >
+                          Print
+                        </Button>
                       </div>
-                      <div className="mt-3 grid grid-cols-1 gap-2 text-sm">
+                      <div className="grid grid-cols-1 gap-2 text-sm">
                         <KV
                           label="Client"
                           value={
@@ -445,30 +677,56 @@ export default function ClientsDashboardBase(
                               : selectedClient.name
                           }
                         />
-                        <KV label="Status" value={preview.data.status || "draft"} />
-                        <KV label="Total" value={money(preview.data.totalAmount ?? preview.data.amount)} />
+                        <KV
+                          label="Status"
+                          value={preview.data.status || "draft"}
+                        />
+                        <KV
+                          label="Total"
+                          value={money(
+                            preview.data.totalAmount ?? preview.data.amount
+                          )}
+                        />
                       </div>
-                      {Array.isArray(preview.data.items) && preview.data.items.length > 0 && (
-                        <div className="mt-3 text-sm">
-                          <div className="font-medium mb-1">Items</div>
-                          <div className="border rounded-xl overflow-hidden">
-                            <div className="grid grid-cols-12 bg-gray-50 px-3 py-1.5">
-                              <div className="col-span-6">Description</div>
-                              <div className="col-span-2 text-right">Minutes</div>
-                              <div className="col-span-2 text-right">Rate</div>
-                              <div className="col-span-2 text-right">Amount</div>
-                            </div>
-                            {preview.data.items.map((it, i) => (
-                              <div key={i} className="grid grid-cols-12 px-3 py-1.5 border-t">
-                                <div className="col-span-6">{it.description || "—"}</div>
-                                <div className="col-span-2 text-right">{it.durationMinutes ?? "—"}</div>
-                                <div className="col-span-2 text-right">{money(it.rate)}</div>
-                                <div className="col-span-2 text-right">{money(it.amount)}</div>
+                      {Array.isArray(preview.data.items) &&
+                        preview.data.items.length > 0 && (
+                          <div className="mt-3 text-sm">
+                            <div className="font-medium mb-1">Items</div>
+                            <div className="border rounded-xl overflow-hidden">
+                              <div className="grid grid-cols-12 bg-gray-50 px-3 py-1.5">
+                                <div className="col-span-6">Description</div>
+                                <div className="col-span-2 text-right">
+                                  Minutes
+                                </div>
+                                <div className="col-span-2 text-right">
+                                  Rate
+                                </div>
+                                <div className="col-span-2 text-right">
+                                  Amount
+                                </div>
                               </div>
-                            ))}
+                              {preview.data.items.map((it, i) => (
+                                <div
+                                  key={i}
+                                  className="grid grid-cols-12 px-3 py-1.5 border-t"
+                                >
+                                  <div className="col-span-6">
+                                    {it.description || "—"}
+                                  </div>
+                                  <div className="col-span-2 text-right">
+                                    {it.durationMinutes ?? "—"}
+                                  </div>
+                                  <div className="col-span-2 text-right">
+                                    {money(it.rate)}
+                                  </div>
+                                  <div className="col-span-2 text-right">
+                                    {money(it.amount)}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
                     </div>
                   ) : null}
                 </div>
@@ -477,8 +735,6 @@ export default function ClientsDashboardBase(
           </div>
         )}
       </Modal>
-
-      {errorClients && <div className="mt-4 text-red-600">{String(errorClients)}</div>}
     </div>
   );
 }
@@ -486,7 +742,7 @@ export default function ClientsDashboardBase(
 /* ---------------- UI helpers ---------------- */
 function KV({ label, value }) {
   return (
-    <div className="flex items-start justify-between gap-6">
+    <div className="flex items-start justify-between gap-6 text-sm">
       <span className="text-[color:var(--lb-muted)]">{label}</span>
       <span className="font-medium text-right">{value}</span>
     </div>
@@ -494,7 +750,7 @@ function KV({ label, value }) {
 }
 function Metric({ label, value }) {
   return (
-    <div className="rounded-xl bg-gray-50 p-3 text-center">
+    <div className="rounded-xl bg-gray-50/70 p-3 text-center">
       <div className="text-xs text-gray-500">{label}</div>
       <div className="text-lg font-semibold">{value}</div>
     </div>

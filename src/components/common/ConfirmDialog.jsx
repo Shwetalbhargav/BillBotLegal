@@ -1,3 +1,4 @@
+// src/components/common/ConfirmDialog.jsx
 import React from "react";
 import Modal from "./Modal";
 import Button from "./Button";
@@ -8,7 +9,7 @@ export default function ConfirmDialog({
   description = "This action cannot be undone.",
   confirmText = "Confirm",
   cancelText = "Cancel",
-  variant = "danger",
+  variant = "danger", // Button variant for confirm
   onCancel,
   onConfirm,
   preventCloseOnBackdrop = false,
@@ -20,13 +21,19 @@ export default function ConfirmDialog({
       title={title}
       preventCloseOnBackdrop={preventCloseOnBackdrop}
       footer={
-        <div className="flex items-center gap-2">
-          <Button variant="secondary" onClick={onCancel}>{cancelText}</Button>
-          <Button variant={variant} onClick={onConfirm}>{confirmText}</Button>
+        <div className="flex items-center justify-end gap-2">
+          <Button variant="secondary" size="sm" onClick={onCancel}>
+            {cancelText}
+          </Button>
+          <Button variant={variant} size="sm" onClick={onConfirm}>
+            {confirmText}
+          </Button>
         </div>
       }
     >
-      <p className="m-0 text-[color:var(--lb-muted)] text-[14px] leading-6">{description}</p>
+      <p className="m-0 text-[color:var(--lb-muted)] text-[14px] leading-6">
+        {description}
+      </p>
     </Modal>
   );
 }

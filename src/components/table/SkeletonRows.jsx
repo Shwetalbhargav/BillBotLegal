@@ -1,16 +1,8 @@
-// SkeletonRows.jsx (Soft-UI Refactor)
+// src/components/table/SkeletonRows.jsx
 import React from "react";
 
 /**
- * SkeletonRows
- * Renders shimmering placeholder rows for tables or lists.
- *
- * Props:
- *  - rows: number of skeleton rows (default 5)
- *  - cols: number of "cells" per row (default 4)
- *  - rowHeight: Tailwind height class for each skeleton bar (default "h-4")
- *  - rounded: Tailwind rounded class (default "rounded-xl")
- *  - className: optional wrapper classes
+ * SkeletonRows – shimmering placeholder rows for tables.
  */
 export default function SkeletonRows({
   rows = 5,
@@ -34,17 +26,17 @@ export default function SkeletonRows({
             className="grid grid-cols-12 gap-4 items-center"
           >
             {Array.from({ length: cols }).map((__, c) => {
-              // Create a flexible column width pattern that feels table-like
-              // Distribute cols across 12-grid: last cell grows a bit.
               const span =
                 cols >= 6
                   ? Math.max(2, Math.floor(12 / cols))
                   : Math.max(3, Math.floor(12 / cols));
               const colSpan =
-                c === cols - 1 ? `col-span-${12 - span * (cols - 1)}` : `col-span-${span}`;
+                c === cols - 1
+                  ? `col-span-${12 - span * (cols - 1)}`
+                  : `col-span-${span}`;
 
               return (
-                <div key={`sk-cell-${r}-${c}`} className={`${colSpan}`}>
+                <div key={`sk-cell-${r}-${c}`} className={colSpan}>
                   <div
                     className={`
                       ${rowHeight} w-full ${rounded}

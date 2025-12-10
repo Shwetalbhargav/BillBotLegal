@@ -2,7 +2,7 @@
 import React, { Suspense, lazy } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import useAuth from "@/hooks/useAuth";
-import FirmSelectLanding from "../pages/FirmSelectLanding";
+import LandingPage from "../pages/LandingPage";
 
 // Layouts
 import ProtectedLayout from "@/layouts/ProtectedLayout";
@@ -14,6 +14,7 @@ const Register = lazy(() => import("@/features/auth/Register"));
 const MagicOk = lazy(() => import("@/pages/MagicOk"));
 const CheckEmail = lazy(() => import("@/pages/CheckEmail"));
 const FirmSelect = lazy(() => import("@/pages/FirmSelectLanding"));
+const Landing = lazy(() => import("@/pages/LandingPage"));
 
 /* ------------------------------- Dashboards ------------------------------ */
 const AdminDashboard = lazy(() => import("@/pages/AdminDashboard"));
@@ -95,8 +96,8 @@ export default function AppRoutes() {
       <Routes>
         {/* ------------------ Public Routes ------------------ */}
         <Route element={<PublicLayout />}>
-          <Route path="/select-firm" element={<FirmSelect />} />
-          <Route path="/" element={<PublicOnlyRoute><Navigate to="/select-firm" replace /></PublicOnlyRoute>}/>
+          <Route path="/Landing" element={<LandingPage />} />
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>}/>
           <Route path="/register" element={<PublicOnlyRoute><Register /></PublicOnlyRoute>}/>
           <Route path="/magic-ok" element={<MagicOk />} />

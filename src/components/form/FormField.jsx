@@ -25,18 +25,19 @@ export default function FormField({
     describedByIds.length > 0 ? describedByIds.join(" ") : undefined;
 
   return (
-    <div className={`space-y-1 ${className}`}>
+    <div className={`space-y-1.5 ${className}`}>
       {label && (
         <label
           htmlFor={id}
-          className="text-sm font-medium text-slate-800 flex items-center gap-1"
+          className="text-[13px] font-medium text-[color:var(--lb-text)] flex items-center gap-1"
         >
           {label}
-          {required && <span className="text-red-500">*</span>}
+          {required && (
+            <span className="text-[color:var(--lb-danger-700)]">*</span>
+          )}
         </label>
       )}
 
-      {/* IMPORTANT: no pointer-events-none, no disabled wrapper, no overlay */}
       {children({
         id,
         describedBy,
@@ -44,7 +45,10 @@ export default function FormField({
       })}
 
       {help && !error && (
-        <p id={`${id}-help`} className="text-xs text-slate-500">
+        <p
+          id={`${id}-help`}
+          className="text-[12px] text-[color:var(--lb-muted)]"
+        >
           {help}
         </p>
       )}
@@ -52,7 +56,7 @@ export default function FormField({
       {error && (
         <p
           id={`${id}-error`}
-          className="text-xs text-red-600"
+          className="text-[12px] text-[color:var(--lb-danger-700)]"
           role="alert"
         >
           {error.message || String(error)}
