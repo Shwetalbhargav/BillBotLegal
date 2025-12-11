@@ -35,7 +35,7 @@ import {
   selectUsers,
   selectUsersLoading,
 } from "@/store/usersSlice.js";
-import { Button, ConfirmDialog, useToast } from "@/components/common";
+import { Button, ConfirmDialog } from "@/components/common";
 import { Input, Select } from "@/components/form";
 import { DataTable, TableToolbar, SkeletonRows } from "@/components/table";
 
@@ -404,7 +404,7 @@ export default function CaseDashboard(
 ) {
   const perms = derivePermissions(role, readOnly);
   const dispatch = useDispatch();
-  const toast = useToast?.();
+  
   const { list = [], loading, error } = useSelector((s) => s.cases || {});
   const users = useSelector(selectUsers);
   const usersLoading = useSelector(selectUsersLoading);
