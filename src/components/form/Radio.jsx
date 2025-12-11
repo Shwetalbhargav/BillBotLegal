@@ -1,6 +1,6 @@
 // src/components/form/Radio.jsx
 import React from "react";
-import { clsx } from "../../utils/clsx";
+import { clsx } from "../../utils/clsx.js";
 
 export default function Radio({
   label,

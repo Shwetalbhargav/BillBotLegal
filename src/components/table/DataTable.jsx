@@ -3,7 +3,7 @@ import React from "react";
 import { Table, THead, TBody, TR, TH, TD } from "./Table";
 import Pagination from "./Pagination";
 import TableToolbar from "./TableToolbar";
-import { clsx } from "../../utils/clsx";
+import { clsx } from "../../utils/clsx.js";
 
 function SortIcon({ dir }) {
   return (

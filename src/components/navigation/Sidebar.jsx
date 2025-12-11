@@ -3,7 +3,7 @@ import React, { useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import SidebarItem from "./SidebarItem";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
-import { clsx } from "../../utils/clsx";
+import { clsx } from "../../utils/clsx.js";
 
 export default function Sidebar({ items = [], collapsed = false, onToggle }) {
   const location = useLocation();

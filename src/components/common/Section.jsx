@@ -1,6 +1,6 @@
 // src/components/common/Section.jsx
 import React from "react";
-import { clsx } from "../../utils/clsx";
+import { clsx } from "../../utils/clsx.js";
 
 export default function Section({ id, className, children }) {
   return (

@@ -1,6 +1,6 @@
 // src/components/common/UserPicker.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { clsx } from "../../utils/clsx";
+import { clsx } from "../../utils/clsx.js";
 
 /**
  * Soft-UI UserPicker

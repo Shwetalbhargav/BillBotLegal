@@ -1,6 +1,6 @@
 // src/components/common/Badge.jsx
 import React from "react";
-import { clsx } from "../../utils/clsx";
+import { clsx } from "../../utils/clsx.js";
 
 export default function Badge({ tone = "info", children, className }) {
   const toneClass =

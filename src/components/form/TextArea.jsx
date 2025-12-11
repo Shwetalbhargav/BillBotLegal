@@ -1,6 +1,6 @@
 // src/components/form/TextArea.jsx
 import React from "react";
-import { clsx } from "../../utils/clsx";
+import { clsx } from "../../utils/clsx.js";
 
 export default function TextArea({
   rows = 4,

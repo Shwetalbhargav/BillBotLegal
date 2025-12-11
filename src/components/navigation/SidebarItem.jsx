@@ -1,7 +1,7 @@
 // src/components/navigation/SidebarItem.jsx
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { clsx } from "../../utils/clsx";
+import { clsx } from "../../utils/clsx.js";
 
 export default function SidebarItem({ item, collapsed, isCurrent }) {
   const { to, label, icon: Icon, readOnly, badge } = item;
