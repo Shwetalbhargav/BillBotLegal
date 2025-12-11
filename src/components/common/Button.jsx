@@ -1,7 +1,7 @@
 // src/components/common/Button.jsx
 // Soft-UI Button
 import React from "react";
-import { clsx } from "../../utils/clsx.js";
+import { clsx } from "@utils/clsx.js";
 
 const VARIANTS = {
   primary:

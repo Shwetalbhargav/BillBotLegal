@@ -1,6 +1,6 @@
 // src/components/form/Switch.jsx
 import React from "react";
-import { clsx } from "../../utils/clsx.js";
+import { clsx } from "@utils/clsx.js";
 
 export default function Switch({
   checked,

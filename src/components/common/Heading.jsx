@@ -1,6 +1,6 @@
 // src/components/common/Heading.jsx
 import React from "react";
-import { clsx } from "../../utils/clsx.js";
+import { clsx } from "@utils/clsx.js";
 
 const SIZE_MAP = {
   1: "text-[28px] sm:text-[32px]",

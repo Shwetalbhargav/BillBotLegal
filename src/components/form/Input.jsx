@@ -1,6 +1,6 @@
 // src/components/form/Input.jsx
 import React from "react";
-import { clsx } from "../../utils/clsx.js";
+import { clsx } from "@utils/clsx.js";
 
 const SIZES = {
   sm: "h-9 text-[var(--lb-fs-sm)] px-3",

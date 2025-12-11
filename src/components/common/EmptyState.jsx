@@ -1,7 +1,7 @@
 // src/components/common/EmptyState.jsx
 import React from "react";
 import Card from "./Card";
-import { clsx } from "../../utils/clsx.js";
+import { clsx } from "@utils/clsx.js";
 
 export default function EmptyState({
   icon,

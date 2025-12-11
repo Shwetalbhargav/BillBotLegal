@@ -1,6 +1,6 @@
 // src/components/form/DatePicker.jsx
 import React from "react";
-import { clsx } from "../../utils/clsx.js";
+import { clsx } from "@utils/clsx.js";
 import FormField from "./FormField";
 
 /**
