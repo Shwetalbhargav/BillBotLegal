@@ -2,6 +2,7 @@
 import React from "react";
 import { NavBar, Footer } from "@/components/layout";
 import {
+  Section,
   HeroSection,
   StatsStrip,
   AboutFirm,
