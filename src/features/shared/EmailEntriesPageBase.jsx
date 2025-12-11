@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchEmails, addEmail, pushClio } from "@/store/emailSlice";
 
 // skeleton barrels
-import { Button, Drawer, useToast } from "@/components/common";
+import { Button, Drawer } from "@/components/common";
 import { Input, Select, DatePicker } from "@/components/form";
 import { DataTable, TableToolbar } from "@/components/table";
 
@@ -55,7 +55,7 @@ export default function EmailEntriesPage({
   const perms = derivePermissions(role, readOnly);
 
   const dispatch = useDispatch();
-  const toast = useToast?.();
+  
 
   const { list = [], loading, error } = useSelector((s) => s.emails || {});
 
