@@ -1,7 +1,7 @@
 // src/components/form/NumberInput.jsx
 import React, { useCallback } from "react";
 import FormField from "./FormField";
-import { clsx } from "@utils/clsx.js";
+import { clsx } from "../../utils/clsx.js";
 
 export default function NumberInput({
   label,

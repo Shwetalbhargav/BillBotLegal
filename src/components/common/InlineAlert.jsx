@@ -1,6 +1,6 @@
 // src/components/common/InlineAlert.jsx
 import React from "react";
-import { clsx } from "@utils/clsx.js";
+import { clsx } from "../../utils/clsx.js";
 
 export default function InlineAlert({
   tone = "info",

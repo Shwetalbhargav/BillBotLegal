@@ -1,6 +1,6 @@
 // src/components/table/Table.jsx
 import React from "react";
-import { clsx } from "@utils/clsx.js";
+import { clsx } from "../../utils/clsx.js";
 
 export function Table({ className, children }) {
   return (

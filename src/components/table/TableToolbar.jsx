@@ -1,6 +1,6 @@
 // src/components/table/TableToolbar.jsx
 import React from "react";
-import { clsx } from "@utils/clsx.js";
+import { clsx } from "../../utils/clsx.js";
 
 export default function TableToolbar({ left, right, className }) {
   return (

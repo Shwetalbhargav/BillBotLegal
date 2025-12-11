@@ -1,6 +1,7 @@
 // src/components/common/Card.jsx
 import React from "react";
-import { clsx } from "@utils/clsx.js";
+import { clsx } from "../../utils/clsx.js";
+
 
 const PADS = { sm: "p-3", md: "p-4", lg: "p-6" };
 
