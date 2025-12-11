@@ -15,6 +15,6 @@ export { default as ConfirmDialog } from "./ConfirmDialog";
 export { default as Drawer } from "./Drawer";
 
 export { default as EmptyState } from "./EmptyState";
-
+export {default as Section } from "./Section";
 export { default as ThemeProvider } from "./ThemeProvider";
 export { default as ToastProvider } from "./ToastProvider";
