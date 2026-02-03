@@ -6,7 +6,7 @@ import React, {
   useMemo,
   useState,
 } from "react";
-
+import { clsx } from "../../utils/clsx.js";
 const ThemeContext = createContext({
   theme: "light",
   setTheme: () => {},
