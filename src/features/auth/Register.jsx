@@ -107,7 +107,7 @@ export default function Register({ isModal = false, onClose }) {
 
   // ---------- styling helpers ----------
   const commonInput =
-    "block w-full mt-1 rounded-lg px-3 py-2 " +
+    "block w-full min-w-0 rounded-md border px-3 py-2 text-sm " +
     "focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500";
 
   const lightInput =
@@ -115,7 +115,7 @@ export default function Register({ isModal = false, onClose }) {
 
   // darker grey glass background in modal
   const darkInput =
-    "border-white/25 bg-slate-900/40 text-white placeholder:text-gray-300";
+    "border-white/20 bg-slate-900 text-white placeholder:text-slate-400";
 
   const inputBaseClasses = `${commonInput} ${isModal ? darkInput : lightInput}`;
 
@@ -125,26 +125,31 @@ export default function Register({ isModal = false, onClose }) {
   const footerText = isModal ? "text-gray-200" : "text-slate-600";
 
   const cardClasses = isModal
-    ? "relative z-50 rounded-2xl bg-white/10 border border-white/20 " +
-      "shadow-2xl p-6 md:p-8 backdrop-blur-xl text-white"
-    : "relative z-50 rounded-2xl bg-white border border-slate-200 " +
+    ? "relative z-50 rounded-xl " +
+      "bg-slate-950/95 border border-white/15 shadow-2xl p-5 sm:p-6 text-white"
+    : "relative z-50 rounded-xl bg-white border border-slate-200 " +
       "shadow-2xl p-6 md:p-8 text-slate-900";
 
   const Wrapper = ({ children }) =>
     isModal ? (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-        <div className="w-full max-w-2xl mx-4">{children}</div>
+      <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/85 px-4 py-6 sm:py-8 backdrop-blur-sm">
+        <div className="w-full max-w-3xl">{children}</div>
       </div>
     ) : (
       <div className="min-h-screen flex items-center justify-center px-6 bg-slate-50">
-        <div className="w-full max-w-xl">{children}</div>
+        <div className="w-full max-w-2xl">{children}</div>
       </div>
     );
 
   // ---------- render ----------
   return (
     <Wrapper>
-      <div className={cardClasses}>
+      <div
+        className={cardClasses}
+        role={isModal ? "dialog" : undefined}
+        aria-modal={isModal ? "true" : undefined}
+        aria-labelledby={isModal ? "register-modal-title" : undefined}
+      >
         {/* close button when used as modal */}
         {isModal && (
           <button
@@ -159,7 +164,10 @@ export default function Register({ isModal = false, onClose }) {
 
         <div className="flex items-center gap-2 mb-2">
           <FiUserPlus className="text-xl text-indigo-400" />
-          <h2 className={`text-xl font-semibold ${headingColor}`}>
+          <h2
+            id={isModal ? "register-modal-title" : undefined}
+            className={`text-xl font-semibold ${headingColor}`}
+          >
             Create your account
           </h2>
         </div>
@@ -180,7 +188,7 @@ export default function Register({ isModal = false, onClose }) {
           >
             {({ id, describedBy, error }) => (
               <div className="relative">
-                <FiUser className="absolute left-3 top-[2.1rem] -translate-y-1/2 text-gray-400" />
+                <FiUser className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   id={id}
                   aria-describedby={describedBy}
@@ -206,7 +214,7 @@ export default function Register({ isModal = false, onClose }) {
             >
               {({ id, describedBy, error }) => (
                 <div className="relative">
-                  <FiMail className="absolute left-3 top-[2.1rem] -translate-y-1/2 text-gray-400" />
+                  <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     id={id}
                     type="email"
@@ -233,13 +241,13 @@ export default function Register({ isModal = false, onClose }) {
             >
               {({ id, describedBy, error }) => (
                 <div className="relative">
-                  <FiLock className="absolute left-3 top-[2.1rem] -translate-y-1/2 text-gray-400" />
+                  <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     id={id}
                     type="password"
                     aria-describedby={describedBy}
                     aria-invalid={!!error}
-                    placeholder="••••••••"
+                    placeholder="........"
                     className={`${inputBaseClasses} pl-10`}
                     {...form.register("password", {
                       required: "Password is required",
@@ -253,7 +261,10 @@ export default function Register({ isModal = false, onClose }) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Role */}
-            <FormField name="role" label="Role">
+            <FormField
+              name="role"
+              label={<span className={labelMuted}>Role</span>}
+            >
               {({ id }) => (
                 <select
                   id={id}
@@ -277,12 +288,15 @@ export default function Register({ isModal = false, onClose }) {
             </FormField>
 
             {/* Firm ID */}
-            <FormField name="firmId" label="Firm ID (optional)">
+            <FormField
+              name="firmId"
+              label={<span className={labelMuted}>Firm ID (optional)</span>}
+            >
               {({ id, describedBy }) => (
                 <input
                   id={id}
                   aria-describedby={describedBy}
-                  placeholder="645af3…"
+                  placeholder="645af3..."
                   className={inputBaseClasses}
                   {...form.register("firmId")}
                 />
@@ -303,7 +317,7 @@ export default function Register({ isModal = false, onClose }) {
             >
               {({ id, describedBy, error }) => (
                 <div className="relative">
-                  <FiPhone className="absolute left-3 top-[2.1rem] -translate-y-1/2 text-gray-400" />
+                  <FiPhone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     id={id}
                     aria-describedby={describedBy}
@@ -330,7 +344,7 @@ export default function Register({ isModal = false, onClose }) {
             >
               {({ id, describedBy }) => (
                 <div className="relative">
-                  <FiHome className="absolute left-3 top-[2.1rem] -translate-y-1/2 text-gray-400" />
+                  <FiHome className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     id={id}
                     aria-describedby={describedBy}
@@ -354,23 +368,27 @@ export default function Register({ isModal = false, onClose }) {
               {fields.map((field, idx) => (
                 <div
                   key={field.id}
-                  className="grid grid-cols-1 md:grid-cols-12 gap-3"
+                  className={`grid grid-cols-1 gap-3 rounded-xl border p-3 ${
+                    isModal
+                      ? "border-white/10 bg-white/5 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_6rem_auto]"
+                      : "border-slate-200 bg-slate-50 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_6rem_auto]"
+                  }`}
                 >
-                  <div className="md:col-span-5">
+                  <div className="min-w-0">
                     <input
                       placeholder="Degree (LLB, JD, LLM)"
                       className={inputBaseClasses}
                       {...form.register(`qualifications.${idx}.degree`)}
                     />
                   </div>
-                  <div className="md:col-span-5">
+                  <div className="min-w-0">
                     <input
                       placeholder="University"
                       className={inputBaseClasses}
                       {...form.register(`qualifications.${idx}.university`)}
                     />
                   </div>
-                  <div className="md:col-span-2">
+                  <div className="min-w-0">
                     <input
                       type="number"
                       placeholder="Year"
@@ -378,21 +396,19 @@ export default function Register({ isModal = false, onClose }) {
                       {...form.register(`qualifications.${idx}.year`)}
                     />
                   </div>
-                  <div className="md:col-span-12 flex justify-end">
-                    <motion.button
-                      type="button"
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                      onClick={() => remove(idx)}
-                      className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${
-                        isModal
-                          ? "bg-white/10 hover:bg-white/20 text-gray-100"
-                          : "bg-slate-100 hover:bg-slate-200 text-slate-700"
-                      }`}
-                    >
-                      <FiTrash2 /> Remove
-                    </motion.button>
-                  </div>
+                  <motion.button
+                    type="button"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => remove(idx)}
+                    className={`inline-flex h-10 w-full items-center justify-center gap-2 rounded-md px-3 text-sm sm:w-auto ${
+                      isModal
+                        ? "bg-white/10 hover:bg-white/20 text-gray-100"
+                        : "bg-white hover:bg-slate-100 text-slate-700 border border-slate-200"
+                    }`}
+                  >
+                    <FiTrash2 /> Remove
+                  </motion.button>
                 </div>
               ))}
               <motion.button
@@ -402,7 +418,7 @@ export default function Register({ isModal = false, onClose }) {
                 onClick={() =>
                   append({ degree: "", university: "", year: "" })
                 }
-                className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${
+                className={`inline-flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm sm:w-auto ${
                   isModal
                     ? "bg-indigo-500/80 hover:bg-indigo-400 text-white"
                     : "bg-indigo-50 hover:bg-indigo-100 text-indigo-700"
@@ -464,7 +480,7 @@ export default function Register({ isModal = false, onClose }) {
             className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 text-white font-medium px-4 py-2 shadow-lg shadow-black/40 disabled:opacity-60 disabled:cursor-not-allowed transition"
           >
             <FiUserPlus />
-            {status === "loading" || submitting ? "Creating…" : "Create account"}
+            {status === "loading" || submitting ? "Creating..." : "Create account"}
           </motion.button>
         </Form>
 
