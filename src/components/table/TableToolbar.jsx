@@ -1,19 +1,33 @@
-// src/components/table/TableToolbar.jsx
 import React from "react";
 import { clsx } from "../../utils/clsx.js";
 
-export default function TableToolbar({ left, right, className }) {
+export default function TableToolbar({
+  left,
+  right,
+  children,
+  className,
+  rightActions,
+}) {
   return (
     <div
       className={clsx(
-        "flex items-center justify-between gap-3 px-3 py-2",
+        "flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between",
         "rounded-t-[var(--lb-radius-xl)] border border-b-0 border-[color:var(--lb-border)]",
-        "bg-[color:var(--lb-bg)] text-[color:var(--lb-text)] shadow-[var(--lb-shadow-sm)]",
+        "bg-[color:var(--lb-surface-subtle)] text-[color:var(--lb-text)]",
         className
       )}
     >
-      <div className="flex items-center gap-2">{left}</div>
-      <div className="flex items-center gap-2">{right}</div>
+      {children ? (
+        children
+      ) : (
+        <>
+          <div className="flex flex-wrap items-center gap-2">{left}</div>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {right}
+            {rightActions}
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -27,6 +27,9 @@ export const loginUser = (credentials) =>
 export const registerUser = (data) =>
   apiClient.post("/api/auth/register", data);
 
+export const logoutUser = () =>
+  apiClient.post("/api/auth/logout");
+
 // ========== ADMIN AUTH / PROFILE ==========
 export const loginAdmin = (credentials) =>
   apiClient.post("/api/admin/login", credentials); 
@@ -237,13 +240,13 @@ export const getInvoicePipeline = (params = {}) =>
 
 // Existing helpers (keep as-is)
 export const addInvoicePayment = (id, payload) =>
-  apiClient.post(`/api/invoices/${id}/payments`, payload);
+  apiClient.post("/api/payments", { ...payload, invoiceId: id });
 
 export const getPendingSummaryByClient = () =>
   apiClient.get("/api/invoices/__analytics/pending-by-client");
 
 export const getInvoicesByUser = (userId) =>
-  apiClient.get(`/api/invoices/user/${userId}`);
+  apiClient.get(`/api/invoices${qs({ userId })}`);
 
 
 
@@ -304,9 +307,9 @@ export const createActivityFromEmailApi = (id) =>
 export const createTimeEntryFromEmailApi = (id, payload = {}) =>
   apiClient.post(`/api/email-entries/${id}/time-entry`, payload);
 
-// Push email entry straight to Clio (POST /:id/push-clio)
-export const pushEmailEntryToClio = (id) =>
-  apiClient.post(`/api/email-entries/${id}/push-clio`);
+// Sync email entry context to Zoho CRM (POST /:id/sync-zoho)
+export const syncEmailEntryToZoho = (id) =>
+  apiClient.post(`/api/email-entries/${id}/sync-zoho`);
 
 // Bulk ingest from extension (POST /email-entries/bulk)
 export const bulkIngestEmailEntries = (entries = []) =>
@@ -786,17 +789,18 @@ export const aiApi = {
     apiClient.post(`/api/ai/${endpoint}`, payload),
 };
 
-// ========== CLIO AUTH & STATUS ==========
+// ========== ZOHO AUTH & SYNC ==========
 
-export const getClioStatus = () =>
-  apiClient.get("/api/clio/status");
+export const getZohoStatus = () =>
+  apiClient.get("/api/integrations/zoho/status");
 
-export const getClioConnectUrl = () => "/api/clio/connect-clio";
+export const getZohoConnectUrl = () => "/api/integrations/zoho/connect";
 
-// ========== CLIO SYNC (clioSyncRoutes) ==========
+export const syncZohoClients = (payload = {}) =>
+  apiClient.post("/api/integrations/zoho-sync/sync/clients", payload);
 
-export const syncClioBillables = (userId) =>
-  apiClient.post("/api/clio-sync/sync-billables", userId ? { userId } : {});
+export const syncZohoCases = (payload = {}) =>
+  apiClient.post("/api/integrations/zoho-sync/sync/cases", payload);
 
-export const syncClioInvoices = (userId) =>
-  apiClient.post("/api/clio-sync/sync-invoices", userId ? { userId } : {});
+export const linkZohoWorkDrive = (payload = {}) =>
+  apiClient.post("/api/integrations/zoho-sync/workdrive/link", payload);

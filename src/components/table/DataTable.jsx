@@ -1,5 +1,5 @@
-// src/components/table/DataTable.jsx
 import React from "react";
+import { Search } from "lucide-react";
 import { Table, THead, TBody, TR, TH, TD } from "./Table";
 import Pagination from "./Pagination";
 import TableToolbar from "./TableToolbar";
@@ -7,195 +7,233 @@ import { clsx } from "../../utils/clsx.js";
 
 function SortIcon({ dir }) {
   return (
-    <span
-      aria-hidden
-      className="ml-1 inline-block select-none opacity-70"
-    >
-      {dir === "asc"
-        ? "▲"
-        : dir === "desc"
-        ? "▼"
-        : "▵"}
+    <span aria-hidden className="ml-1 inline-block text-[10px] opacity-70">
+      {dir === "asc" ? "▲" : dir === "desc" ? "▼" : "◇"}
     </span>
   );
 }
 
 export default function DataTable({
   columns = [],
-  rows = [],
+  rows,
+  data,
   searchableKeys = [],
   initialSort,
   pageSize = 10,
+  page: controlledPage,
+  total: controlledTotal,
+  sort: controlledSort,
+  selectedIds: controlledSelectedIds,
   rowSelectable = false,
-  onSelectionChange,
-  toolbarLeft,
-  toolbarRight,
+  loading = false,
+  skeleton,
+  stickyHeader = true,
+  hidePagination = false,
   emptyState,
   className,
+  toolbarLeft,
+  toolbarRight,
+  rowKey,
+  onPage,
+  onPageChange,
+  onPageSizeChange,
+  onSortChange,
+  onSelectionChange,
+  onToggleRow,
+  onToggleAll,
 }) {
+  const sourceRows = Array.isArray(data) ? data : Array.isArray(rows) ? rows : [];
+  const hasExternalPaging = controlledPage != null || controlledTotal != null;
   const [query, setQuery] = React.useState("");
-  const [page, setPage] = React.useState(1);
-  const [sort, setSort] = React.useState(initialSort || null);
-  const [selected, setSelected] = React.useState(new Set());
+  const [internalPage, setInternalPage] = React.useState(1);
+  const [internalSort, setInternalSort] = React.useState(initialSort || null);
+  const [internalSelected, setInternalSelected] = React.useState(new Set());
 
-  React.useEffect(() => {
-    onSelectionChange?.(Array.from(selected));
-  }, [selected, onSelectionChange]);
+  const page = controlledPage ?? internalPage;
+  const sort = normalizeSort(controlledSort ?? internalSort);
+  const selectable = rowSelectable || columns.some((column) => column.selection);
+  const selectedIds = controlledSelectedIds
+    ? new Set(controlledSelectedIds)
+    : internalSelected;
 
-  const toggleSort = (id, sortable) => {
-    if (!sortable) return;
-    setPage(1);
-    setSort((prev) => {
-      if (!prev || prev.id !== id) return { id, dir: "asc" };
-      if (prev.dir === "asc") return { id, dir: "desc" };
-      return null; // off
-    });
+  const setPage = (next) => {
+    setInternalPage(next);
+    onPageChange?.(next);
+    onPage?.(next);
   };
 
   const filtered = React.useMemo(() => {
-    const baseRows = Array.isArray(rows) ? rows : [];
-    if (!query) return baseRows;
-
+    if (!query || searchableKeys.length === 0) return sourceRows;
     const q = query.toLowerCase();
-    return baseRows.filter((r) =>
-      searchableKeys.some((k) =>
-        String(r[k] ?? "")
+    return sourceRows.filter((row) =>
+      searchableKeys.some((key) =>
+        String(row?.[key] ?? "")
           .toLowerCase()
           .includes(q)
       )
     );
-  }, [rows, query, searchableKeys]);
+  }, [query, searchableKeys, sourceRows]);
 
   const sorted = React.useMemo(() => {
-    if (!sort) return filtered;
-    const col = columns.find((c) => c.id === sort.id);
-    const acc = col?.accessor || ((row) => row[col.id]);
-
+    if (!sort || hasExternalPaging) return filtered;
+    const column = columns.find((c) => c.id === sort.id);
+    const accessor = column?.accessor || ((row) => row?.[column?.id]);
     return [...filtered].sort((a, b) => {
-      const va = acc(a);
-      const vb = acc(b);
-      if (va == null && vb == null) return 0;
-      if (va == null) return -1;
-      if (vb == null) return 1;
-      if (va > vb) return sort.dir === "asc" ? 1 : -1;
-      if (va < vb) return sort.dir === "asc" ? -1 : 1;
-      return 0;
-    });
-  }, [filtered, sort, columns]);
-
-  const pages = Math.max(1, Math.ceil(sorted.length / pageSize));
-  const pageRows = sorted.slice(
-    (page - 1) * pageSize,
-    page * pageSize
-  );
-
-  const allOnPageIds = pageRows.map((r, i) => r.id ?? i);
-  const allChecked =
-    rowSelectable &&
-    allOnPageIds.every((id) => selected.has(id));
-  const someChecked =
-    rowSelectable &&
-    !allChecked &&
-    allOnPageIds.some((id) => selected.has(id));
-
-  const toggleAll = () => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (allChecked) {
-        allOnPageIds.forEach((id) => next.delete(id));
-      } else {
-        allOnPageIds.forEach((id) => next.add(id));
+      const av = comparableValue(accessor(a));
+      const bv = comparableValue(accessor(b));
+      if (av == null && bv == null) return 0;
+      if (av == null) return sort.desc ? 1 : -1;
+      if (bv == null) return sort.desc ? -1 : 1;
+      if (typeof av === "number" && typeof bv === "number") {
+        return sort.desc ? bv - av : av - bv;
       }
+      return sort.desc
+        ? String(bv).localeCompare(String(av))
+        : String(av).localeCompare(String(bv));
+    });
+  }, [columns, filtered, hasExternalPaging, sort]);
+
+  const total = controlledTotal ?? sorted.length;
+  const pages = Math.max(1, Math.ceil(total / pageSize));
+  const pageRows = hasExternalPaging
+    ? sorted
+    : sorted.slice((page - 1) * pageSize, page * pageSize);
+
+  const visibleIds = pageRows.map((row, index) => getRowId(row, index, rowKey));
+  const allChecked =
+    selectable && visibleIds.length > 0 && visibleIds.every((id) => selectedIds.has(id));
+  const someChecked =
+    selectable && !allChecked && visibleIds.some((id) => selectedIds.has(id));
+
+  React.useEffect(() => {
+    onSelectionChange?.([...selectedIds]);
+  }, [onSelectionChange, selectedIds]);
+
+  const toggleSort = (id, sortable) => {
+    if (!sortable) return;
+    const current = sort?.id === id ? sort : null;
+    const next = !current
+      ? { id, desc: false }
+      : current.desc
+      ? null
+      : { id, desc: true };
+    setInternalPage(1);
+    setInternalSort(next);
+    onSortChange?.(next);
+  };
+
+  const toggleAll = (checked) => {
+    onToggleAll?.(checked, visibleIds);
+    if (controlledSelectedIds) return;
+    setInternalSelected((prev) => {
+      const next = new Set(prev);
+      visibleIds.forEach((id) => (checked ? next.add(id) : next.delete(id)));
       return next;
     });
   };
 
-  const toggleOne = (id) => {
-    setSelected((prev) => {
+  const toggleOne = (id, checked, row) => {
+    onToggleRow?.(id, checked, row);
+    if (controlledSelectedIds) return;
+    setInternalSelected((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      checked ? next.add(id) : next.delete(id);
       return next;
     });
   };
 
   return (
     <div className={clsx("grid gap-0", className)}>
-      <TableToolbar
-        left={
-          <div className="flex items-center gap-2">
-            <input
-              className={
-                "lb-reset h-9 w-64 rounded-full border border-[color:var(--lb-border)] " +
-                "bg-[color:var(--lb-bg)] px-3 text-sm text-[color:var(--lb-text)] " +
-                "placeholder:text-[color:var(--lb-muted)] shadow-[var(--lb-shadow-xs)] " +
-                "focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lb-primary-600)]"
-              }
-              placeholder="Search…"
-              value={query}
-              onChange={(e) => {
-                setPage(1);
-                setQuery(e.target.value);
-              }}
-            />
-            {toolbarLeft}
-          </div>
-        }
-        right={toolbarRight}
-      />
+      {(searchableKeys.length > 0 || toolbarLeft || toolbarRight) && (
+        <TableToolbar
+          left={
+            <div className="flex flex-wrap items-center gap-2">
+              {searchableKeys.length > 0 && (
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--lb-muted)]" />
+                  <input
+                    className="lb-reset h-10 w-64 rounded-[var(--lb-radius-md)] border border-[color:var(--lb-border)] bg-[color:var(--lb-surface)] px-9 text-sm text-[color:var(--lb-text)] placeholder:text-[color:var(--lb-placeholder)] shadow-[var(--lb-shadow-xs)] focus:outline-none focus-visible:border-[color:var(--lb-primary-600)] focus-visible:shadow-[var(--lb-focus-ring)]"
+                    placeholder="Search..."
+                    value={query}
+                    onChange={(event) => {
+                      setInternalPage(1);
+                      setQuery(event.target.value);
+                    }}
+                  />
+                </div>
+              )}
+              {toolbarLeft}
+            </div>
+          }
+          right={toolbarRight}
+        />
+      )}
 
-      <Table>
-        <THead>
+      <Table className={className}>
+        <THead sticky={stickyHeader}>
           <tr>
-            {rowSelectable && (
-              <TH width={36} className="!px-2">
+            {selectable && (
+              <TH width={52} className="!px-5">
                 <input
                   type="checkbox"
-                  aria-label="Select all on page"
+                  aria-label="Select all rows on page"
                   checked={allChecked}
-                  ref={(el) =>
-                    el && (el.indeterminate = someChecked)
-                  }
-                  onChange={toggleAll}
-                  className="h-4 w-4 rounded border-[color:var(--lb-border)]"
+                  ref={(el) => {
+                    if (el) el.indeterminate = someChecked;
+                  }}
+                  onChange={(event) => toggleAll(event.target.checked)}
+                  className="h-4 w-4 rounded-[var(--lb-radius-xs)] accent-[color:var(--lb-primary-600)]"
                 />
               </TH>
             )}
 
-            {columns.map((c) => (
-              <TH
-                key={c.id}
-                width={c.width}
-                align={c.align}
-                className={clsx(
-                  c.sortable && "cursor-pointer select-none",
-                  c.headerClassName
-                )}
-                onClick={() => toggleSort(c.id, c.sortable)}
-              >
-                <span className="inline-flex items-center">
-                  {c.header}
-                  {c.sortable && (
-                    <SortIcon
-                      dir={
-                        sort?.id === c.id ? sort.dir : undefined
-                      }
-                    />
+            {columns
+              .filter((column) => !column.selection)
+              .map((column) => (
+                <TH
+                  key={column.id}
+                  width={column.width}
+                  align={column.align}
+                  className={clsx(
+                    column.sortable && "cursor-pointer select-none",
+                    column.headerClassName
                   )}
-                </span>
-              </TH>
-            ))}
+                  onClick={() => toggleSort(column.id, column.sortable)}
+                >
+                  <span className="inline-flex items-center">
+                    {column.header}
+                    {column.sortable && (
+                      <SortIcon
+                        dir={
+                          sort?.id === column.id
+                            ? sort.desc
+                              ? "desc"
+                              : "asc"
+                            : undefined
+                        }
+                      />
+                    )}
+                  </span>
+                </TH>
+              ))}
           </tr>
         </THead>
 
         <TBody>
-          {pageRows.length === 0 && (
+          {loading && skeleton}
+          {loading && !skeleton && (
             <tr>
-              <TD
-                colSpan={
-                  (columns?.length || 0) +
-                  (rowSelectable ? 1 : 0)
-                }
-              >
+              <TD colSpan={columns.length + (selectable ? 1 : 0)}>
+                <div className="p-8 text-center text-[color:var(--lb-muted)]">
+                  Loading...
+                </div>
+              </TD>
+            </tr>
+          )}
+
+          {!loading && pageRows.length === 0 && (
+            <tr>
+              <TD colSpan={columns.length + (selectable ? 1 : 0)}>
                 {emptyState || (
                   <div className="p-8 text-center text-[color:var(--lb-muted)]">
                     No rows found.
@@ -205,60 +243,77 @@ export default function DataTable({
             </tr>
           )}
 
-          {pageRows.map((row, i) => {
-            const id = row.id ?? i;
-            return (
-              <TR key={id}>
-                {rowSelectable && (
-                  <TD className="!px-2">
-                    <input
-                      type="checkbox"
-                      aria-label={`Select row ${i + 1}`}
-                      checked={selected.has(id)}
-                      onChange={() => toggleOne(id)}
-                      className="h-4 w-4 rounded border-[color:var(--lb-border)]"
-                    />
-                  </TD>
-                )}
-
-                {columns.map((c) => {
-                  const acc =
-                    c.accessor || ((r) => r[c.id]);
-                  const value = acc(row);
-                  const content = c.cell
-                    ? c.cell(value, row)
-                    : value;
-                  return (
-                    <TD
-                      key={c.id}
-                      align={c.align}
-                      className={c.cellClassName}
-                    >
-                      {content}
+          {!loading &&
+            pageRows.map((row, index) => {
+              const id = getRowId(row, index, rowKey);
+              return (
+                <TR key={id}>
+                  {selectable && (
+                    <TD className="!px-5">
+                      <input
+                        type="checkbox"
+                        aria-label={`Select row ${index + 1}`}
+                        checked={selectedIds.has(id)}
+                        onChange={(event) =>
+                          toggleOne(id, event.target.checked, row)
+                        }
+                        className="h-4 w-4 rounded-[var(--lb-radius-xs)] accent-[color:var(--lb-primary-600)]"
+                      />
                     </TD>
-                  );
-                })}
-              </TR>
-            );
-          })}
+                  )}
+
+                  {columns
+                    .filter((column) => !column.selection)
+                    .map((column) => {
+                      const accessor = column.accessor || ((item) => item?.[column.id]);
+                      const value = accessor(row);
+                      const content = column.cell ? column.cell(value, row) : value;
+                      return (
+                        <TD
+                          key={column.id}
+                          align={column.align}
+                          className={column.cellClassName}
+                        >
+                          {content}
+                        </TD>
+                      );
+                    })}
+                </TR>
+              );
+            })}
         </TBody>
       </Table>
 
-      <div className="flex items-center justify-between border border-t-0 border-[color:var(--lb-border)] rounded-b-[var(--lb-radius-xl)] bg-[color:var(--lb-bg)]">
-        <div className="px-3 py-2 text-sm text-[color:var(--lb-muted)]">
-          {sorted.length === 0 ? (
-            "No records"
-          ) : (
-            <>
-              Showing{" "}
-              {(page - 1) * pageSize + 1}-
-              {Math.min(page * pageSize, sorted.length)} of{" "}
-              {sorted.length}
-            </>
-          )}
+      {!hidePagination && (
+        <div className="flex flex-col gap-2 rounded-b-[var(--lb-radius-xl)] border border-t-0 border-[color:var(--lb-border)] bg-[color:var(--lb-surface)] sm:flex-row sm:items-center sm:justify-between">
+          <div className="px-5 py-3 text-sm text-[color:var(--lb-muted)]">
+            {total === 0
+              ? "No records"
+              : `Showing ${(page - 1) * pageSize + 1}-${Math.min(
+                  page * pageSize,
+                  total
+                )} of ${total}`}
+          </div>
+          <Pagination page={page} pages={pages} onPage={setPage} />
         </div>
-        <Pagination page={page} pages={pages} onPage={setPage} />
-      </div>
+      )}
     </div>
   );
+}
+
+function normalizeSort(sort) {
+  if (!sort) return null;
+  if (sort.dir) return { id: sort.id, desc: sort.dir === "desc" };
+  return sort;
+}
+
+function comparableValue(value) {
+  if (React.isValidElement(value)) return null;
+  return value;
+}
+
+function getRowId(row, index, rowKey) {
+  if (typeof rowKey === "function") return rowKey(row, index);
+  if (rowKey && row?.[rowKey] != null) return row[rowKey];
+  return row?._id ?? row?.id ?? index;
 }

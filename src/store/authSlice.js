@@ -2,15 +2,16 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { loginUser, getMe, loginAdmin, getAdminMe } from '@/services/api';
 
+const COOKIE_SESSION_TOKEN = 'cookie-session';
+
 export const loginUserThunk = createAsyncThunk(
   'auth/loginUser',
   async (credentials, { rejectWithValue }) => {
     try {
       const { data } = await loginUser(credentials);
-      // Expecting { token, user }
-      return { token: data.token, user: data.user };
+      return { token: data.token || COOKIE_SESSION_TOKEN, user: data.user };
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || 'Login failed');
+      return rejectWithValue(err.response?.data?.error || err.response?.data?.message || 'Login failed');
     }
   }
 );
@@ -20,24 +21,22 @@ export const bootstrapSessionThunk = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const { data } = await getMe();
-      return { user: data.user };
+      return { token: COOKIE_SESSION_TOKEN, user: data.user };
     } catch (e) {
       // attempt refresh if available
-      return rejectWithValue(e.response?.data?.message || 'Session bootstrap failed');
+      return rejectWithValue(e.response?.data?.error || e.response?.data?.message || 'Session bootstrap failed');
     }
   }
 );
 
 export const adminLoginThunk = createAsyncThunk(
   'auth/adminLogin',
-  async ({ email, password }, { rejectWithValue }) => {
+  async (credentials, { rejectWithValue }) => {
     try {
-      const { data } = await loginAdmin({ email, password }); // { token, admin }
-      // Persist token
-      localStorage.setItem('token', data.token);
-      return { user: data.admin, token: data.token };
+      const { data } = await loginAdmin(credentials);
+      return { user: data.user || data.admin, token: data.token || COOKIE_SESSION_TOKEN };
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || 'Login failed');
+      return rejectWithValue(err.response?.data?.error || err.response?.data?.message || 'Login failed');
     }
   }
 );
@@ -97,10 +96,8 @@ const authSlice = createSlice({
       })
       .addCase(bootstrapSessionThunk.fulfilled, (s, a) => {
         s.loading = false;
-        if (a.payload.token) {
-          s.token = a.payload.token;
-          localStorage.setItem('token', a.payload.token);
-        }
+        s.token = a.payload.token;
+        localStorage.setItem('token', a.payload.token);
         s.user = a.payload.user;
         s.role = a.payload.user?.role || null;
         if (s.role) localStorage.setItem('userRole', s.role);

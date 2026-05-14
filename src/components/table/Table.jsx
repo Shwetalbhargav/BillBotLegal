@@ -23,7 +23,7 @@ export function THead({ className, children, sticky = true }) {
     <thead
       className={clsx(
         sticky && "sticky top-0 z-10",
-        "bg-[color:var(--lb-bg)] text-[color:var(--lb-muted)]",
+        "bg-[color:var(--lb-surface-subtle)] text-[color:var(--lb-muted-strong)]",
         "shadow-[inset_0_-1px_0_var(--lb-border)]",
         className
       )}
@@ -43,7 +43,7 @@ export function TR({ className, children, hover = true, onClick }) {
       onClick={onClick}
       className={clsx(
         "border-b border-[color:var(--lb-border)] last:border-b-0",
-        hover && "hover:bg-[color:var(--lb-bg)]",
+        hover && "hover:bg-[color:var(--lb-primary-50)]/50",
         onClick && "cursor-pointer",
         className
       )}
@@ -59,7 +59,7 @@ export function TH({ className, children, align = "left", width }) {
       scope="col"
       style={width ? { width } : undefined}
       className={clsx(
-        "px-3 py-2 text-[13px] font-medium",
+        "px-5 py-4 text-[12px] font-extrabold uppercase tracking-[0.14em]",
         align === "right" && "text-right",
         className
       )}
@@ -73,7 +73,7 @@ export function TD({ className, children, align = "left" }) {
   return (
     <td
       className={clsx(
-        "px-3 py-2 text-[13px]",
+        "px-5 py-4 text-[14px]",
         align === "right" && "text-right",
         className
       )}

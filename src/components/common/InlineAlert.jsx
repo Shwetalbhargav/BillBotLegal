@@ -10,39 +10,39 @@ export default function InlineAlert({
 }) {
   const tones = {
     info: {
-      bg: "bg-[color:var(--lb-bg)]",
-      border: "border-[color:var(--lb-border)]",
-      text: "text-[color:var(--lb-text)]",
+      bg: "bg-[color:var(--lb-info-50)]",
+      border: "border-[color:var(--lb-primary-100)]",
+      text: "text-[color:var(--lb-primary-900)]",
     },
     warn: {
-      bg: "bg-amber-50/70",
-      border: "border-amber-200",
-      text: "text-amber-900",
+      bg: "bg-[color:var(--lb-warning-50)]",
+      border: "border-[color:var(--lb-warning-100)]",
+      text: "text-[color:var(--lb-warning-700)]",
     },
     danger: {
-      bg: "bg-rose-50/80",
-      border: "border-rose-200",
-      text: "text-rose-900",
+      bg: "bg-[color:var(--lb-danger-50)]",
+      border: "border-[color:var(--lb-danger-100)]",
+      text: "text-[color:var(--lb-danger-700)]",
     },
     success: {
-      bg: "bg-emerald-50/80",
-      border: "border-emerald-200",
-      text: "text-emerald-900",
+      bg: "bg-[color:var(--lb-success-50)]",
+      border: "border-[color:var(--lb-success-100)]",
+      text: "text-[color:var(--lb-success-700)]",
     },
   }[tone];
 
   return (
     <div
       className={clsx(
-        "rounded-[var(--lb-radius-md)] border shadow-[var(--lb-shadow-xs)] px-3 py-2.5",
-        "text-[13px] space-y-0.5",
+        "rounded-[var(--lb-radius-md)] border shadow-[var(--lb-shadow-sm)] px-4 py-3",
+        "text-[14px] space-y-1",
         tones.bg,
         tones.border,
         tones.text,
         className
       )}
     >
-      {title && <div className="font-medium">{title}</div>}
+      {title && <div className="font-extrabold">{title}</div>}
       {children && (
         <div className="opacity-90 leading-5">{children}</div>
       )}

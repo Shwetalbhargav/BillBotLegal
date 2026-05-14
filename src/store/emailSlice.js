@@ -9,7 +9,7 @@ import {
   generateEmailNarrativeApi,
   createActivityFromEmailApi,
   createTimeEntryFromEmailApi,
-  pushEmailEntryToClio,
+  syncEmailEntryToZoho,
   bulkIngestEmailEntries,
 } from "@/services/api";
 
@@ -55,20 +55,22 @@ export const addEmail = createAsyncThunk(
   }
 );
 
-// Push an email entry to Clio
-export const pushClio = createAsyncThunk(
-  "emails/pushClio",
+// Sync an email entry to Zoho
+export const syncZoho = createAsyncThunk(
+  "emails/syncZoho",
   async (id, { rejectWithValue }) => {
     try {
-      const { data } = await pushEmailEntryToClio(id);
-      // pushEmailEntryToClio controller: { ok: true, data: { clioActivityId } }
-      const clioActivityId = data?.data?.clioActivityId ?? data?.clioActivityId;
-      return { id, clioActivityId };
+      const { data } = await syncEmailEntryToZoho(id);
+      return {
+        id,
+        clientRecordId: data?.data?.clientRecordId ?? null,
+        matterRecordId: data?.data?.matterRecordId ?? null,
+      };
     } catch (err) {
       return rejectWithValue(
         err?.response?.data?.message ||
           err?.message ||
-          "Failed to push email entry to Clio"
+          "Failed to sync email entry to Zoho"
       );
     }
   }
@@ -365,15 +367,15 @@ const emailSlice = createSlice({
           action.payload || action.error?.message || null;
       });
 
-    // ----- PUSH TO CLIO -----
+    // ----- SYNC TO ZOHO -----
     builder
-      .addCase(pushClio.pending, (state) => {
+      .addCase(syncZoho.pending, (state) => {
         state.pushing = true;
         state.pushError = null;
       })
-      .addCase(pushClio.fulfilled, (state, action) => {
+      .addCase(syncZoho.fulfilled, (state, action) => {
         state.pushing = false;
-        const { id, clioActivityId } = action.payload || {};
+        const { id, clientRecordId, matterRecordId } = action.payload || {};
         if (!id) return;
 
         const idx = state.list.findIndex(
@@ -384,10 +386,12 @@ const emailSlice = createSlice({
         const current = state.list[idx] || {};
         const meta = {
           ...(current.meta || {}),
-          clioPushed: true,
-          clioActivityId:
-            clioActivityId ?? current.meta?.clioActivityId,
-          clioPushedAt: new Date().toISOString(),
+          zohoSynced: true,
+          zohoClientRecordId:
+            clientRecordId ?? current.meta?.zohoClientRecordId,
+          zohoMatterRecordId:
+            matterRecordId ?? current.meta?.zohoMatterRecordId,
+          zohoSyncedAt: new Date().toISOString(),
         };
 
         state.list[idx] = {
@@ -395,7 +399,7 @@ const emailSlice = createSlice({
           meta,
         };
       })
-      .addCase(pushClio.rejected, (state, action) => {
+      .addCase(syncZoho.rejected, (state, action) => {
         state.pushing = false;
         state.pushError = action.payload || action.error?.message || null;
       });

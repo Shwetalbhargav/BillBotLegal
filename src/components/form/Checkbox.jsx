@@ -20,14 +20,15 @@ export default function Checkbox({
         <input
           type="checkbox"
           className={clsx(
-            "lb-reset peer h-4 w-4 rounded-[0.6rem] border",
+            "lb-reset peer h-4 w-4 rounded-[var(--lb-radius-xs)] border",
             "border-[color:var(--lb-border)] bg-[color:var(--lb-bg)]",
             "shadow-[var(--lb-shadow-xs)]",
+            "accent-[color:var(--lb-primary-600)]",
             "checked:bg-[color:var(--lb-primary-600)]",
             "checked:border-[color:var(--lb-primary-600)]",
             "focus:outline-none focus-visible:ring-2",
             "focus-visible:ring-[color:var(--lb-primary-600)]",
-            invalid && "border-[color:var(--lb-danger-400)]"
+            invalid && "border-[color:var(--lb-danger-600)]"
           )}
           {...props}
         />

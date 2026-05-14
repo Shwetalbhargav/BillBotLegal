@@ -19,12 +19,12 @@ function avatarFromUser(user) {
 
 function profileRouteFor(role) {
   const r = String(role || "").toLowerCase();
-  if (r === "admin") return "/profile/admin";
-  if (r === "partner") return "/profile/partner";
-  if (r === "lawyer") return "/profile/lawyer";
-  if (r === "associate") return "/profile/associate";
-  if (r === "intern") return "/profile/intern";
-  return "/profile";
+  if (r === "admin") return "/admin/dashboard";
+  if (r === "partner") return "/partner/dashboard";
+  if (r === "lawyer") return "/lawyer/dashboard";
+  if (r === "associate") return "/associate/dashboard";
+  if (r === "intern") return "/intern/dashboard";
+  return "/dashboard";
 }
 
 const NAV_ITEMS = [
@@ -161,7 +161,7 @@ export default function NavBar() {
                         go(profileRouteFor(user?.role))
                       }
                     >
-                      Profile Settings
+                      Dashboard
                     </MenuItem>
                     <MenuItem onClick={logout} tone="danger">
                       Logout
@@ -222,7 +222,7 @@ export default function NavBar() {
                 onClick={() => go(profileRouteFor(user?.role))}
                 className={`${linkBase} ${linkIdle} w-full text-left`}
               >
-                Profile Settings
+                Dashboard
               </button>
             )}
           </nav>

@@ -9,7 +9,7 @@ try {
 const { data } = await registerUser(payload);
 return data; // { user, token? } depending on backend
 } catch (err) {
-const message = err?.response?.data?.message || err?.message || 'Registration failed';
+const message = err?.response?.data?.error || err?.response?.data?.message || err?.message || 'Registration failed';
 return rejectWithValue(message);
 }
 });

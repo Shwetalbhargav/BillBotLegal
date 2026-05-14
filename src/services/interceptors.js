@@ -14,7 +14,7 @@ import axios from 'axios';
  apiClient.interceptors.request.use(
     (config) => {
       const token = localStorage.getItem('token');
-      if (token) {
+      if (token && token !== 'cookie-session') {
         config.headers.Authorization = `Bearer ${token}`;
       }
       return config;
@@ -29,6 +29,7 @@ import axios from 'axios';
       if (error.response && error.response.status === 401) {
         console.warn('Unauthorized! Redirecting to login...');
         localStorage.removeItem('token');
+        localStorage.removeItem('userRole');
         window.location.href = '/login';
       }
       return Promise.reject(error);

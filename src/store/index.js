@@ -22,7 +22,7 @@ import revenue from './revenueSlice';
 import kpiSnapshots from './kpiSnapshotSlice';
 import ar from './arSlice';
 import activity from './activitySlice';
-import clio from './clioSlice';
+import zoho from './zohoSlice';
 import integrationLogs from './integrationLogSlice';
 import kpi from './kpiSlice';
 
@@ -62,7 +62,7 @@ export default configureStore({
     kpiSnapshots,
     ar,
     activity,
-    clio,
+    zoho,
     integrationLogs,
   },
 });

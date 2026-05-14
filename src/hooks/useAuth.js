@@ -1,33 +1,33 @@
 // src/hooks/useAuth.js
-import { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { logout as clearAuth, setAuth } from '@/store/authSlice';
+import { logoutUser } from '@/services/api';
 
 const useAuth = () => {
-  const [token, setToken] = useState(localStorage.getItem('token'));
-  const [role, setRole] = useState(localStorage.getItem('userRole'));
-  const [isAuthenticated, setIsAuthenticated] = useState(!!token);
-
-  useEffect(() => {
-    setIsAuthenticated(!!token);
-  }, [token]);
+  const dispatch = useDispatch();
+  const auth = useSelector((state) => state.auth);
+  const token = auth.token || localStorage.getItem('token');
+  const role = auth.role || auth.user?.role || localStorage.getItem('userRole');
+  const user = auth.user;
+  const isAuthenticated = Boolean(user || token);
 
   const login = (newToken, newRole) => {
-    localStorage.setItem('token', newToken);
-    localStorage.setItem('userRole', newRole);
-    setToken(newToken);
-    setRole(newRole);
-    setIsAuthenticated(true);
+    dispatch(
+      setAuth({
+        token: newToken || 'cookie-session',
+        user: { role: newRole },
+      })
+    );
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userRole');
-    setToken(null);
-    setRole(null);
-    setIsAuthenticated(false);
-    window.location.href = '/login';
+    logoutUser().catch(() => {}).finally(() => {
+      dispatch(clearAuth());
+      window.location.href = '/login';
+    });
   };
 
-  return { token, role, isAuthenticated, login, logout };
+  return { token, role, user, isAuthenticated, login, logout };
 };
 
 export default useAuth;

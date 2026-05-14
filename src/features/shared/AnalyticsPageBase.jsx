@@ -2,7 +2,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAnalytics } from "@/store/analyticsSlice";
-import { getBillableAnalytics } from "@/services/api";
+import {
+  exportInvoicesCsvApi,
+  exportTimeEntriesCsvApi,
+  exportUtilizationCsvApi,
+  getBillablesByCaseTypeAnalytics,
+} from "@/services/api";
 
 import { Button, Loader } from "@/components/common";
 import { Input, Select, DatePicker } from "@/components/form";
@@ -65,6 +70,11 @@ export default function AnalyticsPage(
   const [sort, setSort] = useState(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [exportState, setExportState] = useState({
+    key: null,
+    loading: false,
+    error: null,
+  });
 
   // server aggregate for case-type view
   const [caseTypeAgg, setCaseTypeAgg] = useState([]);
@@ -79,20 +89,24 @@ export default function AnalyticsPage(
     (async () => {
       try {
         setCaseTypeLoading(true);
-        const res = await getBillableAnalytics();
+        const res = await getBillablesByCaseTypeAnalytics();
         const arr = Array.isArray(res?.data?.items)
           ? res.data.items
+          : Array.isArray(res?.data?.summaryByCaseType)
+          ? res.data.summaryByCaseType
           : Array.isArray(res?.data)
           ? res.data
           : [];
         const mapped = arr.map((x, i) => ({
           id: String(x.id ?? i),
-          bucket: x.caseType || x.type || "—",
-          hours: num(x.hours),
+          bucket: x.caseType || x.type || x._id || "—",
+          hours: num(x.hours ?? x.totalHours),
           avgRate: num(
-            x.avgRate || num(x.revenue) / Math.max(1, num(x.hours))
+            x.avgRate ||
+              num(x.revenue ?? x.totalValue) /
+                Math.max(1, num(x.hours ?? x.totalHours))
           ),
-          revenue: num(x.revenue),
+          revenue: num(x.revenue ?? x.totalValue),
           loggedPct: num(x.loggedPct),
         }));
         setCaseTypeAgg(mapped);
@@ -199,6 +213,66 @@ export default function AnalyticsPage(
     [filters.groupBy]
   );
 
+  const exportParams = useMemo(
+    () => ({
+      from: filters.from || undefined,
+      to: filters.to || undefined,
+    }),
+    [filters.from, filters.to]
+  );
+
+  const handleCsvExport = async (kind) => {
+    const config = {
+      timeEntries: {
+        label: "Time entries",
+        filename: "time-entries.csv",
+        request: () => exportTimeEntriesCsvApi(exportParams),
+      },
+      invoices: {
+        label: "Invoices",
+        filename: "invoices.csv",
+        request: () => exportInvoicesCsvApi(exportParams),
+      },
+      utilization: {
+        label: "Utilization",
+        filename: `utilization-${filters.groupBy || "user"}.csv`,
+        request: () =>
+          exportUtilizationCsvApi({
+            ...exportParams,
+            groupBy:
+              filters.groupBy === "caseType" || filters.groupBy === "date"
+                ? "user"
+                : filters.groupBy,
+          }),
+      },
+    }[kind];
+
+    if (!config) return;
+    if (kind === "utilization" && (!filters.from || !filters.to)) {
+      setExportState({
+        key: kind,
+        loading: false,
+        error: "Utilization export requires both From and To dates.",
+      });
+      return;
+    }
+
+    setExportState({ key: kind, loading: true, error: null });
+    try {
+      const response = await config.request();
+      downloadBlob(response.data, config.filename);
+      setExportState({ key: kind, loading: false, error: null });
+    } catch (err) {
+      setExportState({
+        key: kind,
+        loading: false,
+        error:
+          (await extractExportError(err)) ||
+          `Failed to export ${config.label} CSV.`,
+      });
+    }
+  };
+
   return (
     <div className="lb-reset min-h-screen px-4 py-6 bg-[color:var(--lb-app-bg,#f3f4f6)]">
       <div className="max-w-6xl mx-auto space-y-6">
@@ -223,8 +297,37 @@ export default function AnalyticsPage(
             >
               Refresh
             </Button>
+            <Button
+              variant="secondary"
+              className="rounded-full shadow-[0_8px_24px_rgba(15,23,42,0.12)]"
+              loading={exportState.loading && exportState.key === "timeEntries"}
+              onClick={() => handleCsvExport("timeEntries")}
+            >
+              Time CSV
+            </Button>
+            <Button
+              variant="secondary"
+              className="rounded-full shadow-[0_8px_24px_rgba(15,23,42,0.12)]"
+              loading={exportState.loading && exportState.key === "invoices"}
+              onClick={() => handleCsvExport("invoices")}
+            >
+              Invoice CSV
+            </Button>
+            <Button
+              variant="secondary"
+              className="rounded-full shadow-[0_8px_24px_rgba(15,23,42,0.12)]"
+              loading={exportState.loading && exportState.key === "utilization"}
+              onClick={() => handleCsvExport("utilization")}
+            >
+              Utilization CSV
+            </Button>
           </div>
         </div>
+        {exportState.error && (
+          <div className="rounded-2xl border border-red-200 bg-red-50/80 px-4 py-3 text-sm text-red-700 shadow-[0_12px_32px_rgba(248,113,113,0.20)]">
+            {exportState.error}
+          </div>
+        )}
 
         {/* Main analytics card (KPIs + table) */}
         {perms.canViewAnalytics && (
@@ -307,14 +410,19 @@ function normalizeEvents(billable, invoice, caseStatusMap) {
       items.push({
         id: `b-${e.id ?? items.length}`,
         date: e.date ?? null,
-        client: e.clientName ?? e.client ?? null,
-        case: e.caseTitle ?? e.case ?? null,
-        user: e.userName ?? e.user ?? null,
-        userRole: e.userRole ?? e.role ?? null,
+        client: e.clientName ?? e.client ?? e.clientId?.name ?? null,
+        case: e.caseTitle ?? e.case ?? e.caseId?.name ?? null,
+        user: e.userName ?? e.user ?? e.userId?.name ?? e.createdBy?.name ?? null,
+        userRole: e.userRole ?? e.role ?? e.userId?.role ?? null,
         caseStatus: statusOf(caseKey),
-        hours: num(e.hours),
-        rate: num(e.rate),
-        revenue: num(e.revenue ?? num(e.hours) * num(e.rate)),
+        hours: num(e.hours ?? e.durationHours ?? num(e.durationMinutes) / 60),
+        rate: num(e.rate ?? e.rateApplied),
+        revenue: num(
+          e.revenue ??
+            e.amount ??
+            num(e.hours ?? e.durationHours ?? num(e.durationMinutes) / 60) *
+              num(e.rate ?? e.rateApplied)
+        ),
         loggedPct: num(e.loggedPct),
       });
     }
@@ -325,14 +433,19 @@ function normalizeEvents(billable, invoice, caseStatusMap) {
       items.push({
         id: `i-${e.id ?? items.length}`,
         date: e.date ?? null,
-        client: e.clientName ?? e.client ?? null,
-        case: e.caseTitle ?? e.case ?? null,
-        user: e.userName ?? e.user ?? null,
-        userRole: e.userRole ?? e.role ?? null,
+        client: e.clientName ?? e.client ?? e.clientId?.name ?? null,
+        case: e.caseTitle ?? e.case ?? e.caseId?.name ?? null,
+        user: e.userName ?? e.user ?? e.userId?.name ?? e.createdBy?.name ?? null,
+        userRole: e.userRole ?? e.role ?? e.userId?.role ?? null,
         caseStatus: statusOf(caseKey),
-        hours: num(e.hours),
-        rate: num(e.rate),
-        revenue: num(e.revenue ?? num(e.hours) * num(e.rate)),
+        hours: num(e.hours ?? e.durationHours ?? num(e.durationMinutes) / 60),
+        rate: num(e.rate ?? e.rateApplied),
+        revenue: num(
+          e.revenue ??
+            e.amount ??
+            num(e.hours ?? e.durationHours ?? num(e.durationMinutes) / 60) *
+              num(e.rate ?? e.rateApplied)
+        ),
         loggedPct: num(e.loggedPct),
       });
     }
@@ -472,6 +585,33 @@ function fmtCurrency(v) {
 function fmtPercent(v) {
   const n = Number(v || 0);
   return `${(n * 100).toFixed(0)}%`;
+}
+
+function downloadBlob(blob, filename) {
+  if (!blob) return;
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
+async function extractExportError(err) {
+  const data = err?.response?.data;
+  if (!data) return err?.message;
+  if (data instanceof Blob) {
+    try {
+      const text = await data.text();
+      const parsed = JSON.parse(text);
+      return parsed.error || parsed.message || text;
+    } catch {
+      return null;
+    }
+  }
+  return data.error || data.message || err?.message;
 }
 
 function KpiCard({ label, value, loading }) {

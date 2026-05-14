@@ -3,7 +3,7 @@ import React from "react";
 import { clsx } from "../../utils/clsx.js";
 
 
-const PADS = { sm: "p-3", md: "p-4", lg: "p-6" };
+const PADS = { none: "p-0", sm: "p-3", md: "p-5", lg: "p-6", xl: "p-8" };
 
 export default function Card({
   as: Tag = "div",
@@ -21,7 +21,7 @@ export default function Card({
         "shadow-[var(--lb-shadow-sm)]",
         PADS[padding],
         interactive &&
-          "transition-shadow hover:shadow-[var(--lb-shadow-md)] focus-within:shadow-[var(--lb-shadow-md)]",
+          "transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-[color:var(--lb-primary-200)] hover:shadow-[var(--lb-shadow-md)] focus-within:shadow-[var(--lb-shadow-md)]",
         className
       )}
       {...props}

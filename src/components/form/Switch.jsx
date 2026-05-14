@@ -25,9 +25,10 @@ export default function Switch({
         className={clsx(
           "relative w-11 h-6 rounded-full transition-colors",
           "border border-[color:var(--lb-border)] shadow-[var(--lb-shadow-sm)]",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lb-primary-600)]",
           checked
             ? "bg-[color:var(--lb-primary-600)]"
-            : "bg-[color:var(--lb-bg)]"
+            : "bg-[color:var(--lb-panel-strong)]"
         )}
       >
         <span

@@ -42,7 +42,7 @@ export default function Login() {
         // No need to branch on role here – /dashboard will redirect
         navigate("/dashboard", { replace: true });
       } catch (e) {
-        setError(e?.message || "Invalid credentials");
+        setError(typeof e === "string" ? e : e?.message || "Invalid credentials");
       } finally {
         setSubmitting(false);
       }
