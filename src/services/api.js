@@ -72,8 +72,8 @@ export const deleteUser = (id) =>
 export const listUsers = (params = {}) =>
   apiClient.get(`/api/users${qs(params)}`);
 
-export const getMe = () =>
-  apiClient.get("/api/users/me");
+export const getMe = (config = {}) =>
+  apiClient.get("/api/users/me", config);
 
 // GET /api/users/:id
 export const getUserById = (id) =>

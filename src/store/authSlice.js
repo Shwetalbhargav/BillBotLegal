@@ -20,7 +20,7 @@ export const bootstrapSessionThunk = createAsyncThunk(
   'auth/bootstrap',
   async (_, { rejectWithValue }) => {
     try {
-      const { data } = await getMe();
+      const { data } = await getMe({ skipAuthRedirect: true });
       return { token: COOKIE_SESSION_TOKEN, user: data.user };
     } catch (e) {
       // attempt refresh if available

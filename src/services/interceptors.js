@@ -26,7 +26,7 @@ import axios from 'axios';
  apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
-      if (error.response && error.response.status === 401) {
+      if (error.response && error.response.status === 401 && !error.config?.skipAuthRedirect) {
         console.warn('Unauthorized! Redirecting to login...');
         localStorage.removeItem('token');
         localStorage.removeItem('userRole');

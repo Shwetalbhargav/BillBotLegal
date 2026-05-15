@@ -26,7 +26,6 @@ const ROLES = [
   { label: "Lawyer", value: "lawyer" },
   { label: "Associate", value: "associate" },
   { label: "Intern", value: "intern" },
-  { label: "Admin", value: "admin" },
 ];
 
 export default function Register({ isModal = false, onClose }) {
@@ -82,11 +81,13 @@ export default function Register({ isModal = false, onClose }) {
     }
     setSubmitting(true);
     try {
-      const quals = (values.qualifications || []).map((q) => ({
-        degree: q.degree || undefined,
-        university: q.university || undefined,
-        year: q.year ? Number(q.year) : undefined,
-      }));
+      const quals = (values.qualifications || [])
+        .map((q) => ({
+          degree: q.degree?.trim() || undefined,
+          university: q.university?.trim() || undefined,
+          year: q.year ? Number(q.year) : undefined,
+        }))
+        .filter((q) => q.degree || q.university || q.year);
 
       await dispatch(
         registerThunk({
@@ -97,7 +98,7 @@ export default function Register({ isModal = false, onClose }) {
           firmId: values.firmId || undefined,
           mobile: values.mobile || undefined,
           address: values.address || undefined,
-          qualifications: quals,
+          qualifications: quals.length ? quals : undefined,
         })
       ).unwrap();
     } finally {
