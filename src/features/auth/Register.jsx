@@ -1,20 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm, useFieldArray } from "react-hook-form";
 import { motion } from "framer-motion";
 import {
   FiUserPlus,
-  FiUser,
-  FiMail,
-  FiLock,
-  FiPhone,
-  FiHome,
   FiBookOpen,
   FiTrash2,
   FiPlus,
   FiX,
 } from "react-icons/fi";
+import { CheckCircle2, Eye, EyeOff, LoaderCircle, XCircle } from "lucide-react";
 
 import { Switch } from "@/components/form";
 import Form from "@/components/form/Form";
@@ -35,9 +31,11 @@ export default function Register({ isModal = false, onClose }) {
     status: "idle",
     error: null,
   };
-  const { status, error } = slice;
+  const { status } = slice;
 
   const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [feedback, setFeedback] = useState(null);
 
   const form = useForm({
     mode: "onBlur",
@@ -48,7 +46,7 @@ export default function Register({ isModal = false, onClose }) {
       role: "lawyer",
       mobile: "",
       address: "",
-      firmId: "",
+      firmName: "",
       qualifications: [{ degree: "", university: "", year: "" }],
       terms: false,
     },
@@ -59,27 +57,14 @@ export default function Register({ isModal = false, onClose }) {
     name: "qualifications",
   });
 
-  useEffect(() => {
-    if (status === "succeeded") {
-      alert("Your account was created successfully.");
-      if (isModal && onClose) onClose();
-      else navigate("/login", { replace: true });
-      dispatch(resetRegisterState());
-    }
-  }, [status, navigate, dispatch, isModal, onClose]);
-
-  useEffect(() => {
-    if (status === "failed" && error) {
-      form.setError("email", { message: error });
-    }
-  }, [status, error, form]);
-
   const onSubmit = async (values) => {
     if (!values.terms) {
       form.setError("terms", { message: "You must accept the terms." });
+      setFeedback({ type: "error", message: "You must accept the terms before registering." });
       return;
     }
     setSubmitting(true);
+    setFeedback({ type: "loading", message: "Registering your account..." });
     try {
       const quals = (values.qualifications || [])
         .map((q) => ({
@@ -95,12 +80,21 @@ export default function Register({ isModal = false, onClose }) {
           email: values.email,
           password: values.password,
           role: values.role,
-          firmId: values.firmId || undefined,
+          firmName: values.firmName?.trim() || undefined,
           mobile: values.mobile || undefined,
-          address: values.address || undefined,
+          address: values.address?.trim() || undefined,
           qualifications: quals.length ? quals : undefined,
         })
       ).unwrap();
+      setFeedback({ type: "success", message: "Registration successful. Redirecting to sign in..." });
+      window.setTimeout(() => {
+        if (isModal && onClose) onClose();
+        else navigate("/login", { replace: true });
+        dispatch(resetRegisterState());
+      }, 1200);
+    } catch (err) {
+      const message = typeof err === "string" ? err : err?.message || "Registration failed";
+      setFeedback({ type: "error", message });
     } finally {
       setSubmitting(false);
     }
@@ -142,6 +136,27 @@ export default function Register({ isModal = false, onClose }) {
       </div>
     );
 
+  const nameField = form.register("name", {
+    required: "Name is required",
+    pattern: {
+      value: /^[A-Za-z .'-]+$/,
+      message: "Use letters, spaces, apostrophes, periods, or hyphens only",
+    },
+  });
+  const emailField = form.register("email", {
+    required: "Email is required",
+    pattern: {
+      value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+      message: "Enter a valid email address with @",
+    },
+  });
+  const mobileField = form.register("mobile", {
+    required: "Mobile is required",
+    minLength: { value: 10, message: "Enter a 10-digit mobile number" },
+    maxLength: { value: 10, message: "Enter a 10-digit mobile number" },
+    pattern: { value: /^\d{10}$/, message: "Enter numbers only" },
+  });
+
   // ---------- render ----------
   return (
     <Wrapper>
@@ -180,25 +195,24 @@ export default function Register({ isModal = false, onClose }) {
           {/* Name */}
           <FormField
             name="name"
-            label={
-              <span className={`inline-flex items-center gap-2 ${labelMuted}`}>
-                <FiUser /> Full name
-              </span>
-            }
+            label={<span className={labelMuted}>Full name</span>}
             required
           >
             {({ id, describedBy, error }) => (
-              <div className="relative">
-                <FiUser className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  id={id}
-                  aria-describedby={describedBy}
-                  aria-invalid={!!error}
-                  placeholder="Jane Attorney"
-                  className={`${inputBaseClasses} pl-10`}
-                  {...form.register("name", { required: "Name is required" })}
-                />
-              </div>
+              <input
+                id={id}
+                aria-describedby={describedBy}
+                aria-invalid={!!error}
+                placeholder="Jane Attorney"
+                className={inputBaseClasses}
+                {...nameField}
+                onChange={(event) => {
+                  event.target.value = event.target.value
+                    .replace(/[^A-Za-z .'-]/g, "")
+                    .replace(/\s{2,}/g, " ");
+                  nameField.onChange(event);
+                }}
+              />
             )}
           </FormField>
 
@@ -206,55 +220,55 @@ export default function Register({ isModal = false, onClose }) {
             {/* Email */}
             <FormField
               name="email"
-              label={
-                <span className={`inline-flex items-center gap-2 ${labelMuted}`}>
-                  <FiMail /> Email
-                </span>
-              }
+              label={<span className={labelMuted}>Email</span>}
               required
             >
               {({ id, describedBy, error }) => (
-                <div className="relative">
-                  <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input
-                    id={id}
-                    type="email"
-                    aria-describedby={describedBy}
-                    aria-invalid={!!error}
-                    placeholder="you@firm.com"
-                    className={`${inputBaseClasses} pl-10`}
-                    {...form.register("email", { required: "Email is required" })}
-                  />
-                </div>
+                <input
+                  id={id}
+                  type="email"
+                  aria-describedby={describedBy}
+                  aria-invalid={!!error}
+                  placeholder="you@firm.com"
+                  className={inputBaseClasses}
+                  {...emailField}
+                />
               )}
             </FormField>
 
             {/* Password */}
             <FormField
               name="password"
-              label={
-                <span className={`inline-flex items-center gap-2 ${labelMuted}`}>
-                  <FiLock /> Password
-                </span>
-              }
+              label={<span className={labelMuted}>Password</span>}
               required
               help="At least 8 characters."
             >
               {({ id, describedBy, error }) => (
                 <div className="relative">
-                  <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     id={id}
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     aria-describedby={describedBy}
                     aria-invalid={!!error}
-                    placeholder="........"
-                    className={`${inputBaseClasses} pl-10`}
+                    placeholder="Minimum 8 characters"
+                    className={`${inputBaseClasses} pr-11`}
                     {...form.register("password", {
                       required: "Password is required",
                       minLength: { value: 8, message: "At least 8 characters" },
                     })}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((value) => !value)}
+                    className={`absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md ${
+                      isModal
+                        ? "text-slate-200 hover:bg-white/10"
+                        : "text-slate-500 hover:bg-slate-100"
+                    }`}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
                 </div>
               )}
             </FormField>
@@ -288,18 +302,18 @@ export default function Register({ isModal = false, onClose }) {
               )}
             </FormField>
 
-            {/* Firm ID */}
+            {/* Firm Name */}
             <FormField
-              name="firmId"
-              label={<span className={labelMuted}>Firm ID (optional)</span>}
+              name="firmName"
+              label={<span className={labelMuted}>Firm name (optional)</span>}
             >
               {({ id, describedBy }) => (
                 <input
                   id={id}
                   aria-describedby={describedBy}
-                  placeholder="645af3..."
+                  placeholder="Firm name"
                   className={inputBaseClasses}
-                  {...form.register("firmId")}
+                  {...form.register("firmName")}
                 />
               )}
             </FormField>
@@ -309,51 +323,40 @@ export default function Register({ isModal = false, onClose }) {
             {/* Mobile */}
             <FormField
               name="mobile"
-              label={
-                <span className={`inline-flex items-center gap-2 ${labelMuted}`}>
-                  <FiPhone /> Mobile
-                </span>
-              }
+              label={<span className={labelMuted}>Mobile</span>}
               required
             >
               {({ id, describedBy, error }) => (
-                <div className="relative">
-                  <FiPhone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input
-                    id={id}
-                    aria-describedby={describedBy}
-                    aria-invalid={!!error}
-                    placeholder="+1 555 0100"
-                    className={`${inputBaseClasses} pl-10`}
-                    {...form.register("mobile", {
-                      required: "Mobile is required",
-                      minLength: { value: 7, message: "Too short" },
-                    })}
-                  />
-                </div>
+                <input
+                  id={id}
+                  aria-describedby={describedBy}
+                  aria-invalid={!!error}
+                  inputMode="numeric"
+                  maxLength={10}
+                  placeholder="10-digit mobile number"
+                  className={inputBaseClasses}
+                  {...mobileField}
+                  onChange={(event) => {
+                    event.target.value = event.target.value.replace(/\D/g, "").slice(0, 10);
+                    mobileField.onChange(event);
+                  }}
+                />
               )}
             </FormField>
 
             {/* Address */}
             <FormField
               name="address"
-              label={
-                <span className={`inline-flex items-center gap-2 ${labelMuted}`}>
-                  <FiHome /> Address
-                </span>
-              }
+              label={<span className={labelMuted}>Address</span>}
             >
               {({ id, describedBy }) => (
-                <div className="relative">
-                  <FiHome className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input
-                    id={id}
-                    aria-describedby={describedBy}
-                    placeholder="221B Baker Street"
-                    className={`${inputBaseClasses} pl-10`}
-                    {...form.register("address")}
-                  />
-                </div>
+                <input
+                  id={id}
+                  aria-describedby={describedBy}
+                  placeholder="Office address"
+                  className={inputBaseClasses}
+                  {...form.register("address")}
+                />
               )}
             </FormField>
           </div>
@@ -462,20 +465,51 @@ export default function Register({ isModal = false, onClose }) {
             )}
           </FormField>
 
-          {error && (
-            <p
-              className={`text-sm ${
-                isModal ? "text-red-300" : "text-red-600"
+          {feedback && (
+            <motion.div
+              key={`${feedback.type}-${feedback.message}`}
+              initial={{ opacity: 0, y: 8, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.2 }}
+              className={`flex items-center gap-3 rounded-lg border px-3 py-2 text-sm ${
+                feedback.type === "success"
+                  ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+                  : feedback.type === "error"
+                    ? "border-rose-300 bg-rose-50 text-rose-800"
+                    : isModal
+                      ? "border-white/15 bg-white/10 text-slate-100"
+                      : "border-indigo-200 bg-indigo-50 text-indigo-800"
               }`}
-              role="alert"
+              role={feedback.type === "error" ? "alert" : "status"}
             >
-              {typeof error === "string" ? error : "Registration failed"}
-            </p>
+              <motion.span
+                initial={{ rotate: -8, scale: 0.8 }}
+                animate={{
+                  rotate: feedback.type === "loading" ? 360 : 0,
+                  scale: 1,
+                }}
+                transition={{
+                  duration: feedback.type === "loading" ? 0.8 : 0.25,
+                  repeat: feedback.type === "loading" ? Infinity : 0,
+                  ease: "linear",
+                }}
+                className="inline-flex shrink-0"
+              >
+                {feedback.type === "success" ? (
+                  <CheckCircle2 size={20} />
+                ) : feedback.type === "error" ? (
+                  <XCircle size={20} />
+                ) : (
+                  <LoaderCircle size={20} />
+                )}
+              </motion.span>
+              <span>{feedback.message}</span>
+            </motion.div>
           )}
 
           <motion.button
             type="submit"
-            disabled={submitting || status === "loading"}
+            disabled={submitting || status === "loading" || feedback?.type === "success"}
             whileHover={{ y: -2, scale: 1.01 }}
             whileTap={{ scale: 0.98 }}
             className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 text-white font-medium px-4 py-2 shadow-lg shadow-black/40 disabled:opacity-60 disabled:cursor-not-allowed transition"
