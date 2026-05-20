@@ -1,12 +1,13 @@
 // src/store/registerSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { registerUser } from '@/services/api';
+import { registerAdmin, registerUser } from '@/services/api';
 
 
 export const registerThunk = createAsyncThunk('auth/register', async (payload, { rejectWithValue }) => {
 try {
 // payload may contain: { name, email, password, role, mobile, address, qualifications }
-const { data } = await registerUser(payload);
+const register = payload?.role === 'admin' ? registerAdmin : registerUser;
+const { data } = await register(payload);
 return data; // { user, token? } depending on backend
 } catch (err) {
 const data = err?.response?.data;

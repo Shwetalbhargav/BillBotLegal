@@ -1,5 +1,5 @@
 // ===== src/features/auth/Login.jsx =====
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { useForm } from "react-hook-form";
@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import Form from "@/components/form/Form";
 import FormField from "@/components/form/FormField";
 import lawyer from "@/assets/lawyer.jpg";
+import { listFirmOptions } from "@/services/api";
 import { loginUserThunk } from "@/store/authSlice";
 import Register from "./Register";
 
@@ -26,12 +27,38 @@ export default function Login() {
       mobile: "",
       password: "",
       role: preselectedRole,
+      firmId: "",
     },
   });
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [firms, setFirms] = useState([]);
+  const [firmsLoading, setFirmsLoading] = useState(false);
+  const [firmsError, setFirmsError] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setFirmsLoading(true);
+    listFirmOptions()
+      .then(({ data }) => {
+        if (cancelled) return;
+        setFirms(Array.isArray(data?.data) ? data.data : []);
+        setFirmsError(null);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setFirmsError(err?.response?.data?.message || "Unable to load firms");
+      })
+      .finally(() => {
+        if (!cancelled) setFirmsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
       const onSubmit = async (values) => {
       setSubmitting(true);
@@ -105,12 +132,20 @@ return (
               id={id}
               aria-describedby={describedBy}
               aria-invalid={!!error}
-              placeholder="+1 555 0100"
+              inputMode="numeric"
+              maxLength={10}
+              placeholder="10-digit mobile number"
               className={`${inputBaseClasses} bg-white/20 border-white/30 text-white placeholder:text-gray-300`}
               {...form.register("mobile", {
                 required: "Mobile is required",
-                minLength: { value: 7, message: "Too short" },
+                minLength: { value: 10, message: "Enter a 10-digit mobile number" },
+                maxLength: { value: 10, message: "Enter a 10-digit mobile number" },
+                pattern: { value: /^\d{10}$/, message: "Enter numbers only" },
               })}
+              onChange={(event) => {
+                event.target.value = event.target.value.replace(/\D/g, "").slice(0, 10);
+                form.setValue("mobile", event.target.value, { shouldValidate: true });
+              }}
             />
           )}
         </FormField>
@@ -135,13 +170,17 @@ return (
                 })}
               />
               <button
-                type="button"
-                onClick={() => setShowPassword((s) => !s)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs px-2 py-1 
-                  rounded-md bg-white/20 hover:bg-white/30 text-gray-200"
-              >
-                {showPassword ? "Hide" : "Show"}
-              </button>
+                    type="button"
+                    onClick={() => setShowPassword((value) => !value)}
+                    className={`absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md ${
+                      isModal
+                        ? "text-slate-200 hover:bg-white/10"
+                        : "text-slate-500 hover:bg-slate-100"
+                    }`}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
             </div>
           )}
         </FormField>
@@ -157,21 +196,53 @@ return (
               id={id}
               aria-describedby={describedBy}
               aria-invalid={!!error}
-              className={`${inputBaseClasses} bg-white/20 border-white/30 text-white placeholder:text-gray-300`}
+              className={`${inputBaseClasses} bg-slate-900/80 border-white/30 text-white placeholder:text-gray-300`}
               defaultValue={preselectedRole || ""}
               {...form.register("role", { required: "Role is required" })}
             >
-              <option value="" disabled className="text-gray-700">
+              <option value="" disabled className="bg-slate-900 text-white">
                 Select role
               </option>
-              <option value="admin" className="text-black">Admin</option>
-              <option value="partner" className="text-black">Partner</option>
-              <option value="lawyer" className="text-black">Lawyer</option>
-              <option value="associate" className="text-black">Associate</option>
-              <option value="intern" className="text-black">Intern</option>
+              <option value="admin" className="bg-slate-900 text-white">Admin</option>
+              <option value="partner" className="bg-slate-900 text-white">Partner</option>
+              <option value="lawyer" className="bg-slate-900 text-white">Lawyer</option>
+              <option value="associate" className="bg-slate-900 text-white">Associate</option>
+              <option value="intern" className="bg-slate-900 text-white">Intern</option>
             </select>
           )}
         </FormField>
+
+        {/* Firm */}
+        <FormField
+          name="firmId"
+          label={<span className="text-gray-100">Firm</span>}
+          required
+        >
+          {({ id, describedBy, error }) => (
+            <select
+              id={id}
+              aria-describedby={describedBy}
+              aria-invalid={!!error}
+              className={`${inputBaseClasses} bg-white/20 border-white/30 text-white placeholder:text-gray-300`}
+              {...form.register("firmId", { required: "Firm is required" })}
+            >
+              <option value="" disabled className="bg-slate-900 text-white">
+                {firmsLoading ? "Loading firms..." : "Select firm"}
+              </option>
+              {firms.map((firm) => (
+                <option key={firm._id} value={firm._id} className="bg-slate-900 text-white">
+                  {firm.name}
+                </option>
+              ))}
+            </select>
+          )}
+        </FormField>
+
+        {firmsError && (
+          <p className="text-amber-200 text-sm" role="alert">
+            {firmsError}
+          </p>
+        )}
 
         {error && (
           <p className="text-red-300 text-sm" role="alert">

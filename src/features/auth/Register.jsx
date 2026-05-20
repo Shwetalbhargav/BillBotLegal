@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm, useFieldArray } from "react-hook-form";
@@ -15,6 +15,7 @@ import { CheckCircle2, Eye, EyeOff, LoaderCircle, XCircle } from "lucide-react";
 import { Switch } from "@/components/form";
 import Form from "@/components/form/Form";
 import FormField from "@/components/form/FormField";
+import { listFirmOptions } from "@/services/api";
 import { registerThunk, resetRegisterState } from "@/store/registerSlice";
 
 const ROLES = [
@@ -22,6 +23,7 @@ const ROLES = [
   { label: "Lawyer", value: "lawyer" },
   { label: "Associate", value: "associate" },
   { label: "Intern", value: "intern" },
+  { label: "Admin", value: "admin" },
 ];
 
 export default function Register({ isModal = false, onClose }) {
@@ -36,6 +38,9 @@ export default function Register({ isModal = false, onClose }) {
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [feedback, setFeedback] = useState(null);
+  const [firms, setFirms] = useState([]);
+  const [firmsLoading, setFirmsLoading] = useState(false);
+  const [firmsError, setFirmsError] = useState(null);
 
   const form = useForm({
     mode: "onBlur",
@@ -46,7 +51,7 @@ export default function Register({ isModal = false, onClose }) {
       role: "lawyer",
       mobile: "",
       address: "",
-      firmName: "",
+      firmId: "",
       qualifications: [{ degree: "", university: "", year: "" }],
       terms: false,
     },
@@ -56,6 +61,28 @@ export default function Register({ isModal = false, onClose }) {
     control: form.control,
     name: "qualifications",
   });
+
+  useEffect(() => {
+    let cancelled = false;
+    setFirmsLoading(true);
+    listFirmOptions()
+      .then(({ data }) => {
+        if (cancelled) return;
+        setFirms(Array.isArray(data?.data) ? data.data : []);
+        setFirmsError(null);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setFirmsError(err?.response?.data?.message || "Unable to load firms");
+      })
+      .finally(() => {
+        if (!cancelled) setFirmsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const onSubmit = async (values) => {
     if (!values.terms) {
@@ -80,7 +107,7 @@ export default function Register({ isModal = false, onClose }) {
           email: values.email,
           password: values.password,
           role: values.role,
-          firmName: values.firmName?.trim() || undefined,
+          firmId: values.firmId || undefined,
           mobile: values.mobile || undefined,
           address: values.address?.trim() || undefined,
           qualifications: quals.length ? quals : undefined,
@@ -279,21 +306,20 @@ export default function Register({ isModal = false, onClose }) {
             <FormField
               name="role"
               label={<span className={labelMuted}>Role</span>}
+              required
             >
               {({ id }) => (
                 <select
                   id={id}
                   value={form.watch("role")}
                   onChange={(e) => form.setValue("role", e.target.value)}
-                  className={`${inputBaseClasses} ${
-                    isModal ? "text-white" : "text-slate-900"
-                  }`}
+                  className={`${commonInput} bg-slate-900 text-white border-white/20`}
                 >
                   {ROLES.map((r) => (
                     <option
                       key={r.value}
                       value={r.value}
-                      className="text-black"
+                      className="bg-slate-900 text-white"
                     >
                       {r.label}
                     </option>
@@ -302,22 +328,38 @@ export default function Register({ isModal = false, onClose }) {
               )}
             </FormField>
 
-            {/* Firm Name */}
+            {/* Firm */}
             <FormField
-              name="firmName"
-              label={<span className={labelMuted}>Firm name (optional)</span>}
+              name="firmId"
+              label={<span className={labelMuted}>Firm</span>}
+              required
             >
-              {({ id, describedBy }) => (
-                <input
+              {({ id, describedBy, error }) => (
+                <select
                   id={id}
                   aria-describedby={describedBy}
-                  placeholder="Firm name"
+                  aria-invalid={!!error}
                   className={inputBaseClasses}
-                  {...form.register("firmName")}
-                />
+                  {...form.register("firmId", { required: "Firm is required" })}
+                >
+                  <option value="" disabled className="bg-slate-900 text-white">
+                    {firmsLoading ? "Loading firms..." : "Select firm"}
+                  </option>
+                  {firms.map((firm) => (
+                    <option key={firm._id} value={firm._id} className="bg-slate-900 text-white">
+                      {firm.name}
+                    </option>
+                  ))}
+                </select>
               )}
             </FormField>
           </div>
+
+          {firmsError && (
+            <p className={`text-sm ${isModal ? "text-amber-200" : "text-amber-700"}`}>
+              {firmsError}
+            </p>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Mobile */}

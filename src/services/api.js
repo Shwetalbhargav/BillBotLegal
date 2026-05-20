@@ -31,6 +31,9 @@ export const logoutUser = () =>
   apiClient.post("/api/auth/logout");
 
 // ========== ADMIN AUTH / PROFILE ==========
+export const registerAdmin = (data) =>
+  apiClient.post("/api/admin/register", data);
+
 export const loginAdmin = (credentials) =>
   apiClient.post("/api/admin/login", credentials); 
 
@@ -716,6 +719,9 @@ export const caseAssignments = crudResource("/api/case-assignments");
 // ========== FIRMS (firmRoutes) ==========
 // CRUD for firms (create/list/getById/update/remove)
 export const firms = crudResource("/api/firms");
+
+export const listFirmOptions = () =>
+  apiClient.get("/api/firms/options", { skipAuthRedirect: true });
 
 // Settings (currency, tax, billing prefs)
 export const getFirmSettingsApi = (firmId) =>
